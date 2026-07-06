@@ -4,13 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { proxiedFetch } from "@/backend/helpers/fetch";
 import { get as tmdbGet } from "@/backend/metadata/tmdb";
-import {
-  Category,
-  MediaItem,
-  brandColors,
-  brandLetter,
-  categories,
-} from "@/utils/discover";
+import { Category, MediaItem, categories } from "@/utils/discover";
 
 import { SubPageLayout } from "./layouts/SubPageLayout";
 import { PageTitle } from "./parts/util/PageTitle";
@@ -284,8 +278,6 @@ export function Discover() {
       >
         {categories.map((cat) => {
           const isActive = activeKey === cat.key;
-          const accent = brandColors[cat.key];
-          const letter = brandLetter(cat.key);
           return (
             <button
               key={cat.key}
@@ -297,16 +289,6 @@ export function Discover() {
                   : "bg-white/5 text-white/60 border border-white/10 hover:border-white/30 hover:text-white/90"
               }`}
             >
-              {accent ? (
-                <span
-                  className="w-5 h-5 rounded flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
-                  style={{ backgroundColor: accent }}
-                >
-                  {letter}
-                </span>
-              ) : (
-                <span className="text-xs">{letter}</span>
-              )}
               <span>{cat.label}</span>
               {cat.region && (
                 <span className="text-[10px] px-1 py-0.5 rounded-full bg-white/10 text-white/40 font-semibold leading-tight">
@@ -326,8 +308,6 @@ export function Discover() {
           <div className="flex flex-col gap-1 px-2">
             {categories.map((cat) => {
               const isActive = activeKey === cat.key;
-              const accent = brandColors[cat.key];
-              const letter = brandLetter(cat.key);
               return (
                 <button
                   key={cat.key}
@@ -339,18 +319,6 @@ export function Discover() {
                       : "text-white/60 hover:bg-white/5 hover:text-white/90"
                   }`}
                 >
-                  {accent ? (
-                    <span
-                      className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
-                      style={{ backgroundColor: accent }}
-                    >
-                      {letter}
-                    </span>
-                  ) : (
-                    <span className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold text-white/40 bg-white/10 flex-shrink-0">
-                      {letter}
-                    </span>
-                  )}
                   <span className="truncate">{cat.label}</span>
                   {cat.region && (
                     <span className="text-[10px] px-1 py-0.5 rounded-full bg-white/10 text-white/40 font-semibold leading-tight ml-auto">
