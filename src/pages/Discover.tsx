@@ -278,49 +278,91 @@ export function Discover() {
       </Helmet>
       <PageTitle subpage k="global.pages.discover" />
 
-      <div className="sticky top-0 z-30 bg-background-main/80 backdrop-blur-md border-b border-white/5">
-        <div
-          className="flex gap-2 overflow-x-auto px-4 py-3"
-          style={{ scrollbarWidth: "none" }}
-        >
-          {categories.map((cat) => {
-            const isActive = activeKey === cat.key;
-            const accent = brandColors[cat.key];
-            const letter = brandLetter(cat.key);
-            return (
-              <button
-                key={cat.key}
-                type="button"
-                onClick={() => setActiveKey(cat.key)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 flex-shrink-0 ${
-                  isActive
-                    ? "bg-[rgba(255,90,31,0.12)] text-[#ff5a1f] border border-[#ff5a1f]/40"
-                    : "bg-white/5 text-white/60 border border-white/10 hover:border-white/30 hover:text-white/90"
-                }`}
-              >
-                {accent ? (
-                  <span
-                    className="w-5 h-5 rounded flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
-                    style={{ backgroundColor: accent }}
-                  >
-                    {letter}
-                  </span>
-                ) : (
-                  <span className="text-xs">{letter}</span>
-                )}
-                <span>{cat.label}</span>
-                {cat.region && (
-                  <span className="text-[10px] px-1 py-0.5 rounded-full bg-white/10 text-white/40 font-semibold leading-tight">
-                    {cat.region}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+      <div
+        className="flex gap-2 overflow-x-auto px-4 py-3 lg:hidden sticky top-0 z-30 bg-background-main/80 backdrop-blur-md border-b border-white/5"
+        style={{ scrollbarWidth: "none" }}
+      >
+        {categories.map((cat) => {
+          const isActive = activeKey === cat.key;
+          const accent = brandColors[cat.key];
+          const letter = brandLetter(cat.key);
+          return (
+            <button
+              key={cat.key}
+              type="button"
+              onClick={() => setActiveKey(cat.key)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 flex-shrink-0 ${
+                isActive
+                  ? "bg-[rgba(255,90,31,0.12)] text-[#ff5a1f] border border-[#ff5a1f]/40"
+                  : "bg-white/5 text-white/60 border border-white/10 hover:border-white/30 hover:text-white/90"
+              }`}
+            >
+              {accent ? (
+                <span
+                  className="w-5 h-5 rounded flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
+                  style={{ backgroundColor: accent }}
+                >
+                  {letter}
+                </span>
+              ) : (
+                <span className="text-xs">{letter}</span>
+              )}
+              <span>{cat.label}</span>
+              {cat.region && (
+                <span className="text-[10px] px-1 py-0.5 rounded-full bg-white/10 text-white/40 font-semibold leading-tight">
+                  {cat.region}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
-      <div className="px-4 py-6 max-w-7xl mx-auto">
+      <div className="flex max-w-7xl mx-auto">
+        <aside className="hidden lg:flex flex-col sticky top-0 z-30 h-screen w-56 flex-shrink-0 py-4 pr-2 overflow-y-auto border-r border-white/5"
+          style={{ scrollbarWidth: "none" }}
+        >
+          <div className="flex flex-col gap-1 px-2">
+            {categories.map((cat) => {
+              const isActive = activeKey === cat.key;
+              const accent = brandColors[cat.key];
+              const letter = brandLetter(cat.key);
+              return (
+                <button
+                  key={cat.key}
+                  type="button"
+                  onClick={() => setActiveKey(cat.key)}
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-left ${
+                    isActive
+                      ? "bg-[rgba(255,90,31,0.12)] text-[#ff5a1f]"
+                      : "text-white/60 hover:bg-white/5 hover:text-white/90"
+                  }`}
+                >
+                  {accent ? (
+                    <span
+                      className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
+                      style={{ backgroundColor: accent }}
+                    >
+                      {letter}
+                    </span>
+                  ) : (
+                    <span className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold text-white/40 bg-white/10 flex-shrink-0">
+                      {letter}
+                    </span>
+                  )}
+                  <span className="truncate">{cat.label}</span>
+                  {cat.region && (
+                    <span className="text-[10px] px-1 py-0.5 rounded-full bg-white/10 text-white/40 font-semibold leading-tight ml-auto">
+                      {cat.region}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+
+        <div className="flex-1 min-w-0 px-4 py-6">
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {Array.from({ length: 20 }).map((_, i) => {
@@ -366,6 +408,7 @@ export function Discover() {
             )}
           </>
         )}
+        </div>
       </div>
 
       {showScrollTop && (
