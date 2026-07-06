@@ -65,10 +65,12 @@ async function fetchPage(
 ): Promise<{ items: MediaItem[]; totalPages: number }> {
   const params: Record<string, string> = {
     apiKey: WATCHMODE_KEY,
+    source_ids: String(cat.sourceId),
     page: String(page),
+    limit: "50",
   };
   if (cat.region) params.regions = cat.region;
-  const data = await proxiedFetch<any>(`/v1/sources/${cat.sourceId}/titles/`, {
+  const data = await proxiedFetch<any>("/v1/list-titles/", {
     baseURL: "https://api.watchmode.com",
     params,
   });
