@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 
+import { get as tmdbGet } from "@/backend/metadata/tmdb";
 import { proxiedFetch } from "@/backend/helpers/fetch";
 import {
   Category,
@@ -59,7 +60,54 @@ function PosterCard({
   );
 }
 
-async function fetchPage(
+function mediaType(item: MediaItem): "movie" | "tv" {
+  return item.type === "tv_series" || item.type === "tv_miniseries" || item.type === "tv" ? "tv" : "movie";
+}
+
+async function enrichWatchmodeItems(items: MediaItem[]): Promise<void> {
+  const batchSize = 10;
+  for (let start = 0; start < items.length; start += batchSize) {
+    const batch = items.slice(start, start + batchSize);
+    await Promise.allSettled(
+      batch.map(async (item) => {
+        if (!item.tmdbId) return;
+        try {
+          const mType = mediaType(item);
+          const data = await tmdbGet<any>(`/${mType}/${item.tmdbId}`);
+          if (data?.poster_path) item.poster = `https://image.tmdb.org/t/p/w500${data.poster_path}`;
+          if (data?.vote_average) item.rating = data.vote_average;
+        } catch {
+          // poster stays null
+        }
+      }),
+    );
+  }
+}
+
+async function fetchTMDBPage(
+  cat: Category,
+  page: number,
+): Promise<{ items: MediaItem[]; totalPages: number }> {
+  const endpoint = cat.endpoint || (cat.isTv ? "discover/tv" : "discover/movie");
+  const params: Record<string, string | number> = { page };
+  if (cat.discoverParams) {
+    Object.assign(params, cat.discoverParams);
+  }
+  const data = await tmdbGet<any>(endpoint, params);
+  const results = data?.results ?? [];
+  const items: MediaItem[] = results.map((r: any) => ({
+    id: r.id,
+    title: r.title || r.name || "",
+    poster: r.poster_path ? `https://image.tmdb.org/t/p/w500${r.poster_path}` : null,
+    year: new Date(r.release_date || r.first_air_date || 0).getFullYear() || 0,
+    rating: r.vote_average || 0,
+    tmdbId: r.id,
+    type: cat.isTv ? "tv" : "movie",
+  }));
+  return { items, totalPages: Math.min(data?.total_pages ?? 1, 500) };
+}
+
+async function fetchWatchmodePage(
   cat: Category,
   page: number,
 ): Promise<{ items: MediaItem[]; totalPages: number }> {
@@ -74,16 +122,27 @@ async function fetchPage(
     baseURL: "https://api.watchmode.com",
     params,
   });
-  const items: MediaItem[] = (data?.titles ?? []).map((r: any) => ({
+  const rawItems: MediaItem[] = (data?.titles ?? []).map((r: any) => ({
     id: r.id,
     title: r.title || "",
-    poster: r.poster ?? null,
+    poster: null,
     year: r.year || 0,
-    rating: r.rating || 0,
+    rating: 0,
     tmdbId: r.tmdb_id ?? null,
     type: r.type || "movie",
   }));
-  return { items, totalPages: Math.min(data?.total_pages ?? 1, 500) };
+  await enrichWatchmodeItems(rawItems);
+  return { items: rawItems, totalPages: Math.min(data?.total_pages ?? 1, 500) };
+}
+
+async function fetchPage(
+  cat: Category,
+  page: number,
+): Promise<{ items: MediaItem[]; totalPages: number }> {
+  if (cat.type === "watchmode") {
+    return fetchWatchmodePage(cat, page);
+  }
+  return fetchTMDBPage(cat, page);
 }
 
 export function Discover() {
@@ -104,6 +163,7 @@ export function Discover() {
       } else {
         setIsLoading(true);
         setResults([]);
+        window.scrollTo({ top: 0, behavior: "instant" });
       }
       try {
         const { items, totalPages: tp } = await fetchPage(cat, p);
@@ -159,7 +219,7 @@ export function Discover() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  const handleScrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   return (
     <SubPageLayout>
@@ -233,7 +293,7 @@ export function Discover() {
                   item={item}
                   onClick={() =>
                     navigate(
-                      `/media/tmdb-${item.type === "tv_series" || item.type === "tv_miniseries" ? "tv" : "movie"}-${item.tmdbId || item.id}-${item.title}`,
+                      `/media/tmdb-${mediaType(item)}-${item.tmdbId || item.id}-${item.title}`,
                     )
                   }
                 />
@@ -263,7 +323,7 @@ export function Discover() {
       {showScrollTop && (
         <button
           type="button"
-          onClick={scrollToTop}
+          onClick={handleScrollToTop}
           className="fixed bottom-6 right-6 z-50 w-10 h-10 rounded-full bg-[#ff5a1f] text-white flex items-center justify-center shadow-lg hover:bg-[#ff5a1f]/80 transition-colors"
           aria-label="Back to top"
         >
