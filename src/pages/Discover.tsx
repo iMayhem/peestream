@@ -2,8 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 
-import { get } from "@/backend/metadata/tmdb";
-import { conf } from "@/setup/config";
 import {
   Category,
   MediaItem,
@@ -15,7 +13,7 @@ import {
 import { SubPageLayout } from "./layouts/SubPageLayout";
 import { PageTitle } from "./parts/util/PageTitle";
 
-const TMDB_IMG = "https://image.tmdb.org/t/p/w342";
+const WATCHMODE_KEY = "wr6fJOVgJsUyexE1otCdyajF06PW6zTibu2yOWnR";
 
 function SkeletonCard() {
   return <div className="animate-pulse rounded-xl bg-white/5 aspect-[2/3]" />;
@@ -35,9 +33,9 @@ function PosterCard({
       className="group relative w-full text-left focus:outline-none"
     >
       <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-white/5">
-        {item.poster_path ? (
+        {item.poster ? (
           <img
-            src={`${TMDB_IMG}${item.poster_path}`}
+            src={item.poster}
             alt={item.title}
             loading="lazy"
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -47,9 +45,9 @@ function PosterCard({
             {item.title.charAt(0)}
           </div>
         )}
-        {item.vote_average > 0 && (
+        {item.rating > 0 && (
           <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/70 text-[11px] font-bold text-amber-400 leading-tight">
-            {item.vote_average.toFixed(1)}
+            {item.rating.toFixed(1)}
           </div>
         )}
       </div>
@@ -64,22 +62,19 @@ async function fetchPage(
   cat: Category,
   page: number,
 ): Promise<{ items: MediaItem[]; totalPages: number }> {
-  const endpoint = cat.isTv ? "/discover/tv" : "/discover/movie";
-  const data = await get<any>(endpoint, {
-    api_key: conf().TMDB_READ_API_KEY,
-    language: "en-US",
-    page: String(page),
-    ...Object.fromEntries(
-      Object.entries(cat.params).map(([k, v]) => [k, String(v)]),
-    ),
-  });
-  const items: MediaItem[] = (data?.results ?? []).map((r: any) => ({
+  const regionParam = cat.region ? `&regions=${cat.region}` : "";
+  const res = await fetch(
+    `https://api.watchmode.com/v1/sources/${cat.sourceId}/titles/?apiKey=${WATCHMODE_KEY}&page=${page}${regionParam}`,
+  );
+  const data = await res.json();
+  const items: MediaItem[] = (data?.titles ?? []).map((r: any) => ({
     id: r.id,
-    title: r.title || r.name || "",
-    poster_path: r.poster_path ?? null,
-    vote_average: r.vote_average || 0,
-    release_date: r.release_date || r.first_air_date || "",
-    type: (cat.isTv ? "tv" : "movie") as "movie" | "tv",
+    title: r.title || "",
+    poster: r.poster ?? null,
+    year: r.year || 0,
+    rating: r.rating || 0,
+    tmdbId: r.tmdb_id ?? null,
+    type: r.type || "movie",
   }));
   return { items, totalPages: Math.min(data?.total_pages ?? 1, 500) };
 }
@@ -199,9 +194,9 @@ export function Discover() {
                   <span className="text-xs">{letter}</span>
                 )}
                 <span>{cat.label}</span>
-                {cat.isTv && (
+                {cat.region && (
                   <span className="text-[10px] px-1 py-0.5 rounded-full bg-white/10 text-white/40 font-semibold leading-tight">
-                    TV
+                    {cat.region}
                   </span>
                 )}
               </button>
@@ -231,7 +226,7 @@ export function Discover() {
                   item={item}
                   onClick={() =>
                     navigate(
-                      `/media/tmdb-${item.type}-${item.id}-${item.title}`,
+                      `/media/tmdb-${item.type === "tv_series" || item.type === "tv_miniseries" ? "tv" : "movie"}-${item.tmdbId || item.id}-${item.title}`,
                     )
                   }
                 />
@@ -262,7 +257,7 @@ export function Discover() {
         <button
           type="button"
           onClick={scrollToTop}
-          className="fixed bottom-20 right-6 z-50 w-10 h-10 rounded-full bg-[#ff5a1f] text-white flex items-center justify-center shadow-lg hover:bg-[#ff5a1f]/80 transition-colors"
+          className="fixed bottom-6 right-6 z-50 w-10 h-10 rounded-full bg-[#ff5a1f] text-white flex items-center justify-center shadow-lg hover:bg-[#ff5a1f]/80 transition-colors"
           aria-label="Back to top"
         >
           <svg
