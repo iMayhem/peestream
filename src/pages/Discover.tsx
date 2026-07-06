@@ -127,8 +127,7 @@ export function Discover() {
   );
 
   useEffect(() => {
-    const cat =
-      categories.find((c) => c.key === activeKey) || categories[0];
+    const cat = categories.find((c) => c.key === activeKey) || categories[0];
     loadPage(cat, 1, false);
   }, [activeKey, loadPage]);
 
@@ -158,8 +157,7 @@ export function Discover() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const scrollToTop = () =>
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   return (
     <SubPageLayout>
@@ -215,9 +213,10 @@ export function Discover() {
       <div className="px-4 py-6 max-w-7xl mx-auto">
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {Array.from({ length: 20 }).map((_, i) => (
-              <SkeletonCard key={i} />
-            ))}
+            {Array.from({ length: 20 }).map((_, i) => {
+              // eslint-disable-next-line react/no-array-index-key
+              return <SkeletonCard key={i} />;
+            })}
           </div>
         ) : results.length === 0 ? (
           <div className="text-center py-20 text-white/40">
@@ -241,9 +240,10 @@ export function Discover() {
 
             {isLoadingMore && (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <SkeletonCard key={`load-${i}`} />
-                ))}
+                {Array.from({ length: 8 }).map((_, i) => {
+                  // eslint-disable-next-line react/no-array-index-key
+                  return <SkeletonCard key={i} />;
+                })}
               </div>
             )}
 
@@ -251,7 +251,7 @@ export function Discover() {
 
             {!hasMore && results.length > 0 && (
               <p className="text-center py-10 text-white/30 text-sm">
-                You've seen it all.
+                You&apos;ve seen it all.
               </p>
             )}
           </>
