@@ -10,10 +10,12 @@ import { useSearchQuery } from "@/hooks/useSearchQuery";
 import { Button } from "@/pages/About";
 import { HomeLayout } from "@/pages/layouts/HomeLayout";
 import { BookmarksPart } from "@/pages/parts/home/BookmarksPart";
+import { CategoryRowPart } from "@/pages/parts/home/CategoryRowPart";
 import { HeroPart } from "@/pages/parts/home/HeroPart";
 import { WatchingPart } from "@/pages/parts/home/WatchingPart";
 import { SearchListPart } from "@/pages/parts/search/SearchListPart";
 import { SearchLoadingPart } from "@/pages/parts/search/SearchLoadingPart";
+import { categories } from "@/utils/discover";
 
 function useSearch(search: string) {
   const [searching, setSearching] = useState<boolean>(false);
@@ -47,6 +49,12 @@ export function HomePage() {
   const s = useSearch(search);
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [showWatching, setShowWatching] = useState(false);
+
+  const homeCategories = categories.filter((c) =>
+    ["trending", "trending-tv", "top-rated", "highest-grossing"].includes(
+      c.key,
+    ),
+  );
 
   const handleClick = (path: To) => {
     window.scrollTo(0, 0);
@@ -88,6 +96,11 @@ export function HomePage() {
                 </Button>
               </div>
             ) : null}
+            <div className="flex flex-col gap-10 mt-12">
+              {homeCategories.map((cat) => (
+                <CategoryRowPart key={cat.key} category={cat} />
+              ))}
+            </div>
           </>
         )}
       </WideContainer>
