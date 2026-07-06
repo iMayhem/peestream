@@ -285,7 +285,7 @@ export function Discover() {
               onClick={() => setActiveKey(cat.key)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 flex-shrink-0 ${
                 isActive
-                  ? "bg-[rgba(255,90,31,0.12)] text-[#ff5a1f] border border-[#ff5a1f]/40"
+                  ? "bg-[rgba(139,92,246,0.12)] text-[#8b5cf6] border border-[#8b5cf6]/40"
                   : "bg-white/5 text-white/60 border border-white/10 hover:border-white/30 hover:text-white/90"
               }`}
             >
@@ -315,7 +315,7 @@ export function Discover() {
                   onClick={() => setActiveKey(cat.key)}
                   className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-left ${
                     isActive
-                      ? "bg-[rgba(255,90,31,0.12)] text-[#ff5a1f]"
+                      ? "bg-[rgba(139,92,246,0.12)] text-[#8b5cf6]"
                       : "text-white/60 hover:bg-white/5 hover:text-white/90"
                   }`}
                 >
@@ -384,7 +384,7 @@ export function Discover() {
         <button
           type="button"
           onClick={handleScrollToTop}
-          className="fixed bottom-6 right-6 z-50 w-10 h-10 rounded-full bg-[#ff5a1f] text-white flex items-center justify-center shadow-lg hover:bg-[#ff5a1f]/80 transition-colors"
+          className="fixed bottom-6 right-6 z-50 w-10 h-10 rounded-full bg-[#8b5cf6] text-white flex items-center justify-center shadow-lg hover:bg-[#8b5cf6]/80 transition-colors"
           aria-label="Back to top"
         >
           <svg
