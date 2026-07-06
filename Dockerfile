@@ -6,7 +6,7 @@ RUN apk add --no-cache git && corepack enable
 
 COPY package.json ./
 COPY pnpm-lock.yaml ./
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 ARG PWA_ENABLED="true"
 ARG GA_ID
