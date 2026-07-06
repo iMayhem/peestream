@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 
-import { get as tmdbGet } from "@/backend/metadata/tmdb";
 import { proxiedFetch } from "@/backend/helpers/fetch";
+import { get as tmdbGet } from "@/backend/metadata/tmdb";
 import {
   Category,
   MediaItem,
@@ -61,7 +61,9 @@ function PosterCard({
 }
 
 function mediaType(item: MediaItem): "movie" | "tv" {
-  return item.type === "tv_series" || item.type === "tv_miniseries" || item.type === "tv" ? "tv" : "movie";
+  return item.type === "tv_series" || item.type === "tv_miniseries" || item.type === "tv"
+    ? "tv"
+    : "movie";
 }
 
 async function enrichWatchmodeItems(items: MediaItem[]): Promise<void> {
@@ -74,7 +76,8 @@ async function enrichWatchmodeItems(items: MediaItem[]): Promise<void> {
         try {
           const mType = mediaType(item);
           const data = await tmdbGet<any>(`/${mType}/${item.tmdbId}`);
-          if (data?.poster_path) item.poster = `https://image.tmdb.org/t/p/w500${data.poster_path}`;
+          if (data?.poster_path)
+            item.poster = `https://image.tmdb.org/t/p/w500${data.poster_path}`;
           if (data?.vote_average) item.rating = data.vote_average;
         } catch {
           // poster stays null
@@ -88,7 +91,8 @@ async function fetchTMDBPage(
   cat: Category,
   page: number,
 ): Promise<{ items: MediaItem[]; totalPages: number }> {
-  const endpoint = cat.endpoint || (cat.isTv ? "discover/tv" : "discover/movie");
+  const endpoint =
+    cat.endpoint || (cat.isTv ? "discover/tv" : "discover/movie");
   const params: Record<string, string | number> = { page };
   if (cat.discoverParams) {
     Object.assign(params, cat.discoverParams);
@@ -98,7 +102,9 @@ async function fetchTMDBPage(
   const items: MediaItem[] = results.map((r: any) => ({
     id: r.id,
     title: r.title || r.name || "",
-    poster: r.poster_path ? `https://image.tmdb.org/t/p/w500${r.poster_path}` : null,
+    poster: r.poster_path
+      ? `https://image.tmdb.org/t/p/w500${r.poster_path}`
+      : null,
     year: new Date(r.release_date || r.first_air_date || 0).getFullYear() || 0,
     rating: r.vote_average || 0,
     tmdbId: r.id,
