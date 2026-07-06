@@ -319,7 +319,8 @@ export function Discover() {
       </div>
 
       <div className="flex max-w-7xl mx-auto">
-        <aside className="hidden lg:flex flex-col sticky top-0 z-30 h-screen w-56 flex-shrink-0 py-4 pr-2 overflow-y-auto border-r border-white/5"
+        <aside
+          className="hidden lg:flex flex-col sticky top-0 z-30 h-screen w-56 flex-shrink-0 py-4 pr-2 overflow-y-auto border-r border-white/5"
           style={{ scrollbarWidth: "none" }}
         >
           <div className="flex flex-col gap-1 px-2">
@@ -363,51 +364,51 @@ export function Discover() {
         </aside>
 
         <div className="flex-1 min-w-0 px-4 py-6">
-        {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {Array.from({ length: 20 }).map((_, i) => {
-              // eslint-disable-next-line react/no-array-index-key
-              return <SkeletonCard key={i} />;
-            })}
-          </div>
-        ) : results.length === 0 ? (
-          <div className="text-center py-20 text-white/40">
-            No results found.
-          </div>
-        ) : (
-          <>
+          {isLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {results.map((item) => (
-                <PosterCard
-                  key={`${item.type}-${item.id}`}
-                  item={item}
-                  onClick={() =>
-                    navigate(
-                      `/media/tmdb-${mediaType(item)}-${item.tmdbId || item.id}-${item.title}`,
-                    )
-                  }
-                />
-              ))}
+              {Array.from({ length: 20 }).map((_, i) => {
+                // eslint-disable-next-line react/no-array-index-key
+                return <SkeletonCard key={i} />;
+              })}
             </div>
-
-            {isLoadingMore && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-4">
-                {Array.from({ length: 12 }).map((_, i) => {
-                  // eslint-disable-next-line react/no-array-index-key
-                  return <SkeletonCard key={i} />;
-                })}
+          ) : results.length === 0 ? (
+            <div className="text-center py-20 text-white/40">
+              No results found.
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                {results.map((item) => (
+                  <PosterCard
+                    key={`${item.type}-${item.id}`}
+                    item={item}
+                    onClick={() =>
+                      navigate(
+                        `/media/tmdb-${mediaType(item)}-${item.tmdbId || item.id}-${item.title}`,
+                      )
+                    }
+                  />
+                ))}
               </div>
-            )}
 
-            <div ref={sentinelRef} className="h-1" />
+              {isLoadingMore && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-4">
+                  {Array.from({ length: 12 }).map((_, i) => {
+                    // eslint-disable-next-line react/no-array-index-key
+                    return <SkeletonCard key={i} />;
+                  })}
+                </div>
+              )}
 
-            {!hasMore && results.length > 0 && (
-              <p className="text-center py-10 text-white/30 text-sm">
-                You&apos;ve seen it all.
-              </p>
-            )}
-          </>
-        )}
+              <div ref={sentinelRef} className="h-1" />
+
+              {!hasMore && results.length > 0 && (
+                <p className="text-center py-10 text-white/30 text-sm">
+                  You&apos;ve seen it all.
+                </p>
+              )}
+            </>
+          )}
         </div>
       </div>
 
