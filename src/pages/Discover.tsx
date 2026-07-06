@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { proxiedFetch } from "@/backend/helpers/fetch";
 import { get as tmdbGet } from "@/backend/metadata/tmdb";
 import { Category, MediaItem, categories } from "@/utils/discover";
+import { Icon, Icons } from "@/components/Icon";
 
 import { SubPageLayout } from "./layouts/SubPageLayout";
 import { PageTitle } from "./parts/util/PageTitle";
@@ -192,6 +193,7 @@ export function Discover() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const loadPage = useCallback(
     async (cat: Category, p: number, append: boolean) => {
@@ -272,32 +274,54 @@ export function Discover() {
       </Helmet>
       <PageTitle subpage k="global.pages.discover" />
 
-      <div
-        className="flex gap-2 overflow-x-auto px-4 py-3 lg:hidden sticky top-0 z-30 bg-background-main/80 backdrop-blur-md border-b border-white/5"
-        style={{ scrollbarWidth: "none" }}
-      >
-        {categories.map((cat) => {
-          const isActive = activeKey === cat.key;
-          return (
-            <button
-              key={cat.key}
-              type="button"
-              onClick={() => setActiveKey(cat.key)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 flex-shrink-0 ${
-                isActive
-                  ? "bg-[rgba(139,92,246,0.12)] text-[#8b5cf6] border border-[#8b5cf6]/40"
-                  : "bg-white/5 text-white/60 border border-white/10 hover:border-white/30 hover:text-white/90"
-              }`}
-            >
-              <span>{cat.label}</span>
-              {cat.region && (
-                <span className="text-[10px] px-1 py-0.5 rounded-full bg-white/10 text-white/40 font-semibold leading-tight">
-                  {cat.region}
-                </span>
-              )}
-            </button>
-          );
-        })}
+      {/* Mobile category drawer */}
+      <div className="lg:hidden">
+        <button
+          type="button"
+          onClick={() => setDrawerOpen(true)}
+          className="fixed top-20 left-3 z-30 w-8 h-8 rounded-lg bg-background-main/80 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/70 hover:text-white"
+        >
+          <Icon icon={Icons.MENU} className="text-lg" />
+        </button>
+        {drawerOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/60"
+            onClick={() => setDrawerOpen(false)}
+          />
+        )}
+        <div
+          className={`fixed top-0 left-0 z-50 h-full w-64 bg-background-main border-r border-white/5 transform transition-transform duration-200 ${
+            drawerOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <div className="flex flex-col gap-1 p-4 pt-20">
+            {categories.map((cat) => {
+              const isActive = activeKey === cat.key;
+              return (
+                <button
+                  key={cat.key}
+                  type="button"
+                  onClick={() => {
+                    setActiveKey(cat.key);
+                    setDrawerOpen(false);
+                  }}
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-left ${
+                    isActive
+                      ? "bg-[rgba(139,92,246,0.12)] text-[#8b5cf6]"
+                      : "text-white/60 hover:bg-white/5 hover:text-white/90"
+                  }`}
+                >
+                  <span className="truncate">{cat.label}</span>
+                  {cat.region && (
+                    <span className="text-[10px] px-1 py-0.5 rounded-full bg-white/10 text-white/40 font-semibold leading-tight ml-auto">
+                      {cat.region}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       <div className="flex max-w-7xl mx-auto items-start">
@@ -333,7 +357,7 @@ export function Discover() {
 
         <div className="flex-1 min-w-0 px-4 py-6">
           {isLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
               {Array.from({ length: 20 }).map((_, i) => {
                 // eslint-disable-next-line react/no-array-index-key
                 return <SkeletonCard key={i} />;
@@ -345,7 +369,7 @@ export function Discover() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
                 {results.map((item) => (
                   <PosterCard
                     key={`${item.type}-${item.id}`}
@@ -360,7 +384,7 @@ export function Discover() {
               </div>
 
               {isLoadingMore && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-4">
+                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4 mt-4">
                   {Array.from({ length: 12 }).map((_, i) => {
                     // eslint-disable-next-line react/no-array-index-key
                     return <SkeletonCard key={i} />;
