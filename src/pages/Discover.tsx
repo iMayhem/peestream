@@ -61,7 +61,8 @@ function PosterCard({
 }
 
 function mediaType(item: MediaItem): "movie" | "tv" {
-  return item.type === "tv_series" || item.type === "tv_miniseries" || item.type === "tv"
+  return item.type === "tv_series" || item.type === "tv_miniseries" ||
+    item.type === "tv"
     ? "tv"
     : "movie";
 }
@@ -225,7 +226,8 @@ export function Discover() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handleScrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  const handleScrollToTop = () =>
+    window.scrollTo({ top: 0, behavior: "smooth" });
 
   return (
     <SubPageLayout>
