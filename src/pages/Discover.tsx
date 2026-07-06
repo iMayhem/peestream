@@ -61,7 +61,8 @@ function PosterCard({
 }
 
 function mediaType(item: MediaItem): "movie" | "tv" {
-  return item.type === "tv_series" || item.type === "tv_miniseries" ||
+  return item.type === "tv_series" ||
+    item.type === "tv_miniseries" ||
     item.type === "tv"
     ? "tv"
     : "movie";
