@@ -34,10 +34,9 @@ function parseParams(input: string): Record<string, string> {
   return Object.fromEntries(entriesParams);
 }
 
-export function getParsedUrls() {
-  const urls = useAuthStore.getState().proxySet ?? originalUrls;
+function parseUrls(list: string[]): ParsedUrl[] {
   const output: ParsedUrl[] = [];
-  urls.forEach((url) => {
+  list.forEach((url) => {
     if (!url.startsWith("|")) {
       if (canParseUrl(url)) {
         output.push({
@@ -60,6 +59,23 @@ export function getParsedUrls() {
       type,
     });
   });
+  return output;
+}
+
+export function getParsedUrls() {
+  const userSet = useAuthStore.getState().proxySet;
+  const urls = userSet ?? originalUrls;
+  const output = parseUrls(urls);
+
+  // If user-set proxy URLs are all HTTP (would cause mixed-content errors),
+  // fall back to the config-provided URLs instead
+  if (
+    userSet !== null &&
+    output.length > 0 &&
+    output.every((u) => !u.url.startsWith("https://"))
+  ) {
+    return parseUrls(originalUrls);
+  }
 
   return output;
 }

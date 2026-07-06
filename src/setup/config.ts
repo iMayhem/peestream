@@ -47,7 +47,7 @@ export interface RuntimeConfig {
 }
 
 const env: Record<keyof Config, undefined | string> = {
-  TMDB_READ_API_KEY: undefined,
+  TMDB_READ_API_KEY: undefined, // always use public/config.js at runtime
   APP_VERSION: undefined,
   GITHUB_LINK: undefined,
   DISCORD_LINK: undefined,
