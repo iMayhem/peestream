@@ -17,7 +17,7 @@ import {
   TMDBShowData,
   TMDBShowSearchResult,
 } from "./types/tmdb";
-import { mwFetch } from "../helpers/fetch";
+import { proxiedFetch } from "../helpers/fetch";
 
 export function mediaTypeToTMDB(type: MWMediaType): TMDBContentTypes {
   if (type === MWMediaType.MOVIE) return TMDBContentTypes.MOVIE;
@@ -162,7 +162,7 @@ function abortOnTimeout(timeout: number): AbortSignal {
 export async function get<T>(url: string, params?: object): Promise<T> {
   if (!apiKey) throw new Error("TMDB API key not set");
   try {
-    return await mwFetch<T>(encodeURI(url), {
+    return await proxiedFetch<T>(encodeURI(url), {
       headers: tmdbHeaders,
       baseURL: tmdbBaseUrl1,
       params: {
@@ -171,7 +171,7 @@ export async function get<T>(url: string, params?: object): Promise<T> {
       signal: abortOnTimeout(5000),
     });
   } catch (err) {
-    return mwFetch<T>(encodeURI(url), {
+    return proxiedFetch<T>(encodeURI(url), {
       headers: tmdbHeaders,
       baseURL: tmdbBaseUrl2,
       params: {
