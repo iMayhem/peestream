@@ -158,7 +158,7 @@
     "menu": {
       "about": "O nás",
       "logout": "Odhlásit se",
-      "register": "Synchronizovat do sudo-cloudu",
+      "register": "Synchronizovat do peestreamu",
       "settings": "Nastavení",
       "support": "Podpořte nás"
     }
@@ -450,7 +450,7 @@
       "register": {
         "cta": "Začněte",
         "text": "Sdílejte průběh sledování mezi zařízeními a udržujte je synchronizovaná.",
-        "title": "Synchronizace do sudo-cloudu"
+        "title": "Synchronizace do peestreamu"
       },
       "title": "Účet"
     },

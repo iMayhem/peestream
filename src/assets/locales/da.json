@@ -191,7 +191,7 @@
     "menu": {
       "about": "Om os",
       "logout": "Log ud",
-      "register": "Synkroniser til sudo-cloud",
+      "register": "Synkroniser til peestream",
       "settings": "Indstillinger",
       "support": "Support",
       "discover": "Opdag"
@@ -528,7 +528,7 @@
       },
       "register": {
         "text": "Del fremskridt mellem enheder, og hold dem synkroniseret. ( ̧⸝⸝⍢⸝⸝)ෆ",
-        "title": "Synkroniser med sudo-cloud",
+        "title": "Synkroniser med peestream",
         "cta": "Kom godt i gang"
       },
       "title": "Profil"
