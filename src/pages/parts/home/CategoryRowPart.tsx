@@ -112,7 +112,10 @@ export function CategoryRowPart({ category }: { category: Category }) {
         style={{ scrollbarWidth: "none" }}
       >
         {loading
-          ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
+          ? Array.from({ length: 8 }).map((_, i) => {
+              // eslint-disable-next-line react/no-array-index-key
+              return <SkeletonCard key={i} />;
+            })
           : items.map((item) => (
               <div key={item.id} className="w-32 sm:w-36 flex-shrink-0">
                 <PosterCard
