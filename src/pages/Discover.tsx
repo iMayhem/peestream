@@ -258,17 +258,6 @@ export function Discover() {
         )}
       </div>
 
-      <button
-        type="button"
-        className="fixed bottom-6 right-6 z-50 w-10 h-10 rounded-full bg-[#ff5a1f] text-white flex items-center justify-center shadow-lg hover:bg-[#ff5a1f]/80 transition-colors text-xs font-bold"
-        aria-label="AI assistant"
-      >
-        AI
-        <span className="absolute -top-1 -right-1 text-[8px] px-1 rounded bg-[#ff5a1f] text-black font-bold leading-tight">
-          NEW
-        </span>
-      </button>
-
       {showScrollTop && (
         <button
           type="button"
