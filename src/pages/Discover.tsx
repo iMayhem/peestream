@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 
 import { proxiedFetch } from "@/backend/helpers/fetch";
 import { get as tmdbGet } from "@/backend/metadata/tmdb";
-import { Category, MediaItem, categories } from "@/utils/discover";
 import { Icon, Icons } from "@/components/Icon";
+import { Category, MediaItem, categories } from "@/utils/discover";
 
 import { SubPageLayout } from "./layouts/SubPageLayout";
 import { PageTitle } from "./parts/util/PageTitle";
