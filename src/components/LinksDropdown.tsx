@@ -8,7 +8,6 @@ import { UserAvatar } from "@/components/Avatar";
 import { Icon, Icons } from "@/components/Icon";
 import { Transition } from "@/components/utils/Transition";
 import { useAuth } from "@/hooks/auth/useAuth";
-
 import { useAuthStore } from "@/stores/auth";
 
 function Divider() {

@@ -92,7 +92,8 @@ export function Discover() {
     [genreId: number]: TVShow[];
   }>({});
   const carouselRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-  const [countdownTimeout, setCountdownTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [countdownTimeout, setCountdownTimeout] =
+    useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     categories.forEach(async (cat) => {
