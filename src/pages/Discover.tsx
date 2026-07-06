@@ -63,17 +63,15 @@ async function fetchPage(
   cat: Category,
   page: number,
 ): Promise<{ items: MediaItem[]; totalPages: number }> {
-  const data = await proxiedFetch<any>(
-    `/v1/sources/${cat.sourceId}/titles/`,
-    {
-      baseURL: "https://api.watchmode.com",
-      params: {
-        apiKey: WATCHMODE_KEY,
-        page: String(page),
-        ...(cat.region ? { regions: cat.region } : {}),
-      },
-    },
-  );
+  const params: Record<string, string> = {
+    apiKey: WATCHMODE_KEY,
+    page: String(page),
+  };
+  if (cat.region) params.regions = cat.region;
+  const data = await proxiedFetch<any>(`/v1/sources/${cat.sourceId}/titles/`, {
+    baseURL: "https://api.watchmode.com",
+    params,
+  });
   const items: MediaItem[] = (data?.titles ?? []).map((r: any) => ({
     id: r.id,
     title: r.title || "",
