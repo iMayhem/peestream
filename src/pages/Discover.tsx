@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 
+import { proxiedFetch } from "@/backend/helpers/fetch";
 import {
   Category,
   MediaItem,
@@ -62,11 +63,17 @@ async function fetchPage(
   cat: Category,
   page: number,
 ): Promise<{ items: MediaItem[]; totalPages: number }> {
-  const regionParam = cat.region ? `&regions=${cat.region}` : "";
-  const res = await fetch(
-    `https://api.watchmode.com/v1/sources/${cat.sourceId}/titles/?apiKey=${WATCHMODE_KEY}&page=${page}${regionParam}`,
+  const data = await proxiedFetch<any>(
+    `/v1/sources/${cat.sourceId}/titles/`,
+    {
+      baseURL: "https://api.watchmode.com",
+      params: {
+        apiKey: WATCHMODE_KEY,
+        page: String(page),
+        ...(cat.region ? { regions: cat.region } : {}),
+      },
+    },
   );
-  const data = await res.json();
   const items: MediaItem[] = (data?.titles ?? []).map((r: any) => ({
     id: r.id,
     title: r.title || "",
