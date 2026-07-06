@@ -300,9 +300,9 @@ export function Discover() {
         })}
       </div>
 
-      <div className="flex max-w-7xl mx-auto">
+      <div className="flex max-w-7xl mx-auto items-start">
         <aside
-          className="hidden lg:flex flex-col sticky top-0 z-30 h-screen w-56 flex-shrink-0 py-4 pr-2 overflow-y-auto border-r border-white/5"
+          className="hidden lg:flex flex-col sticky top-20 z-30 h-[calc(100vh-80px)] w-56 flex-shrink-0 py-4 pr-2 overflow-y-auto border-r border-white/5"
           style={{ scrollbarWidth: "none" }}
         >
           <div className="flex flex-col gap-1 px-2">

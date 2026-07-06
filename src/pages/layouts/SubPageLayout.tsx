@@ -36,7 +36,7 @@ export function SubPageLayout(props: { children: React.ReactNode }) {
       {/* Main page */}
       <FooterView>
         <Navigation doBackground noLightbar />
-        <div className="mt-40 relative">{props.children}</div>
+        <div className="mt-20 relative">{props.children}</div>
       </FooterView>
     </div>
   );
