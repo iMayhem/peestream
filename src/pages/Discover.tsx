@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-
 import { get } from "@/backend/metadata/tmdb";
 import { ThiccContainer } from "@/components/layout/ThinContainer";
 import { Divider } from "@/components/utils/Divider";
@@ -17,7 +16,6 @@ import {
   categories,
   tvCategories,
 } from "@/utils/discover";
-
 import { SubPageLayout } from "./layouts/SubPageLayout";
 import { Icon, Icons } from "../components/Icon";
 import { PageTitle } from "./parts/util/PageTitle";
@@ -92,7 +90,9 @@ export function Discover() {
     [genreId: number]: TVShow[];
   }>({});
   const carouselRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-  const [countdownTimeout, setCountdownTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [countdownTimeout, setCountdownTimeout] = useState<
+    NodeJS.Timeout | null
+  >(null);
 
   useEffect(() => {
     categories.forEach(async (cat) => {
