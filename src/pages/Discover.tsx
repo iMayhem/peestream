@@ -153,7 +153,7 @@ async function fetchWatchmodePage(
     apiKey: WATCHMODE_KEY,
     source_ids: String(cat.sourceId),
     page: String(page),
-    limit: "50",
+    limit: "100",
   };
   if (cat.region) params.regions = cat.region;
   const data = await proxiedFetch<any>("/v1/list-titles/", {
@@ -233,7 +233,12 @@ export function Discover() {
 
   useEffect(() => {
     const cat = categories.find((c) => c.key === activeKey) || categories[0];
-    loadPage(cat, 1, false);
+    loadPage(cat, 1, false).then(() => {
+      if (cat.type === "tmdb") {
+        loadPage(cat, 2, true);
+        loadPage(cat, 3, true);
+      }
+    });
   }, [activeKey, loadPage]);
 
   const hasMore = page < totalPages;
