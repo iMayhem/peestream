@@ -44,7 +44,6 @@ export function JipPage() {
               bold: <span className="font-bold" style={{ color: "#cfcfcf" }} />,
             }}
           />
-
         </Paragraph>
       </ThinContainer>
     </SubPageLayout>

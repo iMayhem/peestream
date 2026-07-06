@@ -2,7 +2,6 @@ import classNames from "classnames";
 import { Trans, useTranslation } from "react-i18next";
 
 import { ThinContainer } from "@/components/layout/ThinContainer";
-
 import { Heading1, Paragraph } from "@/components/utils/Text";
 import { PageTitle } from "@/pages/parts/util/PageTitle";
 
@@ -53,7 +52,6 @@ export function SupportPage() {
             </Button>
           </div>
         </Paragraph>
-
       </ThinContainer>
     </SubPageLayout>
   );
