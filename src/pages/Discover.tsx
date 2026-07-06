@@ -17,6 +17,36 @@ import { PageTitle } from "./parts/util/PageTitle";
 
 const WATCHMODE_KEY = "wr6fJOVgJsUyexE1otCdyajF06PW6zTibu2yOWnR";
 
+const CACHE_TTL = 365 * 24 * 60 * 60 * 1000;
+const CACHE_PREFIX = "disc_v2_";
+
+function cacheKey(cat: Category, page: number): string {
+  return `${CACHE_PREFIX}${cat.type}_${cat.key}_${page}${cat.region ? `_${cat.region}` : ""}`;
+}
+
+function cacheGet<T>(key: string): T | null {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const entry = JSON.parse(raw);
+    if (Date.now() - entry.ts > CACHE_TTL) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return entry.data as T;
+  } catch {
+    return null;
+  }
+}
+
+function cacheSet(key: string, data: unknown): void {
+  try {
+    localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data }));
+  } catch {
+    // storage full or unavailable
+  }
+}
+
 function SkeletonCard() {
   return <div className="animate-pulse rounded-xl bg-white/5 aspect-[2/3]" />;
 }
@@ -147,10 +177,15 @@ async function fetchPage(
   cat: Category,
   page: number,
 ): Promise<{ items: MediaItem[]; totalPages: number }> {
-  if (cat.type === "watchmode") {
-    return fetchWatchmodePage(cat, page);
-  }
-  return fetchTMDBPage(cat, page);
+  const key = cacheKey(cat, page);
+  const cached = cacheGet<{ items: MediaItem[]; totalPages: number }>(key);
+  if (cached) return cached;
+  const result =
+    cat.type === "watchmode"
+      ? await fetchWatchmodePage(cat, page)
+      : await fetchTMDBPage(cat, page);
+  cacheSet(key, result);
+  return result;
 }
 
 export function Discover() {
