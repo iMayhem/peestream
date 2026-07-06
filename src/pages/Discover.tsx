@@ -233,12 +233,7 @@ export function Discover() {
 
   useEffect(() => {
     const cat = categories.find((c) => c.key === activeKey) || categories[0];
-    loadPage(cat, 1, false).then(() => {
-      if (cat.type === "tmdb") {
-        loadPage(cat, 2, true);
-        loadPage(cat, 3, true);
-      }
-    });
+    loadPage(cat, 1, false);
   }, [activeKey, loadPage]);
 
   const hasMore = page < totalPages;
@@ -252,14 +247,18 @@ export function Discover() {
           setIsLoadingMore(true);
           const cat =
             categories.find((c) => c.key === activeKey) || categories[0];
-          loadPage(cat, page + 1, true);
+          const nextPage = page + 1;
+          loadPage(cat, nextPage, true);
+          if (cat.type === "tmdb" && nextPage + 1 <= totalPages) {
+            loadPage(cat, nextPage + 1, true);
+          }
         }
       },
-      { rootMargin: "480px 0px" },
+      { rootMargin: "800px 0px" },
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [hasMore, isLoadingMore, activeKey, page, loadPage]);
+  }, [hasMore, isLoadingMore, activeKey, page, totalPages, loadPage]);
 
   useEffect(() => {
     const onScroll = () => setShowScrollTop(window.scrollY > 600);
@@ -351,7 +350,7 @@ export function Discover() {
 
             {isLoadingMore && (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-4">
-                {Array.from({ length: 8 }).map((_, i) => {
+                {Array.from({ length: 12 }).map((_, i) => {
                   // eslint-disable-next-line react/no-array-index-key
                   return <SkeletonCard key={i} />;
                 })}
