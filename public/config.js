@@ -6,7 +6,7 @@ window.__CONFIG__ = {
   VITE_BACKEND_URL: "https://server.vidbinge.com",
 
   // The READ API key to access TMDB
-  VITE_TMDB_READ_API_KEY: "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI1NzlkZWYyZDY5ZWFlNDk4ZjJiOTI4MTgyNDdjM2ViMCIsInN1YiI6IjY2MjdmMGJlNjJmMzM1MDE0YmQ4NTFmMiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.h3KpPvkiaz8uNz1bntAKqsPrxG_4UUWaY3kYME6N6m8",
+  VITE_TMDB_READ_API_KEY: "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJkZmE0YzJjN2MxZGUxMDA1YWRlZTgyNGRjNTU5MzY3MiIsIm5iZiI6MTc1NTM1ODg0NS45NCwic3ViIjoiNjhhMGE2N2RjMDM0MmI4ZmRkZWQxMzljIiwic2NvcGVzIjpbImFwaV9yZWFkIl0sInZlcnNpb24iOjF9.XQoZX0eJUCboSHFR15I1kZhXgIrKavsEamnKwusjj8I",
 
   // The DMCA email displayed in the footer, null to hide the DMCA link
   VITE_DMCA_EMAIL: null,
