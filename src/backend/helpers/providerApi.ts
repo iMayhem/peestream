@@ -49,7 +49,7 @@ function scrapeMediaToQueryMedia(media: ScrapeMedia) {
   }
 
   return {
-    type: media.type,
+    type: media.type === "show" ? "tv" : "movie",
     releaseYear: media.releaseYear.toString(),
     imdbId: media.imdbId,
     tmdbId: media.tmdbId,
