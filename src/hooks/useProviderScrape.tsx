@@ -240,36 +240,76 @@ export function useScrape() {
 
       initEvent({ sourceIds: allSourceIds });
 
-      console.log("[useProviderScrape] Running client-side scrapers first...");
-      const clientOutput = await providers.runAll({
-        media,
-        sourceOrder: clientProviderIds,
-        events: {
-          init: () => {}, // Skip initEvent because we already initialized the UI list
-          start: startEvent,
-          update: updateEvent,
-          discoverEmbeds: discoverEmbedsEvent,
-        },
-      });
+      const proxies = getProxyUrls();
+      const activeProxy = proxies[0];
 
-      if (clientOutput) {
-        console.log(
-          "[useProviderScrape] Client-side scrapers succeeded:",
-          clientOutput,
-        );
-        if (isExtensionActiveCached()) {
-          await prepareStream(clientOutput.stream);
+      console.log("[useProviderScrape] Running client-side scrapers sequentially:", clientProviderIds);
+
+      // Loop over clientProviderIds sequentially
+      for (const id of clientProviderIds) {
+        console.log(`[useProviderScrape] Scraping client-side provider: ${id}`);
+        startEvent(id);
+
+        try {
+          const clientOutput = await providers.runSourceScraper({
+            id,
+            media,
+            events: {
+              init: () => {},
+              start: startEvent,
+              update: updateEvent,
+              discoverEmbeds: discoverEmbedsEvent,
+            },
+          });
+
+          if (clientOutput && clientOutput.stream) {
+            console.log(`[useProviderScrape] Got client stream from ${id}, validating...`);
+            const isPlayable = await validateStream(
+              clientOutput.stream,
+              isExtensionActiveCached() ? undefined : activeProxy
+            );
+
+            if (isPlayable) {
+              console.log(`[useProviderScrape] Client stream from ${id} is playable!`);
+              updateEvent({ id, percentage: 100, status: "success" });
+              if (isExtensionActiveCached()) {
+                await prepareStream(clientOutput.stream);
+              }
+              return getResult(clientOutput);
+            } else {
+              console.log(`[useProviderScrape] Client stream from ${id} is unplayable/offline.`);
+              updateEvent({
+                id,
+                percentage: 100,
+                status: "notfound",
+                reason: "Stream unplayable or offline",
+              });
+            }
+          } else {
+            updateEvent({
+              id,
+              percentage: 100,
+              status: "notfound",
+              reason: "No streams returned",
+            });
+          }
+        } catch (err) {
+          console.error(`[useProviderScrape] Error scraping client-side ${id}:`, err);
+          updateEvent({
+            id,
+            percentage: 100,
+            status: "failure",
+            reason: err instanceof Error ? err.message : "Error occurred",
+          });
         }
-        return getResult(clientOutput);
       }
 
       if (providerApiUrl) {
         console.log(
-          "[useProviderScrape] Client-side failed. Scraping via Server-Side SSE API...",
+          "[useProviderScrape] Client-side scrapers completed. Scraping via Server-Side SSE API sequentially:",
+          serverProviderIds
         );
         const baseUrlMaker = makeProviderUrl(providerApiUrl);
-        const proxies = getProxyUrls();
-        const activeProxy = proxies[0];
 
         // Loop over serverProviderIds sequentially to allow validation and fallbacks
         for (const id of serverProviderIds) {
