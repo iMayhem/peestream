@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { conf } from "@/setup/config";
 import { useAuthStore } from "@/stores/auth";
 
@@ -66,6 +67,9 @@ export function getParsedUrls() {
   const userSet = useAuthStore.getState().proxySet;
   const urls = userSet ?? originalUrls;
   let output = parseUrls(urls);
+  console.log("[ProxyURLs] userSet:", userSet);
+  console.log("[ProxyURLs] originalUrls:", originalUrls);
+  console.log("[ProxyURLs] initial parsed output:", output);
 
   // If user-set proxy URLs are all HTTP (would cause mixed-content errors),
   // fall back to the config-provided URLs instead
@@ -75,12 +79,14 @@ export function getParsedUrls() {
     output.every((u) => !u.url.startsWith("https://"))
   ) {
     output = parseUrls(originalUrls);
+    console.log("[ProxyURLs] HTTP fallback applied, new output:", output);
   }
 
   const defaultParsed = parseUrls(originalUrls);
   const defaultApiUrls = defaultParsed.filter((u) => u.type === "api");
   if (defaultApiUrls.length > 0 && !output.some((u) => u.type === "api")) {
     output = [...output, ...defaultApiUrls];
+    console.log("[ProxyURLs] Appended default API URLs, final output:", output);
   }
 
   return output;

@@ -10,6 +10,7 @@ import {
   setCachedMetadata,
 } from "@/backend/helpers/providerApi";
 import { DetailedMeta, getMetaFromId } from "@/backend/metadata/getmeta";
+/* eslint-disable no-console */
 import { decodeTMDBId } from "@/backend/metadata/tmdb";
 import { MWMediaType } from "@/backend/metadata/types/mw";
 import { getLoadbalancedProviderApiUrl } from "@/backend/providers/fetchers";
@@ -54,13 +55,27 @@ export function MetaPart(props: MetaPartProps) {
 
     // use api metadata or providers metadata
     const providerApiUrl = getLoadbalancedProviderApiUrl();
+    console.log("[MetaPart] providerApiUrl resolved:", providerApiUrl);
     if (providerApiUrl) {
       try {
+        console.log(
+          "[MetaPart] Attempting to fetch metadata from:",
+          providerApiUrl,
+        );
         await fetchMetadata(providerApiUrl);
+        console.log(
+          "[MetaPart] Metadata fetched successfully. Count:",
+          getCachedMetadata().length,
+          getCachedMetadata(),
+        );
       } catch (err) {
+        console.error("[MetaPart] Error fetching metadata:", err);
         throw new Error("failed-api-metadata");
       }
     } else {
+      console.log(
+        "[MetaPart] No provider API URL, using default local providers list.",
+      );
       setCachedMetadata([
         ...getProviders().listSources(),
         ...getProviders().listEmbeds(),

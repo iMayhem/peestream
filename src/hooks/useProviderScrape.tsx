@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import {
   FullScraperEvents,
   RunOutput,
@@ -163,20 +164,46 @@ export function useScrape() {
   const startScraping = useCallback(
     async (media: ScrapeMedia) => {
       const providerApiUrl = getLoadbalancedProviderApiUrl();
+      console.log("[useProviderScrape] Starting scraping for media:", media);
+      console.log("[useProviderScrape] providerApiUrl:", providerApiUrl);
+      console.log(
+        "[useProviderScrape] Cached metadata size:",
+        getCachedMetadata().length,
+      );
       if (providerApiUrl) {
+        console.log("[useProviderScrape] Scraping via Server-Side SSE API...");
         startScrape();
         const baseUrlMaker = makeProviderUrl(providerApiUrl);
-        const conn = await connectServerSideEvents<RunOutput | "">(
-          baseUrlMaker.scrapeAll(media),
-          ["completed", "noOutput"],
-        );
-        conn.on("init", initEvent);
-        conn.on("start", startEvent);
-        conn.on("update", updateEvent);
-        conn.on("discoverEmbeds", discoverEmbedsEvent);
+        const scrapeUrl = baseUrlMaker.scrapeAll(media);
+        console.log("[useProviderScrape] Connecting to SSE URL:", scrapeUrl);
+        const conn = await connectServerSideEvents<RunOutput | "">(scrapeUrl, [
+          "completed",
+          "noOutput",
+        ]);
+        conn.on("init", (evt) => {
+          console.log("[useProviderScrape] SSE 'init' event:", evt);
+          initEvent(evt);
+        });
+        conn.on("start", (id) => {
+          console.log("[useProviderScrape] SSE 'start' event:", id);
+          startEvent(id);
+        });
+        conn.on("update", (evt) => {
+          console.log("[useProviderScrape] SSE 'update' event:", evt);
+          updateEvent(evt);
+        });
+        conn.on("discoverEmbeds", (evt) => {
+          console.log("[useProviderScrape] SSE 'discoverEmbeds' event:", evt);
+          discoverEmbedsEvent(evt);
+        });
         const sseOutput = await conn.promise();
-        if (sseOutput && isExtensionActiveCached())
+        console.log("[useProviderScrape] SSE completed. Output:", sseOutput);
+        if (sseOutput && isExtensionActiveCached()) {
+          console.log(
+            "[useProviderScrape] Extension active, preparing stream...",
+          );
           await prepareStream(sseOutput.stream);
+        }
 
         return getResult(sseOutput === "" ? null : sseOutput);
       }
