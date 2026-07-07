@@ -180,9 +180,23 @@ export function useScrape() {
 
       startScrape();
       const providers = getProviders();
-      const clientProviderIds = providers.listSources().map((s) => s.id);
+      const rawClientProviderIds = providers.listSources().map((s) => s.id);
       const serverMetadata = getCachedMetadata();
-      const serverProviderIds = serverMetadata.map((s) => s.id);
+
+      // Filter and sort client-side providers using the dashboard configuration
+      const clientProviderIds = rawClientProviderIds
+        .filter((id) => serverMetadata.some((s) => s.id === id))
+        .sort((a, b) => {
+          const rankA = serverMetadata.find((s) => s.id === a)?.rank ?? 999;
+          const rankB = serverMetadata.find((s) => s.id === b)?.rank ?? 999;
+          return rankA - rankB;
+        });
+
+      // Server-side providers are those that aren't already handled client-side
+      const serverProviderIds = serverMetadata
+        .filter((s) => !rawClientProviderIds.includes(s.id))
+        .map((s) => s.id);
+
       const allSourceIds = [...clientProviderIds, ...serverProviderIds];
 
       initEvent({ sourceIds: allSourceIds });
