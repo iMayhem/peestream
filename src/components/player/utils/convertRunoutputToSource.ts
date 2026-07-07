@@ -21,6 +21,16 @@ function isAllowedQuality(inp: string): inp is SourceQuality {
   return allowedQualities.includes(inp);
 }
 
+function normalizeQuality(q: string): SourceQuality {
+  const clean = q.toLowerCase().replace("p", "");
+  if (clean === "2160" || clean === "4k") return "4k";
+  if (clean === "1080") return "1080";
+  if (clean === "720") return "720";
+  if (clean === "480") return "480";
+  if (clean === "360") return "360";
+  return "unknown";
+}
+
 export function convertRunoutputToSource(out: {
   stream: Stream;
 }): SourceSliceSource {
@@ -35,7 +45,8 @@ export function convertRunoutputToSource(out: {
   if (out.stream.type === "file") {
     const qualities: Partial<Record<SourceQuality, SourceFileStream>> = {};
     Object.entries(out.stream.qualities).forEach((entry) => {
-      if (!isAllowedQuality(entry[0])) {
+      const normalizedQuality = normalizeQuality(entry[0]);
+      if (!isAllowedQuality(normalizedQuality)) {
         console.warn(`unrecognized quality: ${entry[0]}`);
         return;
       }
@@ -43,7 +54,7 @@ export function convertRunoutputToSource(out: {
         console.warn(`unrecognized file type: ${entry[1].type}`);
         return;
       }
-      qualities[entry[0]] = {
+      qualities[normalizedQuality] = {
         type: entry[1].type,
         url: entry[1].url,
       };
