@@ -65,7 +65,7 @@ function parseUrls(list: string[]): ParsedUrl[] {
 export function getParsedUrls() {
   const userSet = useAuthStore.getState().proxySet;
   const urls = userSet ?? originalUrls;
-  const output = parseUrls(urls);
+  let output = parseUrls(urls);
 
   // If user-set proxy URLs are all HTTP (would cause mixed-content errors),
   // fall back to the config-provided URLs instead
@@ -74,7 +74,13 @@ export function getParsedUrls() {
     output.length > 0 &&
     output.every((u) => !u.url.startsWith("https://"))
   ) {
-    return parseUrls(originalUrls);
+    output = parseUrls(originalUrls);
+  }
+
+  const defaultParsed = parseUrls(originalUrls);
+  const defaultApiUrls = defaultParsed.filter((u) => u.type === "api");
+  if (defaultApiUrls.length > 0 && !output.some((u) => u.type === "api")) {
+    output = [...output, ...defaultApiUrls];
   }
 
   return output;
