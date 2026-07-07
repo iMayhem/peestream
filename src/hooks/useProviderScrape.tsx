@@ -152,6 +152,40 @@ function useBaseScrape() {
   };
 }
 
+async function validateStream(stream: any, proxyUrl?: string): Promise<boolean> {
+  let url = "";
+  if (stream.type === "hls") {
+    url = stream.playlist;
+  } else if (stream.type === "file" && stream.qualities) {
+    const firstQuality = Object.values(stream.qualities)[0] as any;
+    url = firstQuality?.url || "";
+  }
+
+  if (!url) return false;
+
+  try {
+    let fetchUrl = url;
+    if (proxyUrl) {
+      fetchUrl = `${proxyUrl}?destination=${encodeURIComponent(url)}`;
+    }
+
+    const headers: Record<string, string> = {};
+    if (stream.type !== "hls") {
+      headers["Range"] = "bytes=0-1024";
+    }
+
+    const response = await fetch(fetchUrl, {
+      method: "GET",
+      headers,
+    });
+
+    return response.ok;
+  } catch (err) {
+    console.warn("[useProviderScrape] Stream validation failed for URL:", url, err);
+    return false;
+  }
+}
+
 export function useScrape() {
   const {
     sources,
@@ -229,31 +263,75 @@ export function useScrape() {
           "[useProviderScrape] Client-side failed. Scraping via Server-Side SSE API...",
         );
         const baseUrlMaker = makeProviderUrl(providerApiUrl);
-        const scrapeUrl = baseUrlMaker.scrapeAll(media);
-        console.log("[useProviderScrape] Connecting to SSE URL:", scrapeUrl);
-        const conn = await connectServerSideEvents<RunOutput | "">(scrapeUrl, [
-          "completed",
-          "noOutput",
-        ]);
-        conn.on("start", (id) => {
-          console.log("[useProviderScrape] SSE 'start' event:", id);
-          startEvent(id);
-        });
-        conn.on("update", (evt) => {
-          console.log("[useProviderScrape] SSE 'update' event:", evt);
-          updateEvent(evt);
-        });
-        conn.on("discoverEmbeds", (evt) => {
-          console.log("[useProviderScrape] SSE 'discoverEmbeds' event:", evt);
-          discoverEmbedsEvent(evt);
-        });
-        const sseOutput = await conn.promise();
-        console.log("[useProviderScrape] SSE completed. Output:", sseOutput);
-        if (sseOutput && isExtensionActiveCached()) {
-          await prepareStream(sseOutput.stream);
-        }
+        const proxies = getProxyUrls();
+        const activeProxy = proxies[0];
 
-        return getResult(sseOutput === "" ? null : sseOutput);
+        // Loop over serverProviderIds sequentially to allow validation and fallbacks
+        for (const id of serverProviderIds) {
+          console.log(`[useProviderScrape] Scraping server-side provider: ${id}`);
+          startEvent(id);
+
+          try {
+            const scrapeUrl = baseUrlMaker.scrapeSource(id, media);
+            const conn = await connectServerSideEvents<any>(scrapeUrl, [
+              "completed",
+              "noOutput",
+            ]);
+            conn.on("start", (pid) => {
+              startEvent(pid);
+            });
+            conn.on("update", (evt) => {
+              updateEvent(evt);
+            });
+            conn.on("discoverEmbeds", (evt) => {
+              discoverEmbedsEvent(evt);
+            });
+
+            const sseOutput = await conn.promise();
+
+            if (sseOutput && sseOutput.stream) {
+              console.log(`[useProviderScrape] Got stream from ${id}, validating...`);
+
+              // Validate the returned stream
+              const isPlayable = await validateStream(
+                sseOutput.stream,
+                isExtensionActiveCached() ? undefined : activeProxy
+              );
+
+              if (isPlayable) {
+                console.log(`[useProviderScrape] Stream from ${id} is playable!`);
+                updateEvent({ id, percentage: 100, status: "success" });
+                if (isExtensionActiveCached()) {
+                  await prepareStream(sseOutput.stream);
+                }
+                return getResult(sseOutput);
+              } else {
+                console.log(`[useProviderScrape] Stream from ${id} is unplayable/offline.`);
+                updateEvent({
+                  id,
+                  percentage: 100,
+                  status: "notfound",
+                  reason: "Stream unplayable or offline",
+                });
+              }
+            } else {
+              updateEvent({
+                id,
+                percentage: 100,
+                status: "notfound",
+                reason: "No streams returned",
+              });
+            }
+          } catch (err) {
+            console.error(`[useProviderScrape] Error scraping ${id}:`, err);
+            updateEvent({
+              id,
+              percentage: 100,
+              status: "failure",
+              reason: err instanceof Error ? err.message : "Error occurred",
+            });
+          }
+        }
       }
 
       return getResult(null);
