@@ -212,29 +212,47 @@ export function useScrape() {
       );
 
       startScrape();
-      const providers = getProviders();
-      const rawClientProviderIds = providers.listSources().map((s) => s.id);
-      const serverMetadata = getCachedMetadata();
-      const targetType = media.type === "show" ? "tv" : "movie";
+      let clientProviderIds: string[] = [];
+      let serverProviderIds: string[] = [];
 
-      // Filter metadata by media type compatibility
-      const compatibleMetadata = serverMetadata.filter(
-        (s: any) => !s.mediaTypes || s.mediaTypes.includes(targetType)
-      );
+      try {
+        const providers = getProviders();
+        const rawClientProviderIds = providers.listSources().map((s) => s.id);
+        const serverMetadata = getCachedMetadata();
+        const targetType = media.type === "show" ? "tv" : "movie";
 
-      // Filter and sort client-side providers using the dashboard configuration
-      const clientProviderIds = rawClientProviderIds
-        .filter((id) => compatibleMetadata.some((s) => s.id === id))
-        .sort((a, b) => {
-          const rankA = compatibleMetadata.find((s) => s.id === a)?.rank ?? 999;
-          const rankB = compatibleMetadata.find((s) => s.id === b)?.rank ?? 999;
-          return rankA - rankB;
-        });
+        console.log("[useProviderScrape] rawClientProviderIds:", rawClientProviderIds);
+        console.log("[useProviderScrape] serverMetadata:", serverMetadata);
 
-      // Server-side providers are those that aren't already handled client-side
-      const serverProviderIds = compatibleMetadata
-        .filter((s) => !rawClientProviderIds.includes(s.id))
-        .map((s) => s.id);
+        // Filter metadata by media type compatibility safely, unpacking arrays if needed
+        const compatibleMetadata = serverMetadata.filter((s: any) => {
+          if (!s) return false;
+          const item = Array.isArray(s) ? s[0] : s;
+          if (!item) return false;
+          return !item.mediaTypes || item.mediaTypes.includes(targetType);
+        }).map((s: any) => (Array.isArray(s) ? s[0] : s));
+
+        console.log("[useProviderScrape] compatibleMetadata:", compatibleMetadata);
+
+        // Filter and sort client-side providers using the dashboard configuration
+        clientProviderIds = rawClientProviderIds
+          .filter((id) => compatibleMetadata.some((s) => s && s.id === id))
+          .sort((a, b) => {
+            const rankA = compatibleMetadata.find((s) => s && s.id === a)?.rank ?? 999;
+            const rankB = compatibleMetadata.find((s) => s && s.id === b)?.rank ?? 999;
+            return rankA - rankB;
+          });
+
+        // Server-side providers are those that aren't already handled client-side
+        serverProviderIds = compatibleMetadata
+          .filter((s) => s && !rawClientProviderIds.includes(s.id))
+          .map((s) => s.id);
+
+        console.log("[useProviderScrape] clientProviderIds:", clientProviderIds);
+        console.log("[useProviderScrape] serverProviderIds:", serverProviderIds);
+      } catch (err) {
+        console.error("[useProviderScrape] Failed to parse provider lists:", err);
+      }
 
       const allSourceIds = [...clientProviderIds, ...serverProviderIds];
 
