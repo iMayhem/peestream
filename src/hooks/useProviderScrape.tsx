@@ -215,18 +215,24 @@ export function useScrape() {
       const providers = getProviders();
       const rawClientProviderIds = providers.listSources().map((s) => s.id);
       const serverMetadata = getCachedMetadata();
+      const targetType = media.type === "show" ? "tv" : "movie";
+
+      // Filter metadata by media type compatibility
+      const compatibleMetadata = serverMetadata.filter(
+        (s: any) => !s.mediaTypes || s.mediaTypes.includes(targetType)
+      );
 
       // Filter and sort client-side providers using the dashboard configuration
       const clientProviderIds = rawClientProviderIds
-        .filter((id) => serverMetadata.some((s) => s.id === id))
+        .filter((id) => compatibleMetadata.some((s) => s.id === id))
         .sort((a, b) => {
-          const rankA = serverMetadata.find((s) => s.id === a)?.rank ?? 999;
-          const rankB = serverMetadata.find((s) => s.id === b)?.rank ?? 999;
+          const rankA = compatibleMetadata.find((s) => s.id === a)?.rank ?? 999;
+          const rankB = compatibleMetadata.find((s) => s.id === b)?.rank ?? 999;
           return rankA - rankB;
         });
 
       // Server-side providers are those that aren't already handled client-side
-      const serverProviderIds = serverMetadata
+      const serverProviderIds = compatibleMetadata
         .filter((s) => !rawClientProviderIds.includes(s.id))
         .map((s) => s.id);
 
