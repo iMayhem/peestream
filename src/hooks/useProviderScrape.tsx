@@ -47,9 +47,15 @@ function useBaseScrape() {
     setSources(
       evt.sourceIds
         .map((v) => {
-          const clientSource = clientSources.find((s) => s.id === v);
-          const serverSource = getCachedMetadata().find((s) => s.id === v);
-          const name = clientSource?.name ?? serverSource?.name ?? v;
+          const clientSource = clientSources.find((s) => s && s.id === v);
+          const serverMetadata = getCachedMetadata();
+          const serverSource = serverMetadata.find((s: any) => {
+            if (!s) return false;
+            const item = Array.isArray(s) ? s[0] : s;
+            return item && item.id === v;
+          });
+          const unpackedServerSource = Array.isArray(serverSource) ? serverSource[0] : serverSource;
+          const name = clientSource?.name ?? unpackedServerSource?.name ?? v;
           const out: ScrapingSegment = {
             name,
             id: v,
@@ -96,13 +102,17 @@ function useBaseScrape() {
       setSources((s) => {
         evt.embeds.forEach((v) => {
           const clientSource = clientEmbeds.find(
-            (src) => src.id === v.embedScraperId,
+            (src) => src && src.id === v.embedScraperId,
           );
-          const serverSource = getCachedMetadata().find(
-            (src) => src.id === v.embedScraperId,
-          );
+          const serverMetadata = getCachedMetadata();
+          const serverSource = serverMetadata.find((src: any) => {
+            if (!src) return false;
+            const item = Array.isArray(src) ? src[0] : src;
+            return item && item.id === v.embedScraperId;
+          });
+          const unpackedServerSource = Array.isArray(serverSource) ? serverSource[0] : serverSource;
           const name =
-            clientSource?.name ?? serverSource?.name ?? v.embedScraperId;
+            clientSource?.name ?? unpackedServerSource?.name ?? v.embedScraperId;
           const out: ScrapingSegment = {
             embedId: v.embedScraperId,
             name,

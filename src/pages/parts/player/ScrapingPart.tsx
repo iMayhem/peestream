@@ -124,10 +124,10 @@ export function ScrapingPart(props: ScrapingProps) {
             >
               <ScrapeCard
                 id={order.id}
-                name={source.name}
-                status={source.status}
+                name={source?.name ?? order.id}
+                status={source?.status ?? "waiting"}
                 hasChildren={order.children.length > 0}
-                percentage={source.percentage}
+                percentage={source?.percentage ?? 0}
               >
                 <div
                   className={classNames({
@@ -139,9 +139,9 @@ export function ScrapingPart(props: ScrapingProps) {
                     return (
                       <ScrapeItem
                         id={embedId}
-                        name={embed.name}
-                        status={embed.status}
-                        percentage={embed.percentage}
+                        name={embed?.name ?? embedId}
+                        status={embed?.status ?? "waiting"}
+                        percentage={embed?.percentage ?? 0}
                         key={embedId}
                       />
                     );
