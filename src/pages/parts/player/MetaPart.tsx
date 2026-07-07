@@ -7,6 +7,7 @@ import { isAllowedExtensionVersion } from "@/backend/extension/compatibility";
 import { extensionInfo, sendPage } from "@/backend/extension/messaging";
 import {
   fetchMetadata,
+  getCachedMetadata,
   setCachedMetadata,
 } from "@/backend/helpers/providerApi";
 import { DetailedMeta, getMetaFromId } from "@/backend/metadata/getmeta";
