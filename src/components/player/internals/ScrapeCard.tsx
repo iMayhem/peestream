@@ -45,14 +45,17 @@ export function ScrapeItem(props: ScrapeItemProps) {
       <StatusCircle type={status} percentage={props.percentage ?? 0} />
       <div>
         <p
-          className={
-            status === "loading" ? "text-white" : "text-type-secondary"
-          }
+          className={classNames(
+            "text-[17px] font-semibold transition-colors duration-200",
+            status === "loading" ? "text-white" : "text-gray-200",
+          )}
         >
           {props.name}
         </p>
         <Transition animation="fade" show={!!text}>
-          <p className="text-[15px] mt-1">{text ? t(text) : ""}</p>
+          <p className="text-[15px] mt-1 text-gray-400 font-medium">
+            {text ? t(text) : ""}
+          </p>
         </Transition>
         {props.children}
       </div>
