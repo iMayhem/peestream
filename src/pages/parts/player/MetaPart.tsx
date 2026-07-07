@@ -54,7 +54,7 @@ export function MetaPart(props: MetaPartProps) {
 
     // use api metadata or providers metadata
     const providerApiUrl = getLoadbalancedProviderApiUrl();
-    if (providerApiUrl && !isValidExtension) {
+    if (providerApiUrl) {
       try {
         await fetchMetadata(providerApiUrl);
       } catch (err) {
