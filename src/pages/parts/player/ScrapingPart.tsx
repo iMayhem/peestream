@@ -116,10 +116,11 @@ export function ScrapingPart(props: ScrapingProps) {
             sourceOrder.findIndex((o) => o.id === order.id) -
               currentProviderIndex,
           );
+          const opacity = Math.max(0.35, 1 - distance * 0.25);
           return (
             <div
               className="transition-opacity duration-100"
-              style={{ opacity: Math.max(0, 1 - distance * 0.3) }}
+              style={{ opacity }}
               key={order.id}
             >
               <ScrapeCard

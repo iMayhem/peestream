@@ -138,7 +138,33 @@ function useBaseScrape() {
     }
     return output;
   }, []);
+  // Smooth progress animation for the active scraper
+  useEffect(() => {
+    if (!currentSource) return;
 
+    const interval = setInterval(() => {
+      setSources((s) => {
+        const item = s[currentSource];
+        if (!item || item.status !== "pending") {
+          clearInterval(interval);
+          return s;
+        }
+
+        // Asymptotically approach 99%
+        const remaining = 99 - item.percentage;
+        if (remaining <= 0) {
+          clearInterval(interval);
+          return s;
+        }
+
+        const increment = Math.max(1, Math.min(8, Math.round(remaining * 0.1)));
+        item.percentage = Math.min(99, item.percentage + increment);
+        return { ...s };
+      });
+    }, 200);
+
+    return () => clearInterval(interval);
+  }, [currentSource]);
   return {
     initEvent,
     startEvent,
