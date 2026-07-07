@@ -291,19 +291,34 @@ export function useScrape() {
             if (sseOutput && sseOutput.stream) {
               console.log(`[useProviderScrape] Got stream from ${id}, validating...`);
 
-              // Validate the returned stream
-              const isPlayable = await validateStream(
-                sseOutput.stream,
-                isExtensionActiveCached() ? undefined : activeProxy
-              );
+              // Handle array of streams
+              const streams = Array.isArray(sseOutput.stream)
+                ? sseOutput.stream
+                : [sseOutput.stream];
 
-              if (isPlayable) {
+              let playableStream = null;
+              for (const s of streams) {
+                const isPlayable = await validateStream(
+                  s,
+                  isExtensionActiveCached() ? undefined : activeProxy
+                );
+                if (isPlayable) {
+                  playableStream = s;
+                  break;
+                }
+              }
+
+              if (playableStream) {
                 console.log(`[useProviderScrape] Stream from ${id} is playable!`);
+                const alignedOutput = {
+                  sourceId: id,
+                  stream: playableStream,
+                };
                 updateEvent({ id, percentage: 100, status: "success" });
                 if (isExtensionActiveCached()) {
-                  await prepareStream(sseOutput.stream);
+                  await prepareStream(alignedOutput.stream);
                 }
-                return getResult(sseOutput);
+                return getResult(alignedOutput);
               } else {
                 console.log(`[useProviderScrape] Stream from ${id} is unplayable/offline.`);
                 updateEvent({
