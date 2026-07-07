@@ -294,9 +294,10 @@ export function useListCenter(
       ...listRef.current.querySelectorAll("div[data-source-id]"),
     ] as HTMLDivElement[];
 
-    const currentIndex = elements.findIndex(
+    let currentIndex = elements.findIndex(
       (e) => e.getAttribute("data-source-id") === currentSource,
     );
+    if (currentIndex === -1) currentIndex = 0;
 
     const currentElement = elements[currentIndex];
 
