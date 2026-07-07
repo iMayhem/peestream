@@ -1,4 +1,6 @@
 /* eslint-disable no-console */
+import { setM3U8ProxyUrl } from "@movie-web/providers";
+
 import { conf } from "@/setup/config";
 import { useAuthStore } from "@/stores/auth";
 
@@ -99,9 +101,17 @@ export function getParsedUrls() {
 }
 
 export function getProxyUrls() {
-  return getParsedUrls()
+  const urls = getParsedUrls()
     .filter((v) => v.type === "proxy")
     .map((v) => v.url);
+  if (urls.length > 0) {
+    try {
+      setM3U8ProxyUrl(urls[0]);
+    } catch {
+      // ignore
+    }
+  }
+  return urls;
 }
 
 export function getProviderApiUrls() {

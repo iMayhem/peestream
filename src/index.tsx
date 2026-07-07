@@ -4,6 +4,7 @@ import "./stores/__old/imports";
 import "@/setup/ga";
 import "@/assets/css/index.css";
 
+import { setM3U8ProxyUrl } from "@movie-web/providers";
 import { StrictMode, Suspense, useCallback } from "react";
 import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
@@ -29,6 +30,7 @@ import { changeAppLanguage, useLanguageStore } from "@/stores/language";
 import { ProgressSyncer } from "@/stores/progress/ProgressSyncer";
 import { SettingsSyncer } from "@/stores/subtitles/SettingsSyncer";
 import { ThemeProvider } from "@/stores/theme";
+import { getProxyUrls } from "@/utils/proxyUrls";
 
 import {
   extensionInfo,
@@ -39,6 +41,13 @@ import { initializeOldStores } from "./stores/__old/migrations";
 
 // initialize
 initializeChromecast();
+
+const proxies = getProxyUrls();
+if (proxies.length > 0) {
+  // eslint-disable-next-line no-console
+  console.log("[Index] Setting M3U8 Proxy URL to:", proxies[0]);
+  setM3U8ProxyUrl(proxies[0]);
+}
 
 function LoadingScreen(props: { type: "user" | "lazy" }) {
   const mapping = {
