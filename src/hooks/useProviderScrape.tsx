@@ -43,14 +43,16 @@ function useBaseScrape() {
   const lastId = useRef<string | null>(null);
 
   const initEvent = useCallback((evt: ScraperEvent<"init">) => {
+    const clientSources = getProviders().listSources();
     setSources(
       evt.sourceIds
         .map((v) => {
-          const source = getCachedMetadata().find((s) => s.id === v);
-          if (!source) throw new Error("invalid source id");
+          const clientSource = clientSources.find((s) => s.id === v);
+          const serverSource = getCachedMetadata().find((s) => s.id === v);
+          const name = clientSource?.name ?? serverSource?.name ?? v;
           const out: ScrapingSegment = {
-            name: source.name,
-            id: source.id,
+            name,
+            id: v,
             status: "waiting",
             percentage: 0,
           };
@@ -90,15 +92,20 @@ function useBaseScrape() {
 
   const discoverEmbedsEvent = useCallback(
     (evt: ScraperEvent<"discoverEmbeds">) => {
+      const clientEmbeds = getProviders().listEmbeds();
       setSources((s) => {
         evt.embeds.forEach((v) => {
-          const source = getCachedMetadata().find(
+          const clientSource = clientEmbeds.find(
             (src) => src.id === v.embedScraperId,
           );
-          if (!source) throw new Error("invalid source id");
+          const serverSource = getCachedMetadata().find(
+            (src) => src.id === v.embedScraperId,
+          );
+          const name =
+            clientSource?.name ?? serverSource?.name ?? v.embedScraperId;
           const out: ScrapingSegment = {
             embedId: v.embedScraperId,
-            name: source.name,
+            name,
             id: v.id,
             status: "waiting",
             percentage: 0,
@@ -109,7 +116,7 @@ function useBaseScrape() {
       });
       setSourceOrder((s) => {
         const source = s.find((v) => v.id === evt.sourceId);
-        if (!source) throw new Error("invalid source id");
+        if (!source) return s;
         source.children = evt.embeds.map((v) => v.id);
         return [...s];
       });
@@ -170,9 +177,43 @@ export function useScrape() {
         "[useProviderScrape] Cached metadata size:",
         getCachedMetadata().length,
       );
+
+      startScrape();
+      const providers = getProviders();
+      const clientProviderIds = providers.listSources().map((s) => s.id);
+      const serverMetadata = getCachedMetadata();
+      const serverProviderIds = serverMetadata.map((s) => s.id);
+      const allSourceIds = [...clientProviderIds, ...serverProviderIds];
+
+      initEvent({ sourceIds: allSourceIds });
+
+      console.log("[useProviderScrape] Running client-side scrapers first...");
+      const clientOutput = await providers.runAll({
+        media,
+        sourceOrder: enableSourceOrder ? preferredSourceOrder : undefined,
+        events: {
+          init: () => {}, // Skip initEvent because we already initialized the UI list
+          start: startEvent,
+          update: updateEvent,
+          discoverEmbeds: discoverEmbedsEvent,
+        },
+      });
+
+      if (clientOutput) {
+        console.log(
+          "[useProviderScrape] Client-side scrapers succeeded:",
+          clientOutput,
+        );
+        if (isExtensionActiveCached()) {
+          await prepareStream(clientOutput.stream);
+        }
+        return getResult(clientOutput);
+      }
+
       if (providerApiUrl) {
-        console.log("[useProviderScrape] Scraping via Server-Side SSE API...");
-        startScrape();
+        console.log(
+          "[useProviderScrape] Client-side failed. Scraping via Server-Side SSE API...",
+        );
         const baseUrlMaker = makeProviderUrl(providerApiUrl);
         const scrapeUrl = baseUrlMaker.scrapeAll(media);
         console.log("[useProviderScrape] Connecting to SSE URL:", scrapeUrl);
@@ -180,10 +221,6 @@ export function useScrape() {
           "completed",
           "noOutput",
         ]);
-        conn.on("init", (evt) => {
-          console.log("[useProviderScrape] SSE 'init' event:", evt);
-          initEvent(evt);
-        });
         conn.on("start", (id) => {
           console.log("[useProviderScrape] SSE 'start' event:", id);
           startEvent(id);
@@ -199,31 +236,13 @@ export function useScrape() {
         const sseOutput = await conn.promise();
         console.log("[useProviderScrape] SSE completed. Output:", sseOutput);
         if (sseOutput && isExtensionActiveCached()) {
-          console.log(
-            "[useProviderScrape] Extension active, preparing stream...",
-          );
           await prepareStream(sseOutput.stream);
         }
 
         return getResult(sseOutput === "" ? null : sseOutput);
       }
 
-      startScrape();
-      const providers = getProviders();
-      const output = await providers.runAll({
-        media,
-        // Only pass sourceOrder if enableSourceOrder is true
-        sourceOrder: enableSourceOrder ? preferredSourceOrder : undefined,
-        events: {
-          init: initEvent,
-          start: startEvent,
-          update: updateEvent,
-          discoverEmbeds: discoverEmbedsEvent,
-        },
-      });
-      if (output && isExtensionActiveCached())
-        await prepareStream(output.stream);
-      return getResult(output);
+      return getResult(null);
     },
     [
       initEvent,
