@@ -395,7 +395,7 @@ export function useListCenter(
     const topDifference = currentTop - listTop;
 
     const listNewLeft = containerWidth / 2 - listWidth / 2;
-    const listNewTop = containerHeight / 2 - topDifference - currentHeight / 2;
+    const listNewTop = (containerHeight - 130) / 2 - topDifference - currentHeight / 2;
 
     listRef.current.style.transform = `translateY(${listNewTop}px) translateX(${listNewLeft}px)`;
     setTimeout(() => {
