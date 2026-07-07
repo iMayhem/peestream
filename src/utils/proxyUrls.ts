@@ -82,7 +82,13 @@ export function getParsedUrls() {
     console.log("[ProxyURLs] HTTP fallback applied, new output:", output);
   }
 
-  const defaultParsed = parseUrls(originalUrls);
+  const runtimeConfigUrl =
+    (window as any)?.__CONFIG__?.VITE_CORS_PROXY_URL || "";
+  const runtimeUrls = runtimeConfigUrl
+    .split(",")
+    .map((v: any) => v.trim())
+    .filter((v: any) => v.length > 0);
+  const defaultParsed = parseUrls(runtimeUrls);
   const defaultApiUrls = defaultParsed.filter((u) => u.type === "api");
   if (defaultApiUrls.length > 0 && !output.some((u) => u.type === "api")) {
     output = [...output, ...defaultApiUrls];
