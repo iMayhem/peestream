@@ -29,6 +29,8 @@ export function StatusCircle(props: StatusCircleProps | StatusCircleLoading) {
     [props],
   );
 
+  console.log("[DEBUG] StatusCircle render type:", props.type, "pct:", props.percentage, "loading:", statusIsLoading(props));
+
   return (
     <div
       className={classNames(

@@ -44,40 +44,35 @@ function useBaseScrape() {
 
   const initEvent = useCallback((evt: ScraperEvent<"init">) => {
     const clientSources = getProviders().listSources();
-    setSources(
-      evt.sourceIds
-        .map((v) => {
-          const clientSource = clientSources.find((s) => s && s.id === v);
-          const serverMetadata = getCachedMetadata();
-          const serverSource = serverMetadata.find((s: any) => {
-            if (!s) return false;
-            const item = Array.isArray(s) ? s[0] : s;
-            return item && item.id === v;
-          });
-          const unpackedServerSource = Array.isArray(serverSource) ? serverSource[0] : serverSource;
-          const name = clientSource?.name ?? unpackedServerSource?.name ?? v;
-          const out: ScrapingSegment = {
-            name,
-            id: v,
-            status: "waiting",
-            percentage: 0,
-          };
-          return out;
-        })
-        .reduce<Record<string, ScrapingSegment>>((a, v) => {
-          a[v.id] = v;
-          return a;
-        }, {}),
-    );
+    const created = evt.sourceIds.map((v) => {
+      const clientSource = clientSources.find((s) => s && s.id === v);
+      const serverMetadata = getCachedMetadata();
+      const serverSource = serverMetadata.find((s: any) => {
+        if (!s) return false;
+        const item = Array.isArray(s) ? s[0] : s;
+        return item && item.id === v;
+      });
+      const unpackedServerSource = Array.isArray(serverSource) ? serverSource[0] : serverSource;
+      const name = clientSource?.name ?? unpackedServerSource?.name ?? v;
+      return { id: v, name, status: "waiting" as const, percentage: 0 };
+    });
+    console.log("[DEBUG] initEvent sourceIds:", evt.sourceIds, "created:", created);
+    setSources(created.reduce<Record<string, ScrapingSegment>>((a, v) => {
+      a[v.id] = v;
+      return a;
+    }, {}));
     setSourceOrder(evt.sourceIds.map((v) => ({ id: v, children: [] })));
   }, []);
 
   const startEvent = useCallback((id: ScraperEvent<"start">) => {
     const lastIdTmp = lastId.current;
+    console.log("[DEBUG] startEvent id:", id, "lastId:", lastIdTmp);
     setSources((s) => {
-      if (s[id]) s[id].status = "pending";
-      if (lastIdTmp && s[lastIdTmp] && s[lastIdTmp].status === "pending")
+      if (s[id]) { s[id].status = "pending"; console.log("[DEBUG] startEvent set", id, "to pending"); }
+      if (lastIdTmp && s[lastIdTmp] && s[lastIdTmp].status === "pending") {
         s[lastIdTmp].status = "success";
+        console.log("[DEBUG] startEvent auto-completed", lastIdTmp, "to success");
+      }
       return { ...s };
     });
     setCurrentSource(id);
@@ -85,12 +80,17 @@ function useBaseScrape() {
   }, []);
 
   const updateEvent = useCallback((evt: ScraperEvent<"update">) => {
+    console.log("[DEBUG] updateEvent:", JSON.stringify(evt));
     setSources((s) => {
       if (s[evt.id]) {
+        const old = { status: s[evt.id].status, pct: s[evt.id].percentage };
         s[evt.id].status = evt.status;
         s[evt.id].reason = evt.reason;
         s[evt.id].error = evt.error;
         s[evt.id].percentage = evt.percentage;
+        console.log("[DEBUG] updateEvent applied:", evt.id, "old:", old, "new:", { status: evt.status, pct: evt.percentage });
+      } else {
+        console.log("[DEBUG] updateEvent source not found:", evt.id);
       }
       return { ...s };
     });
@@ -139,12 +139,18 @@ function useBaseScrape() {
   }, []);
 
   const getResult = useCallback((output: RunOutput | null) => {
+    console.log("[DEBUG] getResult called. output:", !!output, "lastId.current:", lastId.current);
     if (output && lastId.current) {
       setSources((s) => {
         if (!lastId.current) return s;
-        if (s[lastId.current]) s[lastId.current].status = "success";
+        if (s[lastId.current]) {
+          console.log("[DEBUG] getResult setting", lastId.current, "to success. current status:", s[lastId.current].status);
+          s[lastId.current].status = "success";
+        }
         return { ...s };
       });
+    } else {
+      console.log("[DEBUG] getResult skipped update. reason:", !output ? "no output" : "no lastId");
     }
     return output;
   }, []);
@@ -271,6 +277,7 @@ export function useScrape() {
       // Run client-side scrapers if any are enabled
       if (clientProviderIds.length > 0) {
         console.log("[useProviderScrape] Running client-side scrapers:", clientProviderIds);
+        console.log("[DEBUG] clientProviderIds:", clientProviderIds);
         try {
           const clientOutput = await providers.runAll({
             media,
@@ -298,40 +305,48 @@ export function useScrape() {
       // Fallback to Server-Side SSE API
       if (providerApiUrl && serverProviderIds.length > 0) {
         console.log("[useProviderScrape] Scraping via Server-Side SSE API...");
+        console.log("[DEBUG] providerApiUrl:", providerApiUrl, "serverProviderIds:", serverProviderIds);
         try {
           const baseUrlMaker = makeProviderUrl(providerApiUrl);
           const scrapeUrl = baseUrlMaker.scrapeAll(media);
-          console.log("[useProviderScrape] Connecting to SSE URL:", scrapeUrl);
+          console.log("[DEBUG] SSE URL:", scrapeUrl);
 
           const conn = await connectServerSideEvents<RunOutput | "">(scrapeUrl, [
             "completed",
             "noOutput",
           ]);
 
+          console.log("[DEBUG] SSE connection established, registering listeners");
+
           conn.on("start", (id) => {
-            console.log("[useProviderScrape] SSE 'start' event:", id);
+            console.log("[DEBUG] SSE 'start' event received:", id);
             startEvent(id);
           });
           conn.on("update", (evt) => {
-            console.log("[useProviderScrape] SSE 'update' event:", evt);
+            console.log("[DEBUG] SSE 'update' event received:", JSON.stringify(evt));
             updateEvent(evt);
           });
           conn.on("discoverEmbeds", (evt) => {
-            console.log("[useProviderScrape] SSE 'discoverEmbeds' event:", evt);
+            console.log("[DEBUG] SSE 'discoverEmbeds' event received:", evt);
             discoverEmbedsEvent(evt);
           });
 
+          console.log("[DEBUG] All SSE listeners registered, awaiting promise...");
           const sseOutput = await conn.promise();
-          console.log("[useProviderScrape] SSE completed. Output:", sseOutput);
+          console.log("[DEBUG] SSE promise resolved. Output:", sseOutput);
+          console.log("[DEBUG] SSE output type:", typeof sseOutput, "empty?:", sseOutput === "", "truthy:", !!sseOutput);
 
           if (sseOutput && sseOutput !== "") {
+            console.log("[DEBUG] SSE got stream output, stream keys:", Object.keys(sseOutput));
             if (isExtensionActiveCached()) {
               await prepareStream(sseOutput.stream);
             }
             return getResult(sseOutput);
+          } else {
+            console.log("[DEBUG] SSE no valid output, calling getResult(null) from SSE path");
           }
         } catch (err) {
-          console.error("[useProviderScrape] Server-side scraping error:", err);
+          console.error("[DEBUG] SSE scraping error:", err);
         }
       }
 
