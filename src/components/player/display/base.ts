@@ -30,22 +30,26 @@ import {
 } from "@/utils/detectFeatures";
 import { makeEmitter } from "@/utils/events";
 
-const levelConversionMap: Record<number, SourceQuality> = {
-  360: "360",
-  1080: "1080",
-  720: "720",
-  480: "480",
-};
-
 function hlsLevelToQuality(level?: Level): SourceQuality | null {
-  return levelConversionMap[level?.height ?? 0] ?? null;
+  if (!level) return null;
+  const h = level.height ?? 0;
+  if (h <= 366) return "360";
+  if (h <= 540) return "480";
+  if (h <= 900) return "720";
+  if (h <= 1100) return "1080";
+  return "4k";
 }
 
 function qualityToHlsLevel(quality: SourceQuality): number | null {
-  const found = Object.entries(levelConversionMap).find(
-    (entry) => entry[1] === quality,
-  );
-  return found ? +found[0] : null;
+  const map: Record<SourceQuality, number> = {
+    "360": 360,
+    "480": 480,
+    "720": 720,
+    "1080": 1080,
+    "4k": 2160,
+    unknown: 0,
+  };
+  return map[quality] ?? null;
 }
 
 function hlsLevelsToQualities(levels: Level[]): SourceQuality[] {
@@ -121,7 +125,7 @@ export function makeVideoElementDisplayInterface(): DisplayInterface {
       });
       if (availableQuality) {
         const levelIndex = hls.levels.findIndex(
-          (v) => v.height === qualityToHlsLevel(availableQuality),
+          (v) => hlsLevelToQuality(v) === availableQuality,
         );
         if (levelIndex !== -1) {
           hls.currentLevel = levelIndex;
