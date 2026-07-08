@@ -44,7 +44,8 @@ function useBaseScrape() {
 
   const initEvent = useCallback((evt: ScraperEvent<"init">) => {
     const clientSources = getProviders().listSources();
-    const created = evt.sourceIds.map((v) => {
+    const created: Record<string, ScrapingSegment> = {};
+    evt.sourceIds.forEach((v) => {
       const clientSource = clientSources.find((s) => s && s.id === v);
       const serverMetadata = getCachedMetadata();
       const serverSource = serverMetadata.find((s: any) => {
@@ -54,26 +55,30 @@ function useBaseScrape() {
       });
       const unpackedServerSource = Array.isArray(serverSource) ? serverSource[0] : serverSource;
       const name = clientSource?.name ?? unpackedServerSource?.name ?? v;
-      return { id: v, name, status: "waiting" as const, percentage: 0 };
+      created[v] = { id: v, name, status: "waiting", percentage: 0 };
     });
-    console.log("[DEBUG] initEvent sourceIds:", evt.sourceIds, "created:", created);
-    setSources(created.reduce<Record<string, ScrapingSegment>>((a, v) => {
-      a[v.id] = v;
-      return a;
-    }, {}));
+    console.log("[DEBUG] initEvent sourceIds:", evt.sourceIds, "created:", Object.keys(created));
+    setSources(created);
     setSourceOrder(evt.sourceIds.map((v) => ({ id: v, children: [] })));
   }, []);
 
   const startEvent = useCallback((id: ScraperEvent<"start">) => {
     const lastIdTmp = lastId.current;
     console.log("[DEBUG] startEvent id:", id, "lastId:", lastIdTmp);
-    setSources((s) => {
-      if (s[id]) { s[id].status = "pending"; console.log("[DEBUG] startEvent set", id, "to pending"); }
-      if (lastIdTmp && s[lastIdTmp] && s[lastIdTmp].status === "pending") {
-        s[lastIdTmp].status = "success";
-        console.log("[DEBUG] startEvent auto-completed", lastIdTmp, "to success");
+    setSources((prev) => {
+      const next: Record<string, ScrapingSegment> = {};
+      for (const key of Object.keys(prev)) {
+        next[key] = { ...prev[key] };
+        if (key === id) {
+          next[key].status = "pending";
+          console.log("[DEBUG] startEvent set", id, "to pending");
+        }
+        if (lastIdTmp && key === lastIdTmp && next[key].status === "pending") {
+          next[key].status = "success";
+          console.log("[DEBUG] startEvent auto-completed", lastIdTmp, "to success");
+        }
       }
-      return { ...s };
+      return next;
     });
     setCurrentSource(id);
     lastId.current = id;
@@ -81,18 +86,23 @@ function useBaseScrape() {
 
   const updateEvent = useCallback((evt: ScraperEvent<"update">) => {
     console.log("[DEBUG] updateEvent:", JSON.stringify(evt));
-    setSources((s) => {
-      if (s[evt.id]) {
-        const old = { status: s[evt.id].status, pct: s[evt.id].percentage };
-        s[evt.id].status = evt.status;
-        s[evt.id].reason = evt.reason;
-        s[evt.id].error = evt.error;
-        s[evt.id].percentage = evt.percentage;
-        console.log("[DEBUG] updateEvent applied:", evt.id, "old:", old, "new:", { status: evt.status, pct: evt.percentage });
-      } else {
+    setSources((prev) => {
+      if (!prev[evt.id]) {
         console.log("[DEBUG] updateEvent source not found:", evt.id);
+        return { ...prev, _t: Date.now() };
       }
-      return { ...s };
+      const updated = {
+        ...prev,
+        [evt.id]: {
+          ...prev[evt.id],
+          status: evt.status,
+          reason: evt.reason,
+          error: evt.error,
+          percentage: evt.percentage,
+        },
+      };
+      console.log("[DEBUG] updateEvent applied:", evt.id, "pct:", evt.percentage, "status:", evt.status);
+      return updated;
     });
   }, []);
 
@@ -141,13 +151,13 @@ function useBaseScrape() {
   const getResult = useCallback((output: RunOutput | null) => {
     console.log("[DEBUG] getResult called. output:", !!output, "lastId.current:", lastId.current);
     if (output && lastId.current) {
-      setSources((s) => {
-        if (!lastId.current) return s;
-        if (s[lastId.current]) {
-          console.log("[DEBUG] getResult setting", lastId.current, "to success. current status:", s[lastId.current].status);
-          s[lastId.current].status = "success";
+      setSources((prev) => {
+        if (!lastId.current) return prev;
+        if (prev[lastId.current]) {
+          console.log("[DEBUG] getResult setting", lastId.current, "to success. current status:", prev[lastId.current].status);
+          return { ...prev, [lastId.current]: { ...prev[lastId.current], status: "success" } };
         }
-        return { ...s };
+        return prev;
       });
     } else {
       console.log("[DEBUG] getResult skipped update. reason:", !output ? "no output" : "no lastId");
