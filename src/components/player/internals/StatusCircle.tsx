@@ -22,12 +22,9 @@ function statusIsLoading(
 }
 
 export function StatusCircle(props: StatusCircleProps | StatusCircleLoading) {
-  const [spring] = useSpring(
-    () => ({
-      percentage: statusIsLoading(props) ? props.percentage : 0,
-    }),
-    [props],
-  );
+  const spring = useSpring({
+    percentage: statusIsLoading(props) ? props.percentage : 0,
+  });
 
   console.log("[DEBUG] StatusCircle render type:", props.type, "pct:", props.percentage, "loading:", statusIsLoading(props));
 
