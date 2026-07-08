@@ -181,12 +181,6 @@ export const categories: Category[] = [
     sourceId: 252,
   },
   {
-    key: "peacock",
-    label: "Peacock",
-    type: "watchmode",
-    sourceId: 559,
-  },
-  {
     key: "viki",
     label: "Viki",
     type: "watchmode",
@@ -258,7 +252,6 @@ export const brandColors: Record<string, string> = {
   appletv: "#555",
   crunchyroll: "#f47521",
   shudder: "#ee3a3a",
-  peacock: "#00a78e",
   viki: "#1ab7ea",
   hayu: "#e31b54",
   curiosity: "#0d6e4b",
@@ -295,7 +288,6 @@ export function brandLetter(key: string): string {
     appletv: "A+",
     crunchyroll: "Cr",
     shudder: "Sh",
-    peacock: "Pk",
     viki: "V",
     hayu: "Hy",
     curiosity: "C?",

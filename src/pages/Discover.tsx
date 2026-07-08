@@ -94,7 +94,7 @@ function mediaType(item: MediaItem): "movie" | "tv" {
 }
 
 async function enrichWatchmodeItems(items: MediaItem[]): Promise<void> {
-  const batchSize = 10;
+  const batchSize = 30;
   for (let start = 0; start < items.length; start += batchSize) {
     const batch = items.slice(start, start + batchSize);
     await Promise.allSettled(
