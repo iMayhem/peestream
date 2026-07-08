@@ -195,6 +195,8 @@ export function Discover() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  const activeCategory = categories.find((c) => c.key === activeKey) || categories[0];
+
   const loadPage = useCallback(
     async (cat: Category, p: number, append: boolean) => {
       if (append) {
@@ -276,13 +278,6 @@ export function Discover() {
 
       {/* Mobile category drawer */}
       <div className="lg:hidden">
-        <button
-          type="button"
-          onClick={() => setDrawerOpen(true)}
-          className="fixed top-20 left-3 z-30 w-8 h-8 rounded-lg bg-background-main/80 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/70 hover:text-white"
-        >
-          <Icon icon={Icons.MENU} className="text-lg" />
-        </button>
         {drawerOpen && (
           <div
             className="fixed inset-0 z-40 bg-black/60"
@@ -355,7 +350,36 @@ export function Discover() {
           </div>
         </aside>
 
-        <div className="flex-1 min-w-0 px-4 py-6">
+        <div className="flex-1 min-w-0">
+          {/* Mobile category selector - inline with page flow */}
+          <div className="lg:hidden px-4 pt-4 pb-2">
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(true)}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white/80 hover:text-white hover:bg-white/[0.07] active:bg-white/[0.03] transition-all duration-200"
+            >
+              <Icon icon={Icons.MENU} className="text-lg text-[#8b5cf6]" />
+              <span className="flex-1 text-left text-sm font-medium truncate">
+                {activeCategory.label}
+              </span>
+              {activeCategory.region && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/40 font-semibold leading-tight">
+                  {activeCategory.region}
+                </span>
+              )}
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="w-4 h-4 text-white/40"
+              >
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="px-4 py-4">
           {isLoading ? (
             <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
               {Array.from({ length: 20 }).map((_, i) => {
@@ -402,6 +426,7 @@ export function Discover() {
             </>
           )}
         </div>
+      </div>
       </div>
 
       {showScrollTop && (
