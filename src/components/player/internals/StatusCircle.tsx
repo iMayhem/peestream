@@ -56,13 +56,13 @@ export function StatusCircle(props: StatusCircleProps | StatusCircleLoading) {
         >
           <a.circle
             strokeWidth="32"
-            strokeDasharray={to(spring.percentage, (val) => `${val} 100`)}
+            strokeDasharray="100 100"
+            strokeDashoffset={to(spring.percentage, (val) => 100 - val)}
             r="25%"
             cx="50%"
             cy="50%"
             fill="transparent"
             stroke="currentColor"
-            className="transition-[strokeDasharray]"
           />
         </svg>
       </Transition>
