@@ -23,6 +23,8 @@ export function useAutoFetchLanguageVariants() {
       meta.releaseYear,
       meta.type,
       meta.tmdbId,
+      meta.type === "show" ? meta.season?.number : undefined,
+      meta.type === "show" ? meta.episode?.number : undefined,
     ).then((variants) => {
       if (variants.length > 0) setLanguageVariants(variants);
     });

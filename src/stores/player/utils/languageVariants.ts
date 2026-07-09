@@ -14,6 +14,8 @@ export async function fetchLanguageVariants(
   year: number,
   type: "movie" | "show",
   tmdbId?: string,
+  season?: number,
+  episode?: number,
 ): Promise<LanguageVariant[]> {
   try {
     const providers = ["moovie-catalog", "homecine", "zetflix"];
@@ -25,6 +27,8 @@ export async function fetchLanguageVariants(
           provider,
         });
         if (tmdbId) params.set("tmdbId", tmdbId);
+        if (season != null) params.set("season", String(season));
+        if (episode != null) params.set("episode", String(episode));
         const res = await fetch(`${STREAMSCRAPER_HUB}/api/search?${params}`);
         if (!res.ok) return [];
         const text = await res.text();
