@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { FlagIcon } from "@/components/FlagIcon";
 import { Menu } from "@/components/player/internals/ContextMenu";
 import { useOverlayRouter } from "@/hooks/useOverlayRouter";
-import { AudioTrack } from "@/stores/player/slices/source";
+import { AudioTrack, playerStatus } from "@/stores/player/slices/source";
 import { usePlayerStore } from "@/stores/player/store";
 import { getPrettyLanguageNameFromLocale } from "@/utils/language";
 import { LanguageVariant, resolveLanguageVariantUrl } from "@/stores/player/utils/languageVariants";
@@ -75,9 +75,19 @@ export function AudioView({ id }: { id: string }) {
           );
           if (!url) return;
           const isHls = url.includes(".m3u8");
+          const nextSource = isHls
+            ? { type: "hls" as const, url }
+            : { type: "mp4" as const, qualities: { "1080": { type: "mp4" as const, url } } };
+
+          usePlayerStore.setState((s) => {
+            s.status = playerStatus.PLAYING;
+            s.source = nextSource;
+            s.interface.error = undefined;
+          });
+
           display?.load({
             source: { type: isHls ? "hls" : "mp4", url },
-            startAt: usePlayerStore.getState().progress.time,
+            startAt: usePlayerStore.getState().progress.time || 0,
             automaticQuality: false,
             preferredQuality: null,
           });

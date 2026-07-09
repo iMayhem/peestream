@@ -21,6 +21,13 @@ export function PlayerPart(props: PlayerPartProps) {
   const status = usePlayerStore((s) => s.status);
   const { isMobile } = useIsMobile();
   const isLoading = usePlayerStore((s) => s.mediaPlaying.isLoading);
+  const languageVariants = usePlayerStore((s) => s.languageVariants);
+
+  // Show settings when playing OR when scrape failed but audio variants are available
+  const showSettings =
+    status === playerStatus.PLAYING ||
+    status === playerStatus.PLAYBACK_ERROR ||
+    (status === playerStatus.SCRAPE_NOT_FOUND && languageVariants.length > 0);
 
   return (
     <Player.Container onLoad={props.onLoad} showingControls={showTargets}>
@@ -120,6 +127,8 @@ export function PlayerPart(props: PlayerPartProps) {
                 <Player.Captions />
                 <Player.Settings />
               </>
+            ) : showSettings ? (
+              <Player.Settings />
             ) : null}
             <Player.Fullscreen />
           </div>
@@ -129,7 +138,7 @@ export function PlayerPart(props: PlayerPartProps) {
           <div className="flex justify-center space-x-3">
             {status === playerStatus.PLAYING ? <Player.Pip /> : null}
             <Player.Episodes />
-            {status === playerStatus.PLAYING ? <Player.Settings /> : null}
+            {status === playerStatus.PLAYING ? <Player.Settings /> : showSettings ? <Player.Settings /> : null}
           </div>
           <div>
             <Player.Fullscreen />
