@@ -31,6 +31,32 @@ export function AudioOption(props: {
   );
 }
 
+function getLocaleForLanguageName(name: string): string {
+  const normalized = name.toLowerCase().trim();
+  if (normalized.includes("latino")) return "es-MX";
+  if (normalized.includes("castellano") || normalized === "español" || normalized === "spanish") return "es-ES";
+  if (normalized.includes("hindi")) return "hi-IN";
+  if (normalized.includes("tamil")) return "ta-IN";
+  if (normalized.includes("telugu")) return "te-IN";
+  if (normalized.includes("malayalam")) return "ml-IN";
+  if (normalized.includes("kannada")) return "kn-IN";
+  if (normalized.includes("bengali")) return "bn-IN";
+  if (normalized.includes("marathi")) return "mr-IN";
+  if (normalized.includes("gujarati")) return "gu-IN";
+  if (normalized.includes("punjabi")) return "pa-IN";
+  if (normalized.includes("arabic")) return "ar-SA";
+  if (normalized.includes("indonesian")) return "id-ID";
+  if (normalized.includes("french")) return "fr-FR";
+  if (normalized.includes("german")) return "de-DE";
+  if (normalized.includes("italian")) return "it-IT";
+  if (normalized.includes("portuguese")) return "pt-BR";
+  if (normalized.includes("russian")) return "ru-RU";
+  if (normalized.includes("japanese")) return "ja-JP";
+  if (normalized.includes("korean")) return "ko-KR";
+  if (normalized.includes("chinese")) return "zh-CN";
+  return "und";
+}
+
 export function AudioView({ id }: { id: string }) {
   const { t } = useTranslation();
   const unknownChoice = t("player.menus.subtitles.unknownLanguage");
@@ -139,7 +165,7 @@ export function AudioView({ id }: { id: string }) {
                 selected={v.id === selectedLanguageVariant?.id}
                 loading={loadingId === v.id}
                 onClick={() => changeVariant(v)}
-                langCode={v.language.toLowerCase().startsWith("hin") ? "hi" : "und"}
+                langCode={getLocaleForLanguageName(v.language)}
               >
                 {v.label}
               </AudioOption>
