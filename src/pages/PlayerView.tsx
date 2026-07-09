@@ -12,6 +12,7 @@ import { usePlayer } from "@/components/player/hooks/usePlayer";
 import { usePlayerMeta } from "@/components/player/hooks/usePlayerMeta";
 import { convertProviderCaption } from "@/components/player/utils/captions";
 import { convertRunoutputToSource } from "@/components/player/utils/convertRunoutputToSource";
+import { getLoadbalancedProviderApiUrl } from "@/backend/providers/fetchers";
 import { ScrapingItems, ScrapingSegment } from "@/hooks/useProviderScrape";
 import { useQueryParam } from "@/hooks/useQueryParams";
 import { MetaPart } from "@/pages/parts/player/MetaPart";
@@ -21,6 +22,7 @@ import { ScrapeErrorPart } from "@/pages/parts/player/ScrapeErrorPart";
 import { ScrapingPart } from "@/pages/parts/player/ScrapingPart";
 import { useLastNonPlayerLink } from "@/stores/history";
 import { PlayerMeta, playerStatus } from "@/stores/player/slices/source";
+import { usePlayerStore } from "@/stores/player/store";
 import { needsOnboarding } from "@/utils/onboarding";
 import { parseTimestamp } from "@/utils/timestamp";
 
@@ -74,13 +76,34 @@ export function RealPlayerView() {
       let startAt: number | undefined;
       if (startAtParam) startAt = parseTimestamp(startAtParam) ?? undefined;
 
+      const captions = convertProviderCaption(out.stream.captions);
+
       playMedia(
         convertRunoutputToSource(out),
-        convertProviderCaption(out.stream.captions),
+        captions,
         out.sourceId,
         shouldStartFromBeginning ? 0 : startAt,
       );
       setShouldStartFromBeginning(false);
+
+      const meta = usePlayerStore.getState().meta;
+      if (!meta) return;
+      const baseUrl = getLoadbalancedProviderApiUrl();
+      if (!baseUrl) return;
+      fetch(
+        `${baseUrl}/api/subtitles?tmdbId=${meta.tmdbId}&type=${meta.type}`,
+      )
+        .then((r) => r.json())
+        .then((data) => {
+          if (!data.captions || data.captions.length === 0) return;
+          usePlayerStore.setState((s) => {
+            const existingIds = new Set(s.captionList.map((c) => c.id));
+            const fresh = data.captions.filter((c) => !existingIds.has(c.id));
+            if (fresh.length === 0) return s;
+            return { captionList: [...s.captionList, ...fresh] };
+          });
+        })
+        .catch(() => {});
     },
     [
       playMedia,
