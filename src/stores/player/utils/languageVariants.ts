@@ -19,7 +19,9 @@ export async function fetchLanguageVariants(
     const params = new URLSearchParams({
       q: title,
       type,
+      provider: "moovie-catalog",
     });
+    if (tmdbId) params.set("tmdbId", tmdbId);
     const res = await fetch(`${STREAMSCRAPER_HUB}/api/search?${params}`);
     if (!res.ok) return [];
     const text = await res.text();
