@@ -11,7 +11,11 @@ export function useAutoFetchLanguageVariants() {
   const fetchedKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!meta || status !== playerStatus.PLAYING) return;
+    if (!meta) return;
+    const shouldFetch =
+      status === playerStatus.PLAYING ||
+      status === playerStatus.SCRAPE_NOT_FOUND;
+    if (!shouldFetch) return;
     const key = `${meta.tmdbId}-${meta.type === "show" ? meta.episode?.tmdbId ?? "" : ""}`;
     if (fetchedKeyRef.current === key) return;
     fetchedKeyRef.current = key;

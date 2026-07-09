@@ -1,5 +1,5 @@
 import { RunOutput } from "@movie-web/providers";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Navigate,
   useLocation,
@@ -14,6 +14,7 @@ import { convertProviderCaption } from "@/components/player/utils/captions";
 import { convertRunoutputToSource } from "@/components/player/utils/convertRunoutputToSource";
 import { getLoadbalancedProviderApiUrl } from "@/backend/providers/fetchers";
 import { useAutoFetchLanguageVariants } from "@/hooks/useAutoFetchLanguageVariants";
+import { resolveLanguageVariantUrl } from "@/stores/player/utils/languageVariants";
 import { ScrapingItems, ScrapingSegment } from "@/hooks/useProviderScrape";
 import { useQueryParam } from "@/hooks/useQueryParams";
 import { MetaPart } from "@/pages/parts/player/MetaPart";
@@ -51,6 +52,30 @@ export function RealPlayerView() {
   const backUrl = useLastNonPlayerLink();
 
   useAutoFetchLanguageVariants();
+
+  const languageVariants = usePlayerStore((s) => s.languageVariants);
+  const display = usePlayerStore((s) => s.display);
+  const autoLoadedVariantRef = useRef<string | null>(null);
+
+  // When main scrapers fail but HomeCine found Spanish streams, auto-load the first one
+  useEffect(() => {
+    if (status !== playerStatus.SCRAPE_NOT_FOUND) return;
+    if (languageVariants.length === 0) return;
+    const first = languageVariants[0];
+    if (autoLoadedVariantRef.current === first.id) return;
+    autoLoadedVariantRef.current = first.id;
+
+    resolveLanguageVariantUrl(first.id, first.type, first.season, first.episode).then((url) => {
+      if (!url) return;
+      const isHls = url.includes(".m3u8");
+      display?.load({
+        source: { type: isHls ? "hls" : "mp4", url },
+        startAt: 0,
+        automaticQuality: false,
+        preferredQuality: null,
+      });
+    });
+  }, [status, languageVariants, display]);
 
   const paramsData = JSON.stringify({
     media: params.media,
