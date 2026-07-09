@@ -1,0 +1,77 @@
+import { useCallback, useState } from "react";
+
+import { Menu } from "@/components/player/internals/ContextMenu";
+import { SelectableLink } from "@/components/player/internals/ContextMenu/Links";
+import { useOverlayRouter } from "@/hooks/useOverlayRouter";
+import { LanguageVariant, resolveLanguageVariantUrl } from "@/stores/player/utils/languageVariants";
+import { usePlayerStore } from "@/stores/player/store";
+
+export function LanguageView({ id }: { id: string }) {
+  const router = useOverlayRouter(id);
+  const variants = usePlayerStore((s) => s.languageVariants);
+  const selectedVariant = usePlayerStore((s) => s.selectedLanguageVariant);
+  const display = usePlayerStore((s) => s.display);
+  const selectLanguageVariant = usePlayerStore((s) => s.selectLanguageVariant);
+  const redisplaySource = usePlayerStore((s) => s.redisplaySource);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  const change = useCallback(
+    async (variant: LanguageVariant | null) => {
+      const id = variant?.id ?? "__original__";
+      setLoadingId(id);
+      try {
+        selectLanguageVariant(variant);
+        if (!variant) {
+          const store = usePlayerStore.getState();
+          redisplaySource(store.progress.time);
+        } else {
+          const url = await resolveLanguageVariantUrl(
+            variant.id,
+            variant.type,
+            variant.season,
+            variant.episode,
+          );
+          if (!url) return;
+          const isHls = url.includes(".m3u8");
+          display?.load({
+            source: { type: isHls ? "hls" : "mp4", url },
+            startAt: usePlayerStore.getState().progress.time,
+            automaticQuality: false,
+            preferredQuality: null,
+          });
+        }
+        router.close();
+      } finally {
+        setLoadingId(null);
+      }
+    },
+    [display, selectLanguageVariant, redisplaySource, router],
+  );
+
+  return (
+    <>
+      <Menu.BackLink onClick={() => router.navigate("/")}>
+        Dubs
+      </Menu.BackLink>
+      <Menu.Section className="flex flex-col pb-4">
+        <SelectableLink
+          selected={!selectedVariant}
+          loading={loadingId === "__original__"}
+          onClick={() => change(null)}
+        >
+          Original
+        </SelectableLink>
+        {variants.map((v) => (
+          <SelectableLink
+            key={v.id}
+            selected={v.id === selectedVariant?.id}
+            loading={loadingId === v.id}
+            onClick={() => change(v)}
+          >
+            {v.label}
+          </SelectableLink>
+        ))}
+      </Menu.Section>
+    </>
+  );
+}

@@ -18,6 +18,7 @@ import { AudioView } from "./settings/AudioView";
 import { CaptionSettingsView } from "./settings/CaptionSettingsView";
 import { CaptionsView } from "./settings/CaptionsView";
 import { DownloadRoutes } from "./settings/Downloads";
+import { LanguageView } from "./settings/LanguageView";
 import { OpenSubtitlesCaptionView } from "./settings/OpensubtitlesCaptionsView";
 import { PlaybackSettingsView } from "./settings/PlaybackSettingsView";
 import { QualityView } from "./settings/QualityView";
@@ -52,6 +53,11 @@ function SettingsOverlay({ id }: { id: string }) {
         <OverlayPage id={id} path="/audio" width={343} height={431}>
           <Menu.Card>
             <AudioView id={id} />
+          </Menu.Card>
+        </OverlayPage>
+        <OverlayPage id={id} path="/dubs" width={343} height={431}>
+          <Menu.Card>
+            <LanguageView id={id} />
           </Menu.Card>
         </OverlayPage>
         <OverlayPage id={id} path="/captions" width={343} height={431}>

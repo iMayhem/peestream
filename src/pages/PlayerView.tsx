@@ -12,6 +12,7 @@ import { usePlayer } from "@/components/player/hooks/usePlayer";
 import { usePlayerMeta } from "@/components/player/hooks/usePlayerMeta";
 import { convertProviderCaption } from "@/components/player/utils/captions";
 import { convertRunoutputToSource } from "@/components/player/utils/convertRunoutputToSource";
+import { useAutoFetchLanguageVariants } from "@/hooks/useAutoFetchLanguageVariants";
 import { ScrapingItems, ScrapingSegment } from "@/hooks/useProviderScrape";
 import { useQueryParam } from "@/hooks/useQueryParams";
 import { MetaPart } from "@/pages/parts/player/MetaPart";
@@ -46,6 +47,8 @@ export function RealPlayerView() {
   } = usePlayer();
   const { setPlayerMeta, scrapeMedia } = usePlayerMeta();
   const backUrl = useLastNonPlayerLink();
+
+  useAutoFetchLanguageVariants();
 
   const paramsData = JSON.stringify({
     media: params.media,
