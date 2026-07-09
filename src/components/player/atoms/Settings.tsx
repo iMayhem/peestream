@@ -55,11 +55,6 @@ function SettingsOverlay({ id }: { id: string }) {
             <AudioView id={id} />
           </Menu.Card>
         </OverlayPage>
-        <OverlayPage id={id} path="/dubs" width={343} height={431}>
-          <Menu.Card>
-            <LanguageView id={id} />
-          </Menu.Card>
-        </OverlayPage>
         <OverlayPage id={id} path="/captions" width={343} height={431}>
           <Menu.CardWithScrollable>
             <CaptionsView id={id} backLink />

@@ -77,21 +77,13 @@ export function SettingsMenu({ id }: { id: string }) {
         >
           {t("player.menus.settings.qualityItem")}
         </Menu.ChevronLink>
-        {currentAudioTrack && (
+
+        {(currentAudioTrack || languageVariants.length > 0) && (
           <Menu.ChevronLink
             onClick={() => router.navigate("/audio")}
-            rightText={selectedAudioLanguagePretty ?? undefined}
+            rightText={selectedAudioLanguagePretty ?? selectedVariantLabel}
           >
             {t("player.menus.settings.audioItem")}
-          </Menu.ChevronLink>
-        )}
-
-        {languageVariants.length > 0 && (
-          <Menu.ChevronLink
-            onClick={() => router.navigate("/dubs")}
-            rightText={selectedVariantLabel}
-          >
-            Dubs
           </Menu.ChevronLink>
         )}
 
