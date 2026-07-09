@@ -17,11 +17,9 @@ export async function fetchLanguageVariants(
 ): Promise<LanguageVariant[]> {
   try {
     const params = new URLSearchParams({
-      provider: "moovie-catalog",
-      title,
-      year: year.toString(),
+      q: title,
+      type,
     });
-    if (tmdbId) params.set("tmdbId", tmdbId);
     const res = await fetch(`${STREAMSCRAPER_HUB}/api/search?${params}`);
     if (!res.ok) return [];
     const text = await res.text();
@@ -32,7 +30,7 @@ export async function fetchLanguageVariants(
       return [];
     }
     if (!json || typeof json !== "object") return [];
-    const items = json._languageVariants ?? [];
+    const items = json.results?.[0]?.streams?.[0]?._languageVariants ?? [];
     return items.map((v: any) => ({
       language: v.language ?? "unknown",
       label: v.label ?? v.language ?? "Unknown",
@@ -70,6 +68,9 @@ export async function resolveLanguageVariantUrl(
       json = JSON.parse(text);
     } catch {
       return null;
+    }
+    if (json?.proxyUrl) {
+      return STREAMSCRAPER_HUB + json.proxyUrl;
     }
     return json?.url ?? null;
   } catch {
