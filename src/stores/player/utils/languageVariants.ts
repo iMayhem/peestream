@@ -16,35 +16,45 @@ export async function fetchLanguageVariants(
   tmdbId?: string,
 ): Promise<LanguageVariant[]> {
   try {
-    const params = new URLSearchParams({
-      q: title,
-      type,
-      provider: "moovie-catalog",
+    const providers = ["moovie-catalog", "homecine"];
+    const promises = providers.map(async (provider) => {
+      try {
+        const params = new URLSearchParams({
+          q: title,
+          type,
+          provider,
+        });
+        if (tmdbId) params.set("tmdbId", tmdbId);
+        const res = await fetch(`${STREAMSCRAPER_HUB}/api/search?${params}`);
+        if (!res.ok) return [];
+        const text = await res.text();
+        let json: any;
+        try {
+          json = JSON.parse(text);
+        } catch {
+          return [];
+        }
+        if (!json || typeof json !== "object") return [];
+        const items = json.results?.reduce?.((acc: any[], r: any) => {
+          const v = r.streams?.[0]?._languageVariants;
+          if (v) acc.push(...v);
+          return acc;
+        }, []) ?? [];
+        return items.map((v: any) => ({
+          language: v.language ?? "unknown",
+          label: v.language ?? "Unknown",
+          id: `${provider}:${v.catalogId ?? v.id ?? ""}`,
+          type: v.media_type === "tv" ? "show" : v.type ?? type,
+          season: v.season,
+          episode: v.episode,
+        }));
+      } catch {
+        return [];
+      }
     });
-    if (tmdbId) params.set("tmdbId", tmdbId);
-    const res = await fetch(`${STREAMSCRAPER_HUB}/api/search?${params}`);
-    if (!res.ok) return [];
-    const text = await res.text();
-    let json: any;
-    try {
-      json = JSON.parse(text);
-    } catch {
-      return [];
-    }
-    if (!json || typeof json !== "object") return [];
-    const items = json.results?.reduce?.((acc: any[], r: any) => {
-      const v = r.streams?.[0]?._languageVariants;
-      if (v) acc.push(...v);
-      return acc;
-    }, []) ?? [];
-    return items.map((v: any) => ({
-      language: v.language ?? "unknown",
-      label: v.language ?? "Unknown",
-      id: v.catalogId ?? v.id ?? "",
-      type: v.media_type === "tv" ? "show" : v.type ?? type,
-      season: v.season,
-      episode: v.episode,
-    }));
+
+    const results = await Promise.all(promises);
+    return results.flat();
   } catch {
     return [];
   }
@@ -57,9 +67,16 @@ export async function resolveLanguageVariantUrl(
   episode?: number,
 ): Promise<string | null> {
   try {
+    let provider = "moovie-catalog";
+    let actualId = id;
+    if (id.includes(":")) {
+      const idx = id.indexOf(":");
+      provider = id.substring(0, idx);
+      actualId = id.substring(idx + 1);
+    }
     const params = new URLSearchParams({
-      provider: "moovie-catalog",
-      id,
+      provider,
+      id: actualId,
       type,
     });
     if (season != null) params.set("season", String(season));
