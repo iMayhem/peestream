@@ -143,6 +143,11 @@ export function sortLangCodes(langCodes: string[]) {
  * @returns country code or null
  */
 export function getCountryCodeForLocale(locale: string): string | null {
+  const parts = locale.split("-");
+  const region = parts[parts.length - 1].toLowerCase();
+  if (region === "in") return "in";
+  if (region === "sa") return "sa";
+
   let output: LanguageObj | null = null as any as LanguageObj;
   const tag = getTag(populateLanguageCode(locale), true);
 
