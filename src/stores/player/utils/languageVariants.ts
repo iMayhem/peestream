@@ -33,9 +33,9 @@ export async function fetchLanguageVariants(
     const items = json.results?.[0]?.streams?.[0]?._languageVariants ?? [];
     return items.map((v: any) => ({
       language: v.language ?? "unknown",
-      label: v.label ?? v.language ?? "Unknown",
-      id: v.id ?? "",
-      type: v.type ?? type,
+      label: v.language ?? "Unknown",
+      id: v.catalogId ?? v.id ?? "",
+      type: v.media_type === "tv" ? "show" : v.type ?? type,
       season: v.season,
       episode: v.episode,
     }));
