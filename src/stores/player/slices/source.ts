@@ -180,8 +180,8 @@ export const createSourceSlice: MakeSlice<SourceSlice> = (set, get) => ({
       s.status = playerStatus.PLAYING;
       s.audioTracks = [];
       s.currentAudioTrack = null;
-      s.languageVariants = [];
-      s.selectedLanguageVariant = null;
+      // Do NOT clear languageVariants here — they're populated by the parallel
+      // background Athena/HomeCine fetch and must survive the main stream loading
     });
     const store = get();
     store.redisplaySource(startAt);
