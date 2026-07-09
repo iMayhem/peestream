@@ -22,15 +22,13 @@ function statusIsLoading(
 }
 
 export function StatusCircle(props: StatusCircleProps | StatusCircleLoading) {
-  const isLoading = statusIsLoading(props);
-  const spring = useSpring({
-    percentage: isLoading ? 100 : 0,
-    config: {
-      duration: isLoading ? 8000 : 150,
-    },
-  });
-
-  console.log("[DEBUG] StatusCircle render type:", props.type, "pct:", props.percentage, "loading:", statusIsLoading(props));
+  const [spring] = useSpring(
+    () => ({
+      percentage: statusIsLoading(props) ? 100 : 0,
+      config: { duration: statusIsLoading(props) ? 500 : 150 },
+    }),
+    [props],
+  );
 
   return (
     <div
@@ -60,13 +58,13 @@ export function StatusCircle(props: StatusCircleProps | StatusCircleLoading) {
         >
           <a.circle
             strokeWidth="32"
-            strokeDasharray="100 100"
-            strokeDashoffset={to(spring.percentage, (val) => 100 - val)}
+            strokeDasharray={to(spring.percentage, (val) => `${val} 100`)}
             r="25%"
             cx="50%"
             cy="50%"
             fill="transparent"
             stroke="currentColor"
+            className="transition-[strokeDasharray]"
           />
         </svg>
       </Transition>

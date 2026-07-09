@@ -25,6 +25,10 @@ export function SettingsMenu({ id }: { id: string }) {
   );
   const subtitlesEnabled = useSubtitleStore((s) => s.enabled);
   const currentSourceId = usePlayerStore((s) => s.sourceId);
+  const languageVariants = usePlayerStore((s) => s.languageVariants);
+  const selectedLanguageVariant = usePlayerStore(
+    (s) => s.selectedLanguageVariant,
+  );
   const sourceName = useMemo(() => {
     if (!currentSourceId) return "...";
     const source = getCachedMetadata().find(
@@ -44,6 +48,10 @@ export function SettingsMenu({ id }: { id: string }) {
       currentAudioTrack.label ??
       t("player.menus.subtitles.unknownLanguage"))
     : undefined;
+
+  const selectedVariantLabel =
+    selectedLanguageVariant?.label ??
+    (languageVariants.length > 0 ? "Original" : undefined);
 
   const source = usePlayerStore((s) => s.source);
 
@@ -78,6 +86,15 @@ export function SettingsMenu({ id }: { id: string }) {
           </Menu.ChevronLink>
         )}
 
+        {languageVariants.length > 0 && (
+          <Menu.ChevronLink
+            onClick={() => router.navigate("/dubs")}
+            rightText={selectedVariantLabel}
+          >
+            Dubs
+          </Menu.ChevronLink>
+        )}
+
         <Menu.ChevronLink
           onClick={() => router.navigate("/source")}
           rightText={sourceName}
@@ -100,7 +117,7 @@ export function SettingsMenu({ id }: { id: string }) {
           rightSide={<Icon className="text-xl" icon={Icons.WATCH_PARTY} />}
           className={downloadable ? "opacity-100" : "opacity-50"}
         >
-          {t("Watch Party")}
+          {"Watch Party"}
         </Menu.Link>
       </Menu.Section>
 

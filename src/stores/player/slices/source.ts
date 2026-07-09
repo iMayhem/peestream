@@ -9,6 +9,8 @@ import {
 import { useQualityStore } from "@/stores/quality";
 import { ValuesOf } from "@/utils/typeguard";
 
+import { LanguageVariant } from "@/stores/player/utils/languageVariants";
+
 export const playerStatus = {
   IDLE: "idle",
   SCRAPING: "scraping",
@@ -77,6 +79,8 @@ export interface SourceSlice {
     asTrack: boolean;
   };
   meta: PlayerMeta | null;
+  languageVariants: LanguageVariant[];
+  selectedLanguageVariant: LanguageVariant | null;
   setStatus(status: PlayerStatus): void;
   setSource(
     stream: SourceSliceSource,
@@ -89,6 +93,8 @@ export interface SourceSlice {
   setSourceId(id: string | null): void;
   enableAutomaticQuality(): void;
   redisplaySource(startAt: number): void;
+  setLanguageVariants(variants: LanguageVariant[]): void;
+  selectLanguageVariant(variant: LanguageVariant | null): void;
 }
 
 export function metaToScrapeMedia(meta: PlayerMeta): ScrapeMedia {
@@ -124,6 +130,8 @@ export const createSourceSlice: MakeSlice<SourceSlice> = (set, get) => ({
   currentAudioTrack: null,
   status: playerStatus.IDLE,
   meta: null,
+  languageVariants: [],
+  selectedLanguageVariant: null,
   caption: {
     selected: null,
     asTrack: false,
@@ -172,6 +180,8 @@ export const createSourceSlice: MakeSlice<SourceSlice> = (set, get) => ({
       s.status = playerStatus.PLAYING;
       s.audioTracks = [];
       s.currentAudioTrack = null;
+      s.languageVariants = [];
+      s.selectedLanguageVariant = null;
     });
     const store = get();
     store.redisplaySource(startAt);
@@ -220,5 +230,15 @@ export const createSourceSlice: MakeSlice<SourceSlice> = (set, get) => ({
   enableAutomaticQuality() {
     const store = get();
     store.display?.changeQuality(true, null);
+  },
+  setLanguageVariants(variants) {
+    set((s) => {
+      s.languageVariants = variants;
+    });
+  },
+  selectLanguageVariant(variant) {
+    set((s) => {
+      s.selectedLanguageVariant = variant;
+    });
   },
 });
