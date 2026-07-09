@@ -30,7 +30,11 @@ export async function fetchLanguageVariants(
       return [];
     }
     if (!json || typeof json !== "object") return [];
-    const items = json.results?.[0]?.streams?.[0]?._languageVariants ?? [];
+    const items = json.results?.reduce?.((acc: any[], r: any) => {
+      const v = r.streams?.[0]?._languageVariants;
+      if (v) acc.push(...v);
+      return acc;
+    }, []) ?? [];
     return items.map((v: any) => ({
       language: v.language ?? "unknown",
       label: v.language ?? "Unknown",
