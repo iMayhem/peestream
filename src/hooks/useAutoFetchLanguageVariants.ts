@@ -12,10 +12,8 @@ export function useAutoFetchLanguageVariants() {
 
   useEffect(() => {
     if (!meta) return;
-    const shouldFetch =
-      status === playerStatus.PLAYING ||
-      status === playerStatus.SCRAPE_NOT_FOUND;
-    if (!shouldFetch) return;
+    // Fire as soon as we have meta — parallel to main scraping, not after
+    if (status === playerStatus.IDLE) return;
     const key = `${meta.tmdbId}-${meta.type === "show" ? meta.episode?.tmdbId ?? "" : ""}`;
     if (fetchedKeyRef.current === key) return;
     fetchedKeyRef.current = key;

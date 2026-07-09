@@ -16,7 +16,7 @@ export async function fetchLanguageVariants(
   tmdbId?: string,
 ): Promise<LanguageVariant[]> {
   try {
-    const providers = ["moovie-catalog", "homecine"];
+    const providers = ["moovie-catalog", "homecine", "zetflix"];
     const promises = providers.map(async (provider) => {
       try {
         const params = new URLSearchParams({
