@@ -72,6 +72,36 @@ export async function fetchLanguageVariants(
       }
     });
 
+    // Also fetch French variants from FrenchStream (fss)
+    if (type === "movie" && tmdbId) {
+      promises.push((async () => {
+        try {
+          const params = new URLSearchParams({ tmdbId, type, title });
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 30_000);
+          try {
+            const res = await fetch(`${STREAMSCRAPER_HUB}/api/variants/fss?${params}`, {
+              signal: controller.signal,
+            });
+            if (!res.ok) return [];
+            const json = await res.json();
+            if (!json?.variants?.length) return [];
+            return json.variants.map((v: any) => ({
+              language: v.language || "french",
+              label: v.label || "French",
+              provider: "fss",
+              id: v.id || `fss:${v.language || "french"}`,
+              type: "movie",
+            }));
+          } finally {
+            clearTimeout(timeout);
+          }
+        } catch {
+          return [];
+        }
+      })());
+    }
+
     const results = await Promise.all(promises);
     return results.flat();
   } catch {
