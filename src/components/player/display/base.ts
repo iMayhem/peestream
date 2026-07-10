@@ -146,6 +146,8 @@ export function makeVideoElementDisplayInterface(): DisplayInterface {
       if (canPlayHlsNatively(vid)) {
         vid.src = processCdnLink(src.url);
         vid.currentTime = startAt;
+        vid.load();
+        vid.play().catch(() => {});
         return;
       }
 
@@ -187,40 +189,39 @@ export function makeVideoElementDisplayInterface(): DisplayInterface {
           reportLevels();
           setupQualityForHls();
           reportAudioTracks();
-
-          if (isExtensionActiveCached()) {
-            hls.on(Hls.Events.LEVEL_LOADED, async (_, data) => {
-              const chunkUrlsDomains = data.details.fragments.map(
-                (v) => new URL(v.url).hostname,
-              );
-              const chunkUrls = [...new Set(chunkUrlsDomains)];
-
-              await setDomainRule({
-                ruleId: RULE_IDS.SET_DOMAINS_HLS,
-                targetDomains: chunkUrls,
-                requestHeaders: {
-                  ...src.preferredHeaders,
-                  ...src.headers,
-                },
-              });
-            });
-            hls.on(Hls.Events.AUDIO_TRACK_LOADED, async (_, data) => {
-              const chunkUrlsDomains = data.details.fragments.map(
-                (v) => new URL(v.url).hostname,
-              );
-              const chunkUrls = [...new Set(chunkUrlsDomains)];
-
-              await setDomainRule({
-                ruleId: RULE_IDS.SET_DOMAINS_HLS_AUDIO,
-                targetDomains: chunkUrls,
-                requestHeaders: {
-                  ...src.preferredHeaders,
-                  ...src.headers,
-                },
-              });
-            });
-          }
         });
+        if (isExtensionActiveCached()) {
+          hls.on(Hls.Events.LEVEL_LOADED, async (_, data) => {
+            const chunkUrlsDomains = data.details.fragments.map(
+              (v) => new URL(v.url).hostname,
+            );
+            const chunkUrls = [...new Set(chunkUrlsDomains)];
+
+            await setDomainRule({
+              ruleId: RULE_IDS.SET_DOMAINS_HLS,
+              targetDomains: chunkUrls,
+              requestHeaders: {
+                ...src.preferredHeaders,
+                ...src.headers,
+              },
+            });
+          });
+          hls.on(Hls.Events.AUDIO_TRACK_LOADED, async (_, data) => {
+            const chunkUrlsDomains = data.details.fragments.map(
+              (v) => new URL(v.url).hostname,
+            );
+            const chunkUrls = [...new Set(chunkUrlsDomains)];
+
+            await setDomainRule({
+              ruleId: RULE_IDS.SET_DOMAINS_HLS_AUDIO,
+              targetDomains: chunkUrls,
+              requestHeaders: {
+                ...src.preferredHeaders,
+                ...src.headers,
+              },
+            });
+          });
+        }
         hls.on(Hls.Events.LEVEL_SWITCHED, () => {
           if (!hls) return;
           const quality = hlsLevelToQuality(hls.levels[hls.currentLevel]);
@@ -246,6 +247,8 @@ export function makeVideoElementDisplayInterface(): DisplayInterface {
 
     vid.src = processCdnLink(src.url);
     vid.currentTime = startAt;
+    vid.load();
+    vid.play().catch(() => {});
   }
 
   function setSource() {
