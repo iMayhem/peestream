@@ -90,7 +90,7 @@ export async function fetchLanguageVariants(
               language: v.language || "french",
               label: v.label || "French",
               provider: "fss",
-              id: v.id || `fss:${v.language || "french"}`,
+              id: `fss:${v.id || v.language || "french"}`,
               type: "movie",
             }));
           } finally {
@@ -120,7 +120,7 @@ export async function fetchLanguageVariants(
               language: v.language || "german",
               label: v.label || "German",
               provider: "streamkiste",
-              id: v.id || `streamkiste:${tmdbId}`,
+              id: `streamkiste:${v.id || tmdbId}`,
               type: "movie",
             }));
           } finally {
