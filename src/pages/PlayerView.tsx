@@ -99,9 +99,10 @@ export function RealPlayerView() {
       if (!meta) return;
       const baseUrl = getLoadbalancedProviderApiUrl();
       if (!baseUrl) return;
-      fetch(
-        `${baseUrl}/api/subtitles?tmdbId=${meta.tmdbId}&type=${meta.type}`,
-      )
+      const subParams = new URLSearchParams({ tmdbId: meta.tmdbId, type: meta.type });
+      if (meta.season?.number) subParams.set("season", String(meta.season.number));
+      if (meta.episode?.number) subParams.set("episode", String(meta.episode.number));
+      fetch(`${baseUrl}/api/subtitles?${subParams}`)
         .then((r) => r.json())
         .then((data) => {
           if (!data.captions || data.captions.length === 0) return;
