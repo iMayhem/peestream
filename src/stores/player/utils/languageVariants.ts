@@ -102,10 +102,152 @@ export async function fetchLanguageVariants(
       })());
     }
 
+    // Also fetch German variants from StreamKiste (streamkiste.life)
+    if (type === "movie" && tmdbId) {
+      promises.push((async () => {
+        try {
+          const params = new URLSearchParams({ tmdbId, type, title });
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 30_000);
+          try {
+            const res = await fetch(`${STREAMSCRAPER_HUB}/api/variants/de?${params}`, {
+              signal: controller.signal,
+            });
+            if (!res.ok) return [];
+            const json = await res.json();
+            if (!json?.variants?.length) return [];
+            return json.variants.map((v: any) => ({
+              language: v.language || "german",
+              label: v.label || "German",
+              provider: "streamkiste",
+              id: v.id || `streamkiste:${tmdbId}`,
+              type: "movie",
+            }));
+          } finally {
+            clearTimeout(timeout);
+          }
+        } catch {
+          return [];
+        }
+      })());
+    }
+
+    // Also fetch Hindi variants from Kartoons.me (Aryabhatta)
+    if (tmdbId) {
+      promises.push((async () => {
+        try {
+          const params = new URLSearchParams({ tmdbId, type, title });
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 30_000);
+          try {
+            const res = await fetch(`${STREAMSCRAPER_HUB}/api/variants/hi?${params}`, {
+              signal: controller.signal,
+            });
+            if (!res.ok) return [];
+            const json = await res.json();
+            if (!json?.variants?.length) return [];
+            return json.variants.map((v: any) => ({
+              language: v.language || "hindi",
+              label: v.label || "Hindi",
+              provider: "aryabhatta",
+              id: v.id || `aryabhatta:${tmdbId}`,
+              type,
+            }));
+          } finally {
+            clearTimeout(timeout);
+          }
+        } catch {
+          return [];
+        }
+      })());
+    }
+
     const results = await Promise.all(promises);
     return results.flat();
   } catch {
     return [];
+  }
+}
+
+// AES-256-CBC decryption for kartoons.me URLs
+const AES_KEY = "bca9e0df1a5abb32906ca3f63ac04cef";
+
+function padKey(key: string): Uint8Array {
+  const buf = new Uint8Array(32);
+  buf.fill(0x20); // spaces
+  const enc = new TextEncoder();
+  const k = enc.encode(key);
+  for (let i = 0; i < Math.min(k.length, 32); i++) buf[i] = k[i];
+  return buf;
+}
+
+function base64UrlDecode(str: string): Uint8Array {
+  let b64 = str.replace(/-/g, "+").replace(/_/g, "/");
+  while (b64.length % 4) b64 += "=";
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+async function kartoonsDecrypt(encoded: string): Promise<string> {
+  try {
+    const raw = base64UrlDecode(encoded);
+    const iv = raw.slice(0, 16);
+    const ciphertext = raw.slice(16);
+    const key = await crypto.subtle.importKey(
+      "raw", padKey(AES_KEY),
+      { name: "AES-CBC" }, false, ["decrypt"],
+    );
+    const decrypted = await crypto.subtle.decrypt(
+      { name: "AES-CBC", iv }, key, ciphertext,
+    );
+    const dec = new Uint8Array(decrypted);
+    // PKCS7 unpad
+    const padLen = dec[dec.length - 1];
+    if (padLen > 0 && padLen <= 16) {
+      let valid = true;
+      for (let i = 0; i < padLen; i++) {
+        if (dec[dec.length - 1 - i] !== padLen) { valid = false; break; }
+      }
+      if (valid) return new TextDecoder().decode(dec.slice(0, dec.length - padLen));
+    }
+    return new TextDecoder().decode(dec);
+  } catch {
+    return encoded;
+  }
+}
+
+async function resolveAryabhatta(kartonsId: string, mediaType: string): Promise<ResolvedLanguageVariant | null> {
+  try {
+    const endpoint = mediaType === "movie"
+      ? `https://api.kartoons.me/api/movies/${kartonsId}/links`
+      : `https://api.kartoons.me/api/shows/episode/${kartonsId}/links`;
+    const res = await fetch(endpoint, {
+      credentials: "include",
+      headers: {
+        "User-Agent": navigator.userAgent,
+        Referer: "https://kartoons.me/",
+        Origin: "https://kartoons.me",
+      },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (!json.success) return null;
+    const data = json.data;
+    let links: any[] = [];
+    if (Array.isArray(data)) links = data;
+    else if (data?.links && Array.isArray(data.links)) links = data.links;
+    for (const link of links) {
+      const url = link.url ? await kartoonsDecrypt(link.url) : null;
+      if (url) {
+        const isHls = url.includes(".m3u8");
+        return { url, type: isHls ? "hls" : "file" };
+      }
+    }
+    return null;
+  } catch {
+    return null;
   }
 }
 
@@ -123,6 +265,12 @@ export async function resolveLanguageVariantUrl(
       provider = id.substring(0, idx);
       actualId = id.substring(idx + 1);
     }
+
+    // Aryabhatta resolves directly from kartoons.me API (browser-side)
+    if (provider === "aryabhatta") {
+      return resolveAryabhatta(actualId, type);
+    }
+
     const params = new URLSearchParams({
       provider,
       id: actualId,
