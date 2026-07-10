@@ -10,6 +10,8 @@ import { usePlayerStore } from "@/stores/player/store";
 import { getPrettyLanguageNameFromLocale } from "@/utils/language";
 import { LanguageVariant, resolveLanguageVariantUrl } from "@/stores/player/utils/languageVariants";
 
+let latestRequestId = "";
+
 import { SelectableLink } from "../../internals/ContextMenu/Links";
 
 export function AudioOption(props: {
@@ -86,6 +88,16 @@ export function AudioView({ id }: { id: string }) {
   const changeVariant = useCallback(
     async (variant: LanguageVariant | null) => {
       const lid = variant?.id ?? "__original__";
+      latestRequestId = lid;
+
+      // Immediately stop/clear the player display to prevent audio/video overlap
+      display?.load({
+        source: null,
+        startAt: 0,
+        automaticQuality: false,
+        preferredQuality: null,
+      });
+
       setLoadingId(lid);
       try {
         selectLanguageVariant(variant);
@@ -99,6 +111,7 @@ export function AudioView({ id }: { id: string }) {
             variant.season,
             variant.episode,
           );
+          if (latestRequestId !== lid) return;
           if (!url) return;
           const isHls = url.includes(".m3u8");
           const nextSource = isHls
@@ -123,7 +136,9 @@ export function AudioView({ id }: { id: string }) {
         }
         router.close();
       } finally {
-        setLoadingId(null);
+        if (latestRequestId === lid) {
+          setLoadingId(null);
+        }
       }
     },
     [display, selectLanguageVariant, redisplaySource, router],

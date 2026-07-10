@@ -6,6 +6,8 @@ import { useOverlayRouter } from "@/hooks/useOverlayRouter";
 import { LanguageVariant, resolveLanguageVariantUrl } from "@/stores/player/utils/languageVariants";
 import { usePlayerStore } from "@/stores/player/store";
 
+let latestRequestId = "";
+
 export function LanguageView({ id }: { id: string }) {
   const router = useOverlayRouter(id);
   const variants = usePlayerStore((s) => s.languageVariants);
@@ -17,8 +19,18 @@ export function LanguageView({ id }: { id: string }) {
 
   const change = useCallback(
     async (variant: LanguageVariant | null) => {
-      const id = variant?.id ?? "__original__";
-      setLoadingId(id);
+      const lid = variant?.id ?? "__original__";
+      latestRequestId = lid;
+
+      // Immediately stop/clear the player display to prevent audio/video overlap
+      display?.load({
+        source: null,
+        startAt: 0,
+        automaticQuality: false,
+        preferredQuality: null,
+      });
+
+      setLoadingId(lid);
       try {
         selectLanguageVariant(variant);
         if (!variant) {
@@ -31,18 +43,21 @@ export function LanguageView({ id }: { id: string }) {
             variant.season,
             variant.episode,
           );
+          if (latestRequestId !== lid) return;
           if (!url) return;
           const isHls = url.includes(".m3u8");
           display?.load({
             source: { type: isHls ? "hls" : "mp4", url },
-            startAt: usePlayerStore.getState().progress.time,
+            startAt: usePlayerStore.getState().progress.time || 0,
             automaticQuality: false,
             preferredQuality: null,
           });
         }
         router.close();
       } finally {
-        setLoadingId(null);
+        if (latestRequestId === lid) {
+          setLoadingId(null);
+        }
       }
     },
     [display, selectLanguageVariant, redisplaySource, router],

@@ -62,6 +62,9 @@ export function RealPlayerView() {
   });
   useEffect(() => {
     reset();
+    return () => {
+      reset();
+    };
   }, [paramsData, reset]);
 
   const metaChange = useCallback(
