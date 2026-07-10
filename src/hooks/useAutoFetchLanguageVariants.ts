@@ -73,7 +73,8 @@ export function useAutoFetchLanguageVariants() {
         const unique = [];
         const seen = new Set();
         for (const v of allVariants) {
-          const ukey = `${v.id}-${v.season}-${v.episode}`;
+          // Dedup by language — only show each language once (best source wins)
+          const ukey = v.language.toLowerCase();
           if (!seen.has(ukey)) {
             seen.add(ukey);
             unique.push(v);
