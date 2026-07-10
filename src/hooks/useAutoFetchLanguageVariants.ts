@@ -9,6 +9,7 @@ export function useAutoFetchLanguageVariants() {
   const status = usePlayerStore((s) => s.status);
   const setLanguageVariants = usePlayerStore((s) => s.setLanguageVariants);
   const fetchedKeyRef = useRef<string | null>(null);
+  const activeKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     // A player reset clears the variants. Clear the memoized key too, so
@@ -16,6 +17,7 @@ export function useAutoFetchLanguageVariants() {
     // the Audio menu empty.
     if (!meta) {
       fetchedKeyRef.current = null;
+      activeKeyRef.current = null;
       return;
     }
     // Fire as soon as we have meta — parallel to main scraping, not after
@@ -23,7 +25,7 @@ export function useAutoFetchLanguageVariants() {
     const key = `${meta.tmdbId}-${meta.type === "show" ? meta.episode?.tmdbId ?? "" : ""}`;
     if (fetchedKeyRef.current === key) return;
     fetchedKeyRef.current = key;
-    let cancelled = false;
+    activeKeyRef.current = key;
 
     setLanguageVariants([]);
 
@@ -77,7 +79,7 @@ export function useAutoFetchLanguageVariants() {
     }
 
     Promise.all(fetchPromises).then((results) => {
-      if (cancelled) return;
+      if (activeKeyRef.current !== key) return;
       const allVariants = results.flat();
       if (allVariants.length > 0) {
         const counts = new Map<string, number>();
@@ -106,8 +108,5 @@ export function useAutoFetchLanguageVariants() {
         setLanguageVariants(unique);
       }
     });
-    return () => {
-      cancelled = true;
-    };
   }, [meta?.tmdbId, meta?.episode?.tmdbId, status, meta?.title, meta?.releaseYear, meta?.type, setLanguageVariants]);
 }
