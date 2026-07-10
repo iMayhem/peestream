@@ -134,7 +134,7 @@ export function AudioView({ id }: { id: string }) {
       <Menu.BackLink onClick={() => router.navigate("/")}>Audio</Menu.BackLink>
       <Menu.Section className="flex flex-col pb-4">
         {/* Render HLS Multiplexed Audio Tracks */}
-        {audioTracks.length > 0 && languageVariants.length === 0 && audioTracks.map((v) => (
+        {audioTracks.length > 0 && audioTracks.map((v) => (
           <AudioOption
             key={v.id}
             selected={v.id === currentAudioTrack?.id && !selectedLanguageVariant}
@@ -160,7 +160,7 @@ export function AudioView({ id }: { id: string }) {
               onClick={() => changeVariant(null)}
               langCode="en"
             >
-              Original (English)
+              Original
             </AudioOption>
             {languageVariants.map((v) => (
               <AudioOption
