@@ -51,7 +51,7 @@ export function HomePage() {
   const [showWatching, setShowWatching] = useState(false);
 
   const homeCategories = categories.filter((c) =>
-    ["trending", "trending-tv", "top-rated", "highest-grossing"].includes(
+    ["trending", "trending-tv", "anime", "top-rated", "highest-grossing"].includes(
       c.key,
     ),
   );
