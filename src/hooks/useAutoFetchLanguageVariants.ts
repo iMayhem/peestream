@@ -18,15 +18,69 @@ export function useAutoFetchLanguageVariants() {
     if (fetchedKeyRef.current === key) return;
     fetchedKeyRef.current = key;
 
-    fetchLanguageVariants(
-      meta.title,
-      meta.releaseYear,
-      meta.type,
-      meta.tmdbId,
-      meta.type === "show" ? meta.season?.number : undefined,
-      meta.type === "show" ? meta.episode?.number : undefined,
-    ).then((variants) => {
-      if (variants.length > 0) setLanguageVariants(variants);
+    const fetchPromises = [];
+
+    // Fetch primary variant
+    fetchPromises.push(
+      fetchLanguageVariants(
+        meta.title,
+        meta.releaseYear,
+        meta.type,
+        meta.tmdbId,
+        meta.type === "show" ? meta.season?.number : undefined,
+        meta.type === "show" ? meta.episode?.number : undefined,
+      )
+    );
+
+    // Fetch adjacent episode if part of a multi-part episode
+    if (meta.type === "show" && meta.episode && meta.season) {
+      const epTitle = meta.episode.title;
+      const epNum = meta.episode.number;
+      const partMatch = epTitle.match(/(?:Part\s*|#\s*|\(\s*)(\d+)(?:\s*\))?/i);
+      if (partMatch) {
+        const currentPart = parseInt(partMatch[1], 10);
+        let adjacentEpNum: number | null = null;
+        if (currentPart === 1) {
+          adjacentEpNum = epNum + 1;
+        } else if (currentPart === 2) {
+          adjacentEpNum = epNum - 1;
+        }
+
+        if (adjacentEpNum !== null && adjacentEpNum > 0) {
+          fetchPromises.push(
+            fetchLanguageVariants(
+              meta.title,
+              meta.releaseYear,
+              meta.type,
+              meta.tmdbId,
+              meta.season.number,
+              adjacentEpNum,
+            ).then((variants) =>
+              variants.map((v) => ({
+                ...v,
+                label: `${v.language} (Ep ${adjacentEpNum})`,
+                episode: adjacentEpNum,
+              }))
+            )
+          );
+        }
+      }
+    }
+
+    Promise.all(fetchPromises).then((results) => {
+      const allVariants = results.flat();
+      if (allVariants.length > 0) {
+        const unique = [];
+        const seen = new Set();
+        for (const v of allVariants) {
+          const ukey = `${v.id}-${v.season}-${v.episode}`;
+          if (!seen.has(ukey)) {
+            seen.add(ukey);
+            unique.push(v);
+          }
+        }
+        setLanguageVariants(unique);
+      }
     });
   }, [meta?.tmdbId, meta?.episode?.tmdbId, status, meta?.title, meta?.releaseYear, meta?.type, setLanguageVariants]);
 }
