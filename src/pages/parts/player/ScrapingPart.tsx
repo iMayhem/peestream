@@ -99,7 +99,7 @@ export function ScrapingPart(props: ScrapingProps) {
       {!sourceOrder || sourceOrder.length === 0 ? (
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center flex flex-col justify-center z-0">
           <Loading className="mb-8" />
-          <p>{t("player.turnstile.verifyingHumanity")}</p>
+          <p>{t("player.scraping.items.pending")}</p>
         </div>
       ) : null}
       <div
