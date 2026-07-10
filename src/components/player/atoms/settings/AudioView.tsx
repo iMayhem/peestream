@@ -103,7 +103,7 @@ export function AudioView({ id }: { id: string }) {
           const isHls = url.includes(".m3u8");
           const nextSource = isHls
             ? { type: "hls" as const, url }
-            : { type: "mp4" as const, qualities: { "1080": { type: "mp4" as const, url } } };
+            : { type: "file" as const, qualities: { "1080": { type: "mp4" as const, url } } };
 
           usePlayerStore.setState((s) => {
             s.status = playerStatus.PLAYING;
