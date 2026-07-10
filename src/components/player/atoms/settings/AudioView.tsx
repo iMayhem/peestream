@@ -105,11 +105,14 @@ export function AudioView({ id }: { id: string }) {
             ? { type: "hls" as const, url }
             : { type: "file" as const, qualities: { "1080": { type: "mp4" as const, url } } };
 
-          usePlayerStore.setState((s) => {
-            s.status = playerStatus.PLAYING;
-            s.source = nextSource;
-            s.interface.error = undefined;
-          });
+          usePlayerStore.setState((s) => ({
+            status: playerStatus.PLAYING,
+            source: nextSource,
+            interface: {
+              ...s.interface,
+              error: undefined,
+            },
+          }));
 
           display?.load({
             source: { type: isHls ? "hls" : "mp4", url },
