@@ -18,6 +18,8 @@ export function useAutoFetchLanguageVariants() {
     if (fetchedKeyRef.current === key) return;
     fetchedKeyRef.current = key;
 
+    setLanguageVariants([]);
+
     const fetchPromises = [];
 
     // Fetch primary variant
