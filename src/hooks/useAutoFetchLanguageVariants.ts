@@ -17,6 +17,7 @@ export function useAutoFetchLanguageVariants() {
     const key = `${meta.tmdbId}-${meta.type === "show" ? meta.episode?.tmdbId ?? "" : ""}`;
     if (fetchedKeyRef.current === key) return;
     fetchedKeyRef.current = key;
+    let cancelled = false;
 
     setLanguageVariants([]);
 
@@ -70,20 +71,37 @@ export function useAutoFetchLanguageVariants() {
     }
 
     Promise.all(fetchPromises).then((results) => {
+      if (cancelled) return;
       const allVariants = results.flat();
       if (allVariants.length > 0) {
+        const counts = new Map<string, number>();
+        for (const v of allVariants) {
+          const languageKey = `${v.language.toLowerCase()}:${v.episode ?? ""}`;
+          counts.set(languageKey, (counts.get(languageKey) ?? 0) + 1);
+        }
+
         const unique = [];
         const seen = new Set();
         for (const v of allVariants) {
-          // Dedup by language — only show each language once (best source wins)
-          const ukey = v.language.toLowerCase();
+          // Keep alternatives from different providers. The previous language-only
+          // dedupe made Athena hide a usable Russian or Spanish fallback.
+          const ukey = v.id;
           if (!seen.has(ukey)) {
             seen.add(ukey);
-            unique.push(v);
+            const languageKey = `${v.language.toLowerCase()}:${v.episode ?? ""}`;
+            unique.push({
+              ...v,
+              label: (counts.get(languageKey) ?? 0) > 1
+                ? `${v.label} · ${v.provider}`
+                : v.label,
+            });
           }
         }
         setLanguageVariants(unique);
       }
     });
+    return () => {
+      cancelled = true;
+    };
   }, [meta?.tmdbId, meta?.episode?.tmdbId, status, meta?.title, meta?.releaseYear, meta?.type, setLanguageVariants]);
 }

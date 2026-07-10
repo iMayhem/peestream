@@ -105,16 +105,20 @@ export function AudioView({ id }: { id: string }) {
           const store = usePlayerStore.getState();
           redisplaySource(store.progress.time);
         } else {
-          const url = await resolveLanguageVariantUrl(
+          const resolved = await resolveLanguageVariantUrl(
             variant.id,
             variant.type,
             variant.season,
             variant.episode,
           );
           if (latestRequestId !== lid) return;
-          if (!url) return;
-          const isHls = url.includes(".m3u8");
-          const nextSource = isHls
+          if (!resolved) {
+            selectLanguageVariant(null);
+            redisplaySource(usePlayerStore.getState().progress.time);
+            return;
+          }
+          const { url } = resolved;
+          const nextSource = resolved.type === "hls"
             ? { type: "hls" as const, url }
             : { type: "file" as const, qualities: { "1080": { type: "mp4" as const, url } } };
 
@@ -128,7 +132,7 @@ export function AudioView({ id }: { id: string }) {
           }));
 
           display?.load({
-            source: { type: isHls ? "hls" : "mp4", url },
+            source: { type: resolved.type === "hls" ? "hls" : "mp4", url },
             startAt: usePlayerStore.getState().progress.time || 0,
             automaticQuality: false,
             preferredQuality: null,
