@@ -11,7 +11,13 @@ export function useAutoFetchLanguageVariants() {
   const fetchedKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!meta) return;
+    // A player reset clears the variants. Clear the memoized key too, so
+    // replaying the same title/episode fetches them again instead of leaving
+    // the Audio menu empty.
+    if (!meta) {
+      fetchedKeyRef.current = null;
+      return;
+    }
     // Fire as soon as we have meta — parallel to main scraping, not after
     if (status === playerStatus.IDLE) return;
     const key = `${meta.tmdbId}-${meta.type === "show" ? meta.episode?.tmdbId ?? "" : ""}`;
