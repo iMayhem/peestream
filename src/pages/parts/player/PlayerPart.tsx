@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 
 import { BrandPill } from "@/components/layout/BrandPill";
+import { Icon, Icons } from "@/components/Icon";
 import { Player } from "@/components/player";
 import { useShouldShowControls } from "@/components/player/hooks/useShouldShowControls";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -74,7 +75,15 @@ export function PlayerPart(props: PlayerPartProps) {
           <div className="text-center hidden xl:flex justify-center items-center">
             <Player.EpisodeTitle />
           </div>
-          <div className="hidden sm:flex items-center justify-end">
+          <div className="hidden sm:flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => window.open("/watch-together", "_blank")}
+              className="flex items-center gap-1.5 rounded-full px-3 py-2 text-sm text-white bg-pill-background bg-opacity-50 hover:bg-pill-backgroundHover backdrop-blur-lg transition-[transform,background-color] hover:scale-105 active:scale-95"
+            >
+              <Icon className="text-lg" icon={Icons.WATCH_PARTY} />
+              <span className="hidden lg:inline font-medium">Watch Together</span>
+            </button>
             <BrandPill />
           </div>
           <div className="flex sm:hidden items-center justify-end">
