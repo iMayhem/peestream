@@ -1,6 +1,8 @@
 import { ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { BrandPill } from "@/components/layout/BrandPill";
+import { Icon, Icons } from "@/components/Icon";
 import { Player } from "@/components/player";
 import { useShouldShowControls } from "@/components/player/hooks/useShouldShowControls";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -17,6 +19,8 @@ export interface PlayerPartProps {
 }
 
 export function PlayerPart(props: PlayerPartProps) {
+  const navigate = useNavigate();
+  const source = usePlayerStore((s) => s.source);
   const { showTargets, showTouchTargets } = useShouldShowControls();
   const status = usePlayerStore((s) => s.status);
   const { isMobile } = useIsMobile();
@@ -74,7 +78,25 @@ export function PlayerPart(props: PlayerPartProps) {
           <div className="text-center hidden xl:flex justify-center items-center">
             <Player.EpisodeTitle />
           </div>
-          <div className="hidden sm:flex items-center justify-end">
+          <div className="hidden sm:flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                let videoUrl = "";
+                if (source?.type === "hls") {
+                  videoUrl = (source as any).playlist || "";
+                } else if (source?.type === "file") {
+                  const quals = Object.values((source as any).qualities || {}) as any[];
+                  videoUrl = quals.find((q: any) => q?.url)?.url || "";
+                }
+                const params = videoUrl ? `?url=${encodeURIComponent(videoUrl)}` : "";
+                navigate(`/watch-together${params}`);
+              }}
+              className="flex items-center gap-1.5 rounded-full px-3 py-2 text-sm text-white bg-pill-background bg-opacity-50 hover:bg-pill-backgroundHover backdrop-blur-lg transition-[transform,background-color] hover:scale-105 active:scale-95"
+            >
+              <Icon className="text-lg" icon={Icons.WATCH_PARTY} />
+              <span className="hidden lg:inline font-medium">Watch Together</span>
+            </button>
             <BrandPill />
           </div>
           <div className="flex sm:hidden items-center justify-end">
