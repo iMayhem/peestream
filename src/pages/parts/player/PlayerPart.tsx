@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { BrandPill } from "@/components/layout/BrandPill";
 import { Icon, Icons } from "@/components/Icon";
@@ -18,6 +19,7 @@ export interface PlayerPartProps {
 }
 
 export function PlayerPart(props: PlayerPartProps) {
+  const navigate = useNavigate();
   const { showTargets, showTouchTargets } = useShouldShowControls();
   const status = usePlayerStore((s) => s.status);
   const { isMobile } = useIsMobile();
@@ -78,7 +80,7 @@ export function PlayerPart(props: PlayerPartProps) {
           <div className="hidden sm:flex items-center justify-end gap-2">
             <button
               type="button"
-              onClick={() => window.open("/watch-together", "_blank")}
+              onClick={() => navigate("/watch-together")}
               className="flex items-center gap-1.5 rounded-full px-3 py-2 text-sm text-white bg-pill-background bg-opacity-50 hover:bg-pill-backgroundHover backdrop-blur-lg transition-[transform,background-color] hover:scale-105 active:scale-95"
             >
               <Icon className="text-lg" icon={Icons.WATCH_PARTY} />
