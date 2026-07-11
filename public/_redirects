@@ -1,7 +1,2 @@
-# Serve party app static files directly (they use their own routing)
-/party/app.html /party/app.html 200
-/party/party.js /party/party.js 200
-/party/party.css /party/party.css 200
-
 /assets/* /assets/:splat 200
 /* /index.html 200

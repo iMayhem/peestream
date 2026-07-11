@@ -1,15 +1,9 @@
 /*
-  X-Frame-Options: DENY
+  X-Frame-Options: SAMEORIGIN
   X-XSS-Protection: 1; mode=block
   X-Content-Type-Options: nosniff
   Referrer-Policy: origin-when-cross-origin
   Cache-Control: public, max-age=0, s-maxage=0, must-revalidate
-
-# Allow the party app to be embedded in an iframe on the same origin
-/party/*
-  X-Frame-Options: SAMEORIGIN
-  X-XSS-Protection: 1; mode=block
-  X-Content-Type-Options: nosniff
 
 /manifest.webmanifest
   Content-Type: application/manifest+json
