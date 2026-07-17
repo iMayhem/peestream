@@ -161,7 +161,16 @@
       </script>
   {{/if}}
 
-  <script defer src="https://cloud.umami.is/script.js" data-website-id="6b9a9f98-0117-4e58-ac60-f97436303a50"></script>
+    <script>
+    window.op=window.op||function(){var n=[];return new Proxy(function(){arguments.length&&n.push([].slice.call(arguments))},{get:function(t,r){return"q"===r?n:function(){n.push([r].concat([].slice.call(arguments)))}} ,has:function(t,r){return"q"===r}}) }();
+    window.op('init', {
+      clientId: 'be0fa489-1813-4fbf-939a-858f1b842b61',
+      trackScreenViews: true,
+      trackOutgoingLinks: true,
+      trackAttributes: true,
+    });
+  </script>
+  <script src="https://openpanel.dev/op1.js" defer async></script>
 </head>
 
 <body>
