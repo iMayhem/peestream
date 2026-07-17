@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PeeStream Embed Player</title>
+  
+  <!-- Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- ArtPlayer & HlsJS CDNs -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.0/dist/hls.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
+  
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body, html {
+      width: 100%;
+      height: 100%;
+      background-color: #050508;
+      font-family: 'Outfit', sans-serif;
+      color: #ffffff;
+      overflow: hidden;
+    }
+    
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    /* Video Player Container */
+    .player-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background-color: #000000;
+      z-index: 1;
+    }
+    
+    .artplayer-app {
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* Loading / Scraping Overlay */
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(5, 5, 8, 0.95);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: opacity 0.5s ease;
+    }
+    
+    .overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .loader-card {
+      width: 90%;
+      max-width: 450px;
+      padding: 30px;
+      border-radius: 20px;
+      background: rgba(25, 25, 35, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .media-info {
+      margin-bottom: 20px;
+    }
+    
+    .media-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #ffffff 0%, #a5a5c5 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .media-details {
+      font-size: 0.9rem;
+      color: #8e8e9f;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .spinner-box {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      margin-bottom: 25px;
+    }
+    
+    .spinner-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border: 3px solid rgba(255, 62, 108, 0.1);
+      border-top: 3px solid #ff3e6c;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    .spinner-ring-inner {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 80px;
+      height: 80px;
+      border: 2px solid rgba(0, 212, 255, 0.05);
+      border-bottom: 2px solid #00d4ff;
+      border-radius: 50%;
+      animation: spin-reverse 1.5s linear infinite;
+    }
+    
+    .spinner-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #ff3e6c;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes spin-reverse {
+      0% { transform: rotate(360deg); }
+      100% { transform: rotate(0deg); }
+    }
+    
+    .status-text {
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 20px;
+      color: #e5e5f5;
+    }
+    
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 25px;
+    }
+    
+    .progress-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #ff3e6c, #ff8a00);
+      border-radius: 10px;
+      transition: width 0.3s cubic-bezier(0.1, 0.8, 0.3, 1);
+    }
+    
+    .sources-list {
+      width: 100%;
+      max-height: 140px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-right: 5px;
+    }
+    
+    .sources-list::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    .sources-list::-webkit-scrollbar-thumb {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+    
+    .source-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background-color: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 12px;
+      font-size: 0.85rem;
+    }
+    
+    .source-name {
+      font-weight: 500;
+      color: #e5e5f5;
+      text-transform: capitalize;
+    }
+    
+    .source-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .source-status.pending {
+      color: #ffaa00;
+    }
+    
+    .source-status.success {
+      color: #00e676;
+    }
+    
+    .source-status.failure {
+      color: #ff5252;
+    }
+    
+    .source-status.notfound {
+      color: #8e8e9f;
+    }
+    
+    /* Embed Code Drawer Button */
+    .embed-trigger-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(25, 25, 35, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+      color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      z-index: 5;
+      transition: all 0.2s ease;
+    }
+    
+    .embed-trigger-btn:hover {
+      background: rgba(255, 62, 108, 0.2);
+      border-color: #ff3e6c;
+      color: #ff3e6c;
+      transform: scale(1.05);
+    }
+    
+    /* Embed Code Drawer */
+    .embed-drawer {
+      position: absolute;
+      bottom: -320px;
+      left: 0;
+      width: 100%;
+      height: 300px;
+      background: rgba(10, 10, 15, 0.95);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      z-index: 8;
+      transition: bottom 0.3s cubic-bezier(0.1, 0.8, 0.3, 1);
+      padding: 25px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6);
+    }
+    
+    .embed-drawer.open {
+      bottom: 0;
+    }
+    
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .drawer-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #ffffff;
+    }
+    
+    .drawer-close-btn {
+      background: none;
+      border: none;
+      color: #8e8e9f;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+    
+    .drawer-close-btn:hover {
+      color: #ff3e6c;
+    }
+    
+    .drawer-content {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .input-label {
+      font-size: 0.8rem;
+      color: #8e8e9f;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 500;
+    }
+    
+    .code-box-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    
+    .code-input {
+      width: 100%;
+      padding: 12px 14px;
+      padding-right: 90px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      color: #ff8a00;
+      font-family: monospace;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+    
+    .code-input:focus {
+      border-color: rgba(255, 62, 108, 0.5);
+    }
+    
+    .copy-btn {
+      position: absolute;
+      right: 6px;
+      padding: 7px 14px;
+      background: #ff3e6c;
+      border: none;
+      border-radius: 8px;
+      color: #ffffff;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .copy-btn:hover {
+      background: #ff1e53;
+    }
+    
+    .options-row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: #e5e5f5;
+      cursor: pointer;
+    }
+    
+    .checkbox-label input {
+      accent-color: #ff3e6c;
+      width: 16px;
+      height: 16px;
+    }
+    
+    /* Error View */
+    .error-card {
+      display: none;
+      width: 90%;
+      max-width: 400px;
+      padding: 30px;
+      border-radius: 20px;
+      background: rgba(25, 25, 35, 0.8);
+      border: 1px solid rgba(255, 82, 82, 0.2);
+      backdrop-filter: blur(10px);
+      text-align: center;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .error-icon {
+      font-size: 3rem;
+      color: #ff5252;
+    }
+    
+    .error-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+    
+    .error-desc {
+      font-size: 0.9rem;
+      color: #8e8e9f;
+      line-height: 1.4;
+    }
+    
+    .retry-btn {
+      padding: 10px 24px;
+      background: #ff3e6c;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      margin-top: 10px;
+    }
+    
+    .retry-btn:hover {
+      background: #ff1e53;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app">
+    
+    <!-- Video Player Container -->
+    <div class="player-container">
+      <div id="artplayer" class="artplayer-app"></div>
+      
+      <!-- Embed Drawer Button -->
+      <div id="embed-trigger" class="embed-trigger-btn" title="Get Embed Code">
+        <i class="fa-solid fa-code"></i>
+      </div>
+    </div>
+    
+    <!-- Scraping Loading Overlay -->
+    <div id="loading-overlay" class="overlay">
+      <div class="loader-card">
+        <div class="media-info">
+          <div id="loader-title" class="media-title">Loading Media</div>
+          <div id="loader-details" class="media-details">Resolving stream</div>
+        </div>
+        
+        <div class="spinner-box">
+          <div class="spinner-ring"></div>
+          <div class="spinner-ring-inner"></div>
+          <div id="progress-percent" class="spinner-text">0%</div>
+        </div>
+        
+        <div id="loader-status" class="status-text">Connecting to scrapers...</div>
+        
+        <div class="progress-bar-container">
+          <div id="progress-bar-fill" class="progress-bar-fill"></div>
+        </div>
+        
+        <div id="sources-list" class="sources-list">
+          <!-- Dynamic sources statuses -->
+        </div>
+      </div>
+    </div>
+    
+    <!-- Error Overlay -->
+    <div id="error-overlay" class="overlay" style="display: none;">
+      <div class="error-card" style="display: flex;">
+        <i class="fa-solid fa-triangle-exclamation error-icon"></i>
+        <div class="error-title">Failed to load video</div>
+        <div id="error-desc" class="error-desc">No video streams could be found for this content. Please try again later.</div>
+        <button onclick="window.location.reload()" class="retry-btn">Retry</button>
+      </div>
+    </div>
+    
+    <!-- Embed Code Drawer -->
+    <div id="embed-drawer" class="embed-drawer">
+      <div class="drawer-header">
+        <div class="drawer-title">Embed Options</div>
+        <button id="drawer-close" class="drawer-close-btn"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      
+      <div class="drawer-content">
+        <div class="input-group">
+          <div class="input-label">HTML Iframe Embed Code</div>
+          <div class="code-box-wrapper">
+            <input type="text" id="iframe-code-input" class="code-input" readonly value="">
+            <button id="copy-code-btn" class="copy-btn">
+              <i class="fa-regular fa-copy"></i> Copy
+            </button>
+          </div>
+        </div>
+        
+        <div class="options-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="opt-autoplay" checked>
+            <span>Autoplay video</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="opt-mute">
+            <span>Mute on start</span>
+          </label>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+
+  <script>
+    // URL Params parsing
+    const urlParams = new URLSearchParams(window.location.search);
+    const tmdbId = urlParams.get('tmdbId');
+    const type = urlParams.get('type') || 'movie';
+    const season = urlParams.get('season');
+    const episode = urlParams.get('episode');
+    const title = urlParams.get('title') || 'PeeStream Media';
+    
+    // Elements
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const errorOverlay = document.getElementById('error-overlay');
+    const loaderTitle = document.getElementById('loader-title');
+    const loaderDetails = document.getElementById('loader-details');
+    const loaderStatus = document.getElementById('loader-status');
+    const progressBarFill = document.getElementById('progress-bar-fill');
+    const progressPercent = document.getElementById('progress-percent');
+    const sourcesList = document.getElementById('sources-list');
+    
+    const embedTrigger = document.getElementById('embed-trigger');
+    const embedDrawer = document.getElementById('embed-drawer');
+    const drawerClose = document.getElementById('drawer-close');
+    const iframeCodeInput = document.getElementById('iframe-code-input');
+    const copyCodeBtn = document.getElementById('copy-code-btn');
+    const optAutoplay = document.getElementById('opt-autoplay');
+    const optMute = document.getElementById('opt-mute');
+    
+    // Set UI Media Info
+    loaderTitle.innerText = title;
+    if (type === 'show' || type === 'tv') {
+      loaderDetails.innerText = `Season ${season} • Episode ${episode}`;
+    } else {
+      loaderDetails.innerText = 'Movie';
+    }
+    
+    // Setup initial iframe code
+    function updateEmbedCode() {
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.delete('autoplay');
+      currentUrl.searchParams.delete('muted');
+      
+      const autoplay = optAutoplay.checked ? '&autoplay=true' : '';
+      const mute = optMute.checked ? '&muted=true' : '';
+      
+      const embedUrl = `${currentUrl.origin}${currentUrl.pathname}?tmdbId=${tmdbId}&type=${type}${season ? `&season=${season}` : ''}${episode ? `&episode=${episode}` : ''}&title=${encodeURIComponent(title)}${autoplay}${mute}`;
+      iframeCodeInput.value = `<iframe src="${embedUrl}" width="100%" height="100%" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
+    }
+    
+    // Embed drawer open/close
+    embedTrigger.addEventListener('click', () => {
+      updateEmbedCode();
+      embedDrawer.classList.add('open');
+    });
+    
+    drawerClose.addEventListener('click', () => {
+      embedDrawer.classList.remove('open');
+    });
+    
+    optAutoplay.addEventListener('change', updateEmbedCode);
+    optMute.addEventListener('change', updateEmbedCode);
+    
+    // Copy code button
+    copyCodeBtn.addEventListener('click', () => {
+      iframeCodeInput.select();
+      document.execCommand('copy');
+      
+      copyCodeBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+      copyCodeBtn.style.background = '#00e676';
+      
+      setTimeout(() => {
+        copyCodeBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+        copyCodeBtn.style.background = '#ff3e6c';
+      }, 2000);
+    });
+
+    // Scrapers mapping & progress logic
+    let totalProgress = 0;
+    let sourceProgresses = {};
+    
+    function updateProgressUI() {
+      const keys = Object.keys(sourceProgresses);
+      if (keys.length === 0) return;
+      
+      let sum = 0;
+      keys.forEach(k => {
+        sum += sourceProgresses[k].percentage;
+      });
+      
+      // Target average percentage
+      totalProgress = Math.round(sum / keys.length);
+      progressBarFill.style.width = `${totalProgress}%`;
+      progressPercent.innerText = `${totalProgress}%`;
+    }
+    
+    function setSourceStatus(id, percentage, status, reason = '') {
+      sourceProgresses[id] = { percentage, status };
+      updateProgressUI();
+      
+      let item = document.getElementById(`src-${id}`);
+      if (!item) {
+        item = document.createElement('div');
+        item.id = `src-${id}`;
+        item.className = 'source-item';
+        sourcesList.appendChild(item);
+      }
+      
+      let statusIcon = '';
+      if (status === 'pending') {
+        statusIcon = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+      } else if (status === 'success') {
+        statusIcon = '<i class="fa-solid fa-circle-check"></i>';
+      } else if (status === 'failure') {
+        statusIcon = '<i class="fa-solid fa-circle-xmark"></i>';
+      } else if (status === 'notfound') {
+        statusIcon = '<i class="fa-solid fa-circle-minus"></i>';
+      }
+      
+      item.innerHTML = `
+        <span class="source-name">${id}</span>
+        <span class="source-status ${status}">
+          ${statusIcon} <span>${status}</span>
+        </span>
+      `;
+      
+      loaderStatus.innerText = `Scraping: ${id} (${percentage}%)`;
+    }
+    
+    // Connect to Server-Sent Events scraper
+    if (!tmdbId) {
+      loadingOverlay.style.display = 'none';
+      errorOverlay.style.display = 'flex';
+      document.getElementById('error-desc').innerText = 'Missing tmdbId in the URL parameters.';
+    } else {
+      startScraping();
+    }
+    
+    function startScraping() {
+      const scrapeUrl = `https://providers.peestream.in/scrape?tmdbId=${tmdbId}&type=${type}${season ? `&season=${season}` : ''}${episode ? `&episode=${episode}` : ''}`;
+      const eventSource = new EventSource(scrapeUrl);
+      
+      eventSource.addEventListener('init', (e) => {
+        const data = JSON.parse(e.data);
+        data.sourceIds.forEach(id => {
+          setSourceStatus(id, 0, 'pending');
+        });
+      });
+      
+      eventSource.addEventListener('start', (e) => {
+        const id = e.data;
+        setSourceStatus(id, 0, 'pending');
+      });
+      
+      eventSource.addEventListener('update', (e) => {
+        const data = JSON.parse(e.data);
+        setSourceStatus(data.id, data.percentage, data.status, data.reason || data.error);
+      });
+      
+      eventSource.addEventListener('completed', (e) => {
+        const data = JSON.parse(e.data);
+        eventSource.close();
+        
+        // Success progress
+        progressBarFill.style.width = '100%';
+        progressPercent.innerText = '100%';
+        loaderStatus.innerText = 'Initializing player...';
+        
+        setTimeout(() => {
+          loadingOverlay.classList.add('hidden');
+          initPlayer(data.stream);
+        }, 800);
+      });
+      
+      eventSource.addEventListener('done', (e) => {
+        eventSource.close();
+        // If completed didn't fire (meaning no streams succeeded)
+        setTimeout(() => {
+          if (loadingOverlay.classList.contains('hidden')) return;
+          loadingOverlay.style.display = 'none';
+          errorOverlay.style.display = 'flex';
+        }, 1000);
+      });
+      
+      eventSource.onerror = (err) => {
+        eventSource.close();
+        setTimeout(() => {
+          if (loadingOverlay.classList.contains('hidden')) return;
+          loadingOverlay.style.display = 'none';
+          errorOverlay.style.display = 'flex';
+          document.getElementById('error-desc').innerText = 'Scraper connection lost. Retrying...';
+        }, 1500);
+      };
+    }
+    
+    // Play Stream via ArtPlayer
+    async function initPlayer(stream) {
+      let playerUrl = '';
+      let playerType = 'mp4';
+      
+      if (stream.type === 'hls') {
+        playerUrl = stream.playlist;
+        playerType = 'm3u8';
+      } else if (stream.type === 'file') {
+        // Choose highest quality
+        const qualities = Object.keys(stream.qualities);
+        const bestQual = qualities.includes('1080P') ? '1080P' : qualities.includes('720P') ? '720P' : qualities[0];
+        playerUrl = stream.qualities[bestQual].url;
+        playerType = stream.qualities[bestQual].type || 'mp4';
+      }
+      
+      // Fetch Subtitles
+      const captionsList = [];
+      try {
+        const subUrl = `https://providers.peestream.in/api/subtitles?tmdbId=${tmdbId}&type=${type}${season ? `&season=${season}` : ''}${episode ? `&episode=${episode}` : ''}`;
+        const subResp = await fetch(subUrl);
+        if (subResp.ok) {
+          const subData = await subResp.json();
+          if (subData && Array.isArray(subData.captions)) {
+            // Map subtitles to ArtPlayer settings structure
+            subData.captions.forEach(cap => {
+              // Convert download link to use our proxy if it needs proxying
+              let targetUrl = cap.url;
+              if (cap.needsProxy) {
+                // The proxy endpoint on providers.peestream.in/proxy
+                const u = btoa(cap.url).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                targetUrl = `https://providers.peestream.in/proxy?u=${u}`;
+              }
+              
+              captionsList.push({
+                html: getLanguageName(cap.language),
+                url: targetUrl,
+                type: cap.type || 'srt',
+                language: cap.language
+              });
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Error loading subtitles:', err);
+      }
+      
+      // Setup autoplay / mute settings from URL params
+      const autoplayParam = urlParams.get('autoplay') === 'true';
+      const mutedParam = urlParams.get('muted') === 'true';
+      
+      // ArtPlayer configuration
+      const art = new ArtPlayer({
+        container: '#artplayer',
+        url: playerUrl,
+        type: playerType === 'm3u8' ? 'm3u8' : 'mp4',
+        poster: 'https://peestream.in/placeholder.png', // Fallback poster
+        volume: 0.8,
+        isLive: false,
+        muted: mutedParam,
+        autoplay: autoplayParam,
+        pip: true,
+        autoSize: true,
+        autoMini: true,
+        screenshot: true,
+        setting: true,
+        loop: false,
+        flip: true,
+        playbackRate: true,
+        aspectRatio: true,
+        fullscreen: true,
+        fullscreenWeb: true,
+        subtitleOffset: true,
+        miniProgressBar: true,
+        mutex: true,
+        backdrop: true,
+        playsInline: true,
+        autoPlayback: true,
+        airplay: true,
+        theme: '#ff3e6c',
+        customType: {
+          m3u8: function (video, url) {
+            if (Hls.isSupported()) {
+              const hls = new Hls();
+              hls.loadSource(url);
+              hls.attachMedia(video);
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+              video.src = url;
+            }
+          },
+        },
+        subtitle: {
+          url: '',
+          type: 'srt',
+          style: {
+            color: '#ffffff',
+            fontSize: '22px',
+            textShadow: '0 0 4px rgba(0,0,0,0.8)'
+          },
+        },
+      });
+      
+      // Inject Subtitles Settings Menu
+      if (captionsList.length > 0) {
+        // Sort language choices alphabetically
+        captionsList.sort((a, b) => a.html.localeCompare(b.html));
+        
+        art.setting.update({
+          name: 'subtitle',
+          width: 200,
+          html: 'Subtitles',
+          tooltip: 'Off',
+          selector: [
+            {
+              html: 'Off',
+              url: '',
+              default: true,
+            },
+            ...captionsList
+          ],
+          onSelect: function (item) {
+            if (item.url) {
+              art.subtitle.show = true;
+              art.subtitle.url = item.url;
+              art.subtitle.type = item.type || 'srt';
+            } else {
+              art.subtitle.show = false;
+            }
+            return item.html;
+          },
+        });
+        
+        // Auto-select English subtitles if present
+        const englishSub = captionsList.find(sub => sub.language === 'en');
+        if (englishSub) {
+          setTimeout(() => {
+            art.subtitle.show = true;
+            art.subtitle.url = englishSub.url;
+            art.subtitle.type = englishSub.type || 'srt';
+            art.setting.update({
+              name: 'subtitle',
+              tooltip: 'English'
+            });
+          }, 1000);
+        }
+      }
+      
+      // Store player instance globally for debugging
+      window.art = art;
+    }
+    
+    // Help helper for language pretty names
+    function getLanguageName(code) {
+      const names = {
+        'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German', 'it': 'Italian',
+        'pt': 'Portuguese', 'ru': 'Russian', 'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean',
+        'ar': 'Arabic', 'hi': 'Hindi', 'nl': 'Dutch', 'pl': 'Polish', 'tr': 'Turkish',
+        'vi': 'Vietnamese', 'th': 'Thai', 'sv': 'Swedish', 'no': 'Norwegian', 'da': 'Danish',
+        'fi': 'Finnish', 'el': 'Greek', 'he': 'Hebrew', 'id': 'Indonesian', 'ms': 'Malay',
+        'ro': 'Romanian', 'hu': 'Hungarian', 'cs': 'Czech', 'sk': 'Slovak', 'uk': 'Ukrainian',
+        'sr': 'Serbian', 'hr': 'Croatian', 'bg': 'Bulgarian', 'sl': 'Slovenian', 'fa': 'Persian'
+      };
+      return names[code.toLowerCase()] || code.toUpperCase();
+    }
+  </script>
+</body>
+</html>
