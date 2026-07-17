@@ -7,12 +7,15 @@ import { Menu } from "@/components/player/internals/ContextMenu";
 import { useOverlayRouter } from "@/hooks/useOverlayRouter";
 import { AudioTrack, playerStatus } from "@/stores/player/slices/source";
 import { usePlayerStore } from "@/stores/player/store";
+import {
+  LanguageVariant,
+  resolveLanguageVariantUrl,
+} from "@/stores/player/utils/languageVariants";
 import { getPrettyLanguageNameFromLocale } from "@/utils/language";
-import { LanguageVariant, resolveLanguageVariantUrl } from "@/stores/player/utils/languageVariants";
-
-let latestRequestId = "";
 
 import { SelectableLink } from "../../internals/ContextMenu/Links";
+
+let latestRequestId = "";
 
 export function AudioOption(props: {
   langCode?: string;
@@ -22,7 +25,11 @@ export function AudioOption(props: {
   loading?: boolean;
 }) {
   return (
-    <SelectableLink selected={props.selected} loading={props.loading} onClick={props.onClick}>
+    <SelectableLink
+      selected={props.selected}
+      loading={props.loading}
+      onClick={props.onClick}
+    >
       <span className="flex items-center">
         <span data-code={props.langCode} className="mr-3 inline-flex">
           <FlagIcon langCode={props.langCode} />
@@ -36,7 +43,12 @@ export function AudioOption(props: {
 function getLocaleForLanguageName(name: string): string {
   const normalized = name.toLowerCase().trim();
   if (normalized.includes("latino")) return "es-MX";
-  if (normalized.includes("castellano") || normalized === "español" || normalized === "spanish") return "es-ES";
+  if (
+    normalized.includes("castellano") ||
+    normalized === "español" ||
+    normalized === "spanish"
+  )
+    return "es-ES";
   if (normalized.includes("hindi")) return "hi-IN";
   if (normalized.includes("tamil")) return "ta-IN";
   if (normalized.includes("telugu")) return "te-IN";
@@ -69,7 +81,9 @@ export function AudioView({ id }: { id: string }) {
   const changeAudioTrack = usePlayerStore((s) => s.display?.changeAudioTrack);
 
   const languageVariants = usePlayerStore((s) => s.languageVariants);
-  const selectedLanguageVariant = usePlayerStore((s) => s.selectedLanguageVariant);
+  const selectedLanguageVariant = usePlayerStore(
+    (s) => s.selectedLanguageVariant,
+  );
   const selectLanguageVariant = usePlayerStore((s) => s.selectLanguageVariant);
   const display = usePlayerStore((s) => s.display);
   const redisplaySource = usePlayerStore((s) => s.redisplaySource);
@@ -118,9 +132,13 @@ export function AudioView({ id }: { id: string }) {
             return;
           }
           const { url } = resolved;
-          const nextSource = resolved.type === "hls"
-            ? { type: "hls" as const, url }
-            : { type: "file" as const, qualities: { "1080": { type: "mp4" as const, url } } };
+          const nextSource =
+            resolved.type === "hls"
+              ? { type: "hls" as const, url }
+              : {
+                  type: "file" as const,
+                  qualities: { "1080": { type: "mp4" as const, url } },
+                };
 
           usePlayerStore.setState((s) => ({
             status: playerStatus.PLAYING,
@@ -153,22 +171,27 @@ export function AudioView({ id }: { id: string }) {
       <Menu.BackLink onClick={() => router.navigate("/")}>Audio</Menu.BackLink>
       <Menu.Section className="flex flex-col pb-4">
         {/* Render HLS Multiplexed Audio Tracks */}
-        {audioTracks.length > 0 && audioTracks.map((v) => (
-          <AudioOption
-            key={v.id}
-            selected={v.id === currentAudioTrack?.id && !selectedLanguageVariant}
-            langCode={
-              v.language.length === 3
-                ? (iso6393To1[v.language] ?? v.language)
-                : v.language
-            }
-            onClick={audioTracks.includes(v) ? () => changeTrack(v) : undefined}
-          >
-            {getPrettyLanguageNameFromLocale(v.language) ??
-              v.label ??
-              unknownChoice}
-          </AudioOption>
-        ))}
+        {audioTracks.length > 0 &&
+          audioTracks.map((v) => (
+            <AudioOption
+              key={v.id}
+              selected={
+                v.id === currentAudioTrack?.id && !selectedLanguageVariant
+              }
+              langCode={
+                v.language.length === 3
+                  ? (iso6393To1[v.language] ?? v.language)
+                  : v.language
+              }
+              onClick={
+                audioTracks.includes(v) ? () => changeTrack(v) : undefined
+              }
+            >
+              {getPrettyLanguageNameFromLocale(v.language) ??
+                v.label ??
+                unknownChoice}
+            </AudioOption>
+          ))}
 
         {/* Render Dubs / External Language Variants */}
         {languageVariants.length > 0 && (

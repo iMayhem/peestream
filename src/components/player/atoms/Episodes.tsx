@@ -143,15 +143,26 @@ function EpisodesView({
 
     // Merge consecutive multi-part episodes (e.g. "Ben 10 Returns (1)" + "(2)")
     const partSuffixRe = /\s*(?:\((\d+)\)|Part\s*(\d+)|#(\d+))\s*$/i;
-    type EpItem = typeof loadingState.value.season.episodes[number];
-    const mergedEpisodes: Array<{ ep: EpItem; parts: EpItem[]; baseTitle: string }> = [];
+    type EpItem = (typeof loadingState.value.season.episodes)[number];
+    const mergedEpisodes: Array<{
+      ep: EpItem;
+      parts: EpItem[];
+      baseTitle: string;
+    }> = [];
     for (const ep of loadingState.value.season.episodes) {
       const partMatch = ep.title.match(partSuffixRe);
       if (partMatch) {
-        const partNum = parseInt(partMatch[1] ?? partMatch[2] ?? partMatch[3], 10);
+        const partNum = parseInt(
+          partMatch[1] ?? partMatch[2] ?? partMatch[3],
+          10,
+        );
         const baseTitle = ep.title.replace(partSuffixRe, "").trim();
         const prev = mergedEpisodes[mergedEpisodes.length - 1];
-        if (partNum > 1 && prev && prev.baseTitle.toLowerCase() === baseTitle.toLowerCase()) {
+        if (
+          partNum > 1 &&
+          prev &&
+          prev.baseTitle.toLowerCase() === baseTitle.toLowerCase()
+        ) {
           prev.parts.push(ep);
           continue;
         }
@@ -171,7 +182,8 @@ function EpisodesView({
         {mergedEpisodes.map(({ ep, parts, baseTitle }) => {
           const allIds = parts.map((p) => p.id);
           const isActive = allIds.includes(meta?.episode?.tmdbId ?? "");
-          const episodeProgress = progress.items[meta?.tmdbId]?.episodes?.[ep.id];
+          const episodeProgress =
+            progress.items[meta?.tmdbId]?.episodes?.[ep.id];
           const lastEp = parts[parts.length - 1];
 
           let rightSide;
@@ -188,9 +200,10 @@ function EpisodesView({
             );
           }
 
-          const badgeLabel = parts.length > 1
-            ? `E${ep.number}-${lastEp.number}`
-            : t("player.menus.episodes.episodeBadge", { episode: ep.number });
+          const badgeLabel =
+            parts.length > 1
+              ? `E${ep.number}-${lastEp.number}`
+              : t("player.menus.episodes.episodeBadge", { episode: ep.number });
 
           return (
             <Menu.Link
@@ -204,20 +217,14 @@ function EpisodesView({
                 <div
                   className={classNames(
                     "text-left flex items-center space-x-3 text-video-context-type-main",
-                    hasAired(ep.air_date) || isActive
-                      ? ""
-                      : "text-opacity-25",
+                    hasAired(ep.air_date) || isActive ? "" : "text-opacity-25",
                   )}
                 >
                   <span
                     className={classNames(
                       "p-0.5 px-2 rounded inline bg-video-context-hoverColor",
-                      isActive
-                        ? "text-white bg-opacity-100"
-                        : "bg-opacity-50",
-                      hasAired(ep.air_date) || isActive
-                        ? ""
-                        : "!bg-opacity-25",
+                      isActive ? "text-white bg-opacity-100" : "bg-opacity-50",
+                      hasAired(ep.air_date) || isActive ? "" : "!bg-opacity-25",
                     )}
                   >
                     {badgeLabel}

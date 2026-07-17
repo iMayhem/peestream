@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 import { get as tmdbGet } from "@/backend/metadata/tmdb";
+import { Icon, Icons } from "@/components/Icon";
 import { Category } from "@/utils/discover";
 
 interface HomeMediaItem {
@@ -63,7 +65,13 @@ function SkeletonCard() {
 export function CategoryRowPart({ category }: { category: Category }) {
   const [items, setItems] = useState<HomeMediaItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
   const navigate = useNavigate();
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollRight = useCallback(() => {
+    scrollRef.current?.scrollBy({ left: 600, behavior: "smooth" });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -106,28 +114,47 @@ export function CategoryRowPart({ category }: { category: Category }) {
 
   return (
     <section>
-      <h2 className="text-lg font-bold text-white mb-3">{category.label}</h2>
-      <div
-        className="flex gap-3 overflow-x-auto pb-2"
-        style={{ scrollbarWidth: "none" }}
-      >
-        {loading
-          ? Array.from({ length: 8 }).map((_, i) => {
-              // eslint-disable-next-line react/no-array-index-key
-              return <SkeletonCard key={i} />;
-            })
-          : items.map((item) => (
-              <div key={item.id} className="w-32 sm:w-36 flex-shrink-0">
-                <PosterCard
-                  item={item}
-                  onClick={() =>
-                    navigate(
-                      `/media/tmdb-${mediaType(item)}-${item.id}-${item.title}`,
-                    )
-                  }
-                />
-              </div>
-            ))}
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg font-bold text-white">{category.label}</h2>
+        <button
+          type="button"
+          onClick={() => navigate("/discover")}
+          className="text-sm font-medium text-type-dimmed hover:text-white transition-colors duration-100"
+        >
+          More
+        </button>
+      </div>
+      <div className="relative">
+        <div
+          ref={scrollRef}
+          className="flex gap-3 overflow-x-auto pb-2"
+          style={{ scrollbarWidth: "none" }}
+        >
+          {loading
+            ? Array.from({ length: 8 }).map((_, i) => {
+                // eslint-disable-next-line react/no-array-index-key
+                return <SkeletonCard key={i} />;
+              })
+            : items.map((item) => (
+                <div key={item.id} className="w-32 sm:w-36 flex-shrink-0">
+                  <PosterCard
+                    item={item}
+                    onClick={() =>
+                      navigate(
+                        `/media/tmdb-${mediaType(item)}-${item.id}-${item.title}`,
+                      )
+                    }
+                  />
+                </div>
+              ))}
+        </div>
+        <button
+          type="button"
+          onClick={scrollRight}
+          className="absolute right-0 top-0 bottom-2 w-12 flex items-center justify-center bg-gradient-to-l from-background to-transparent text-white/60 hover:text-white transition-colors duration-100"
+        >
+          <Icon icon={Icons.CHEVRON_RIGHT} className="text-2xl" />
+        </button>
       </div>
     </section>
   );

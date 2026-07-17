@@ -40,7 +40,16 @@ export function ScrapeItem(props: ScrapeItemProps) {
   const text = statusTextMap[props.status];
   const status = statusMap[props.status];
 
-  console.log("[DEBUG] ScrapeItem render:", props.id || props.name, "status:", props.status, "-> circle type:", status, "pct:", props.percentage);
+  console.log(
+    "[DEBUG] ScrapeItem render:",
+    props.id || props.name,
+    "status:",
+    props.status,
+    "-> circle type:",
+    status,
+    "pct:",
+    props.percentage,
+  );
 
   return (
     <div className="grid gap-4 grid-cols-[auto,1fr]" data-source-id={props.id}>

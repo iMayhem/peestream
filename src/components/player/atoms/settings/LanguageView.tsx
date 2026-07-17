@@ -3,8 +3,11 @@ import { useCallback, useState } from "react";
 import { Menu } from "@/components/player/internals/ContextMenu";
 import { SelectableLink } from "@/components/player/internals/ContextMenu/Links";
 import { useOverlayRouter } from "@/hooks/useOverlayRouter";
-import { LanguageVariant, resolveLanguageVariantUrl } from "@/stores/player/utils/languageVariants";
 import { usePlayerStore } from "@/stores/player/store";
+import {
+  LanguageVariant,
+  resolveLanguageVariantUrl,
+} from "@/stores/player/utils/languageVariants";
 
 let latestRequestId = "";
 
@@ -50,7 +53,10 @@ export function LanguageView({ id }: { id: string }) {
             return;
           }
           display?.load({
-            source: { type: resolved.type === "hls" ? "hls" : "mp4", url: resolved.url },
+            source: {
+              type: resolved.type === "hls" ? "hls" : "mp4",
+              url: resolved.url,
+            },
             startAt: usePlayerStore.getState().progress.time || 0,
             automaticQuality: false,
             preferredQuality: null,
@@ -68,9 +74,7 @@ export function LanguageView({ id }: { id: string }) {
 
   return (
     <>
-      <Menu.BackLink onClick={() => router.navigate("/")}>
-        Dubs
-      </Menu.BackLink>
+      <Menu.BackLink onClick={() => router.navigate("/")}>Dubs</Menu.BackLink>
       <Menu.Section className="flex flex-col pb-4">
         <SelectableLink
           selected={!selectedVariant}

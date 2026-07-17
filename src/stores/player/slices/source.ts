@@ -1,6 +1,7 @@
 import { ScrapeMedia } from "@movie-web/providers";
 
 import { MakeSlice } from "@/stores/player/slices/types";
+import { LanguageVariant } from "@/stores/player/utils/languageVariants";
 import {
   SourceQuality,
   SourceSliceSource,
@@ -8,8 +9,6 @@ import {
 } from "@/stores/player/utils/qualities";
 import { useQualityStore } from "@/stores/quality";
 import { ValuesOf } from "@/utils/typeguard";
-
-import { LanguageVariant } from "@/stores/player/utils/languageVariants";
 
 export const playerStatus = {
   IDLE: "idle",

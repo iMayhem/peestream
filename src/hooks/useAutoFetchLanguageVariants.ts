@@ -22,7 +22,7 @@ export function useAutoFetchLanguageVariants() {
     }
     // Fire as soon as we have meta — parallel to main scraping, not after
     if (status === playerStatus.IDLE) return;
-    const key = `${meta.tmdbId}-${meta.type === "show" ? meta.episode?.tmdbId ?? "" : ""}`;
+    const key = `${meta.tmdbId}-${meta.type === "show" ? (meta.episode?.tmdbId ?? "") : ""}`;
     if (fetchedKeyRef.current === key) return;
     fetchedKeyRef.current = key;
     activeKeyRef.current = key;
@@ -40,7 +40,7 @@ export function useAutoFetchLanguageVariants() {
         meta.tmdbId,
         meta.type === "show" ? meta.season?.number : undefined,
         meta.type === "show" ? meta.episode?.number : undefined,
-      )
+      ),
     );
 
     // Fetch adjacent episode if part of a multi-part episode
@@ -71,8 +71,8 @@ export function useAutoFetchLanguageVariants() {
                 ...v,
                 label: `${v.language} (Ep ${adjacentEpNum})`,
                 episode: adjacentEpNum,
-              }))
-            )
+              })),
+            ),
           );
         }
       }
@@ -99,14 +99,23 @@ export function useAutoFetchLanguageVariants() {
             const languageKey = `${v.language.toLowerCase()}:${v.episode ?? ""}`;
             unique.push({
               ...v,
-              label: (counts.get(languageKey) ?? 0) > 1
-                ? `${v.label} · ${v.provider}`
-                : v.label,
+              label:
+                (counts.get(languageKey) ?? 0) > 1
+                  ? `${v.label} · ${v.provider}`
+                  : v.label,
             });
           }
         }
         setLanguageVariants(unique);
       }
     });
-  }, [meta?.tmdbId, meta?.episode?.tmdbId, status, meta?.title, meta?.releaseYear, meta?.type, setLanguageVariants]);
+  }, [
+    meta?.tmdbId,
+    meta?.episode?.tmdbId,
+    status,
+    meta?.title,
+    meta?.releaseYear,
+    meta?.type,
+    setLanguageVariants,
+  ]);
 }

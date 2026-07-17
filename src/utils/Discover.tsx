@@ -195,7 +195,8 @@ export function Discover() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const activeCategory = categories.find((c) => c.key === activeKey) || categories[0];
+  const activeCategory =
+    categories.find((c) => c.key === activeKey) || categories[0];
 
   const loadPage = useCallback(
     async (cat: Category, p: number, append: boolean) => {
@@ -380,53 +381,53 @@ export function Discover() {
           </div>
 
           <div className="px-4 py-4">
-          {isLoading ? (
-            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
-              {Array.from({ length: 20 }).map((_, i) => {
-                // eslint-disable-next-line react/no-array-index-key
-                return <SkeletonCard key={i} />;
-              })}
-            </div>
-          ) : results.length === 0 ? (
-            <div className="text-center py-20 text-white/40">
-              No results found.
-            </div>
-          ) : (
-            <>
+            {isLoading ? (
               <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
-                {results.map((item) => (
-                  <PosterCard
-                    key={`${item.type}-${item.id}`}
-                    item={item}
-                    onClick={() =>
-                      navigate(
-                        `/media/tmdb-${mediaType(item)}-${item.tmdbId || item.id}-${item.title}`,
-                      )
-                    }
-                  />
-                ))}
+                {Array.from({ length: 20 }).map((_, i) => {
+                  // eslint-disable-next-line react/no-array-index-key
+                  return <SkeletonCard key={i} />;
+                })}
               </div>
-
-              {isLoadingMore && (
-                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4 mt-4">
-                  {Array.from({ length: 12 }).map((_, i) => {
-                    // eslint-disable-next-line react/no-array-index-key
-                    return <SkeletonCard key={i} />;
-                  })}
+            ) : results.length === 0 ? (
+              <div className="text-center py-20 text-white/40">
+                No results found.
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
+                  {results.map((item) => (
+                    <PosterCard
+                      key={`${item.type}-${item.id}`}
+                      item={item}
+                      onClick={() =>
+                        navigate(
+                          `/media/tmdb-${mediaType(item)}-${item.tmdbId || item.id}-${item.title}`,
+                        )
+                      }
+                    />
+                  ))}
                 </div>
-              )}
 
-              <div ref={sentinelRef} className="h-1" />
+                {isLoadingMore && (
+                  <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4 mt-4">
+                    {Array.from({ length: 12 }).map((_, i) => {
+                      // eslint-disable-next-line react/no-array-index-key
+                      return <SkeletonCard key={i} />;
+                    })}
+                  </div>
+                )}
 
-              {!hasMore && results.length > 0 && (
-                <p className="text-center py-10 text-white/30 text-sm">
-                  You&apos;ve seen it all.
-                </p>
-              )}
-            </>
-          )}
+                <div ref={sentinelRef} className="h-1" />
+
+                {!hasMore && results.length > 0 && (
+                  <p className="text-center py-10 text-white/30 text-sm">
+                    You&apos;ve seen it all.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
         </div>
-      </div>
       </div>
 
       {showScrollTop && (

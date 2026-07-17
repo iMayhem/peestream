@@ -59,7 +59,11 @@ export const categories: Category[] = [
     label: "Anime",
     type: "tmdb",
     endpoint: "discover/tv",
-    discoverParams: { with_genres: "16", with_original_language: "ja", sort_by: "popularity.desc" },
+    discoverParams: {
+      with_genres: "16",
+      with_original_language: "ja",
+      sort_by: "popularity.desc",
+    },
     isTv: true,
   },
   {

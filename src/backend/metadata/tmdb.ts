@@ -238,7 +238,8 @@ export function getMediaDetails<
 }
 
 export function getMediaPoster(posterPath: string | null): string | undefined {
-  if (posterPath) return `https://providers.peestream.in/tmdb-image/w342/${posterPath}`;
+  if (posterPath)
+    return `https://providers.peestream.in/tmdb-image/w342/${posterPath}`;
 }
 
 export async function getEpisodes(

@@ -53,11 +53,18 @@ function useBaseScrape() {
         const item = Array.isArray(s) ? s[0] : s;
         return item && item.id === v;
       });
-      const unpackedServerSource = Array.isArray(serverSource) ? serverSource[0] : serverSource;
+      const unpackedServerSource = Array.isArray(serverSource)
+        ? serverSource[0]
+        : serverSource;
       const name = clientSource?.name ?? unpackedServerSource?.name ?? v;
       created[v] = { id: v, name, status: "waiting", percentage: 0 };
     });
-    console.log("[DEBUG] initEvent sourceIds:", evt.sourceIds, "created:", Object.keys(created));
+    console.log(
+      "[DEBUG] initEvent sourceIds:",
+      evt.sourceIds,
+      "created:",
+      Object.keys(created),
+    );
     setSources(created);
     setSourceOrder(evt.sourceIds.map((v) => ({ id: v, children: [] })));
   }, []);
@@ -75,7 +82,11 @@ function useBaseScrape() {
         }
         if (lastIdTmp && key === lastIdTmp && next[key].status === "pending") {
           next[key].status = "success";
-          console.log("[DEBUG] startEvent auto-completed", lastIdTmp, "to success");
+          console.log(
+            "[DEBUG] startEvent auto-completed",
+            lastIdTmp,
+            "to success",
+          );
         }
       }
       return next;
@@ -101,7 +112,14 @@ function useBaseScrape() {
           percentage: evt.percentage,
         },
       };
-      console.log("[DEBUG] updateEvent applied:", evt.id, "pct:", evt.percentage, "status:", evt.status);
+      console.log(
+        "[DEBUG] updateEvent applied:",
+        evt.id,
+        "pct:",
+        evt.percentage,
+        "status:",
+        evt.status,
+      );
       return updated;
     });
   }, []);
@@ -120,9 +138,13 @@ function useBaseScrape() {
             const item = Array.isArray(src) ? src[0] : src;
             return item && item.id === v.embedScraperId;
           });
-          const unpackedServerSource = Array.isArray(serverSource) ? serverSource[0] : serverSource;
+          const unpackedServerSource = Array.isArray(serverSource)
+            ? serverSource[0]
+            : serverSource;
           const name =
-            clientSource?.name ?? unpackedServerSource?.name ?? v.embedScraperId;
+            clientSource?.name ??
+            unpackedServerSource?.name ??
+            v.embedScraperId;
           const out: ScrapingSegment = {
             embedId: v.embedScraperId,
             name,
@@ -149,18 +171,34 @@ function useBaseScrape() {
   }, []);
 
   const getResult = useCallback((output: RunOutput | null) => {
-    console.log("[DEBUG] getResult called. output:", !!output, "lastId.current:", lastId.current);
+    console.log(
+      "[DEBUG] getResult called. output:",
+      !!output,
+      "lastId.current:",
+      lastId.current,
+    );
     if (output && lastId.current) {
       setSources((prev) => {
         if (!lastId.current) return prev;
         if (prev[lastId.current]) {
-          console.log("[DEBUG] getResult setting", lastId.current, "to success. current status:", prev[lastId.current].status);
-          return { ...prev, [lastId.current]: { ...prev[lastId.current], status: "success" } };
+          console.log(
+            "[DEBUG] getResult setting",
+            lastId.current,
+            "to success. current status:",
+            prev[lastId.current].status,
+          );
+          return {
+            ...prev,
+            [lastId.current]: { ...prev[lastId.current], status: "success" },
+          };
         }
         return prev;
       });
     } else {
-      console.log("[DEBUG] getResult skipped update. reason:", !output ? "no output" : "no lastId");
+      console.log(
+        "[DEBUG] getResult skipped update. reason:",
+        !output ? "no output" : "no lastId",
+      );
     }
     return output;
   }, []);
@@ -177,7 +215,10 @@ function useBaseScrape() {
   };
 }
 
-async function validateStream(stream: any, proxyUrl?: string): Promise<boolean> {
+async function validateStream(
+  stream: any,
+  proxyUrl?: string,
+): Promise<boolean> {
   let url = "";
   if (stream.type === "hls") {
     url = stream.playlist;
@@ -196,7 +237,7 @@ async function validateStream(stream: any, proxyUrl?: string): Promise<boolean> 
 
     const headers: Record<string, string> = {};
     if (stream.type !== "hls") {
-      headers["Range"] = "bytes=0-1024";
+      headers.Range = "bytes=0-1024";
     }
 
     const response = await fetch(fetchUrl, {
@@ -206,7 +247,11 @@ async function validateStream(stream: any, proxyUrl?: string): Promise<boolean> 
 
     return response.ok;
   } catch (err) {
-    console.warn("[useProviderScrape] Stream validation failed for URL:", url, err);
+    console.warn(
+      "[useProviderScrape] Stream validation failed for URL:",
+      url,
+      err,
+    );
     return false;
   }
 }
@@ -247,25 +292,35 @@ export function useScrape() {
         const serverMetadata = getCachedMetadata();
         const targetType = media.type === "show" ? "tv" : "movie";
 
-        console.log("[useProviderScrape] rawClientProviderIds:", rawClientProviderIds);
+        console.log(
+          "[useProviderScrape] rawClientProviderIds:",
+          rawClientProviderIds,
+        );
         console.log("[useProviderScrape] serverMetadata:", serverMetadata);
 
         // Filter metadata by media type compatibility safely, unpacking arrays if needed
-        const compatibleMetadata = serverMetadata.filter((s: any) => {
-          if (!s) return false;
-          const item = Array.isArray(s) ? s[0] : s;
-          if (!item) return false;
-          return !item.mediaTypes || item.mediaTypes.includes(targetType);
-        }).map((s: any) => (Array.isArray(s) ? s[0] : s));
+        const compatibleMetadata = serverMetadata
+          .filter((s: any) => {
+            if (!s) return false;
+            const item = Array.isArray(s) ? s[0] : s;
+            if (!item) return false;
+            return !item.mediaTypes || item.mediaTypes.includes(targetType);
+          })
+          .map((s: any) => (Array.isArray(s) ? s[0] : s));
 
-        console.log("[useProviderScrape] compatibleMetadata:", compatibleMetadata);
+        console.log(
+          "[useProviderScrape] compatibleMetadata:",
+          compatibleMetadata,
+        );
 
         // Filter and sort client-side providers using the dashboard configuration
         clientProviderIds = rawClientProviderIds
           .filter((id) => compatibleMetadata.some((s) => s && s.id === id))
           .sort((a, b) => {
-            const rankA = compatibleMetadata.find((s) => s && s.id === a)?.rank ?? 999;
-            const rankB = compatibleMetadata.find((s) => s && s.id === b)?.rank ?? 999;
+            const rankA =
+              compatibleMetadata.find((s) => s && s.id === a)?.rank ?? 999;
+            const rankB =
+              compatibleMetadata.find((s) => s && s.id === b)?.rank ?? 999;
             return rankA - rankB;
           });
 
@@ -274,10 +329,19 @@ export function useScrape() {
           .filter((s) => s && !rawClientProviderIds.includes(s.id))
           .map((s) => s.id);
 
-        console.log("[useProviderScrape] clientProviderIds:", clientProviderIds);
-        console.log("[useProviderScrape] serverProviderIds:", serverProviderIds);
+        console.log(
+          "[useProviderScrape] clientProviderIds:",
+          clientProviderIds,
+        );
+        console.log(
+          "[useProviderScrape] serverProviderIds:",
+          serverProviderIds,
+        );
       } catch (err) {
-        console.error("[useProviderScrape] Failed to parse provider lists:", err);
+        console.error(
+          "[useProviderScrape] Failed to parse provider lists:",
+          err,
+        );
       }
 
       const allSourceIds = [...clientProviderIds, ...serverProviderIds];
@@ -286,7 +350,10 @@ export function useScrape() {
 
       // Run client-side scrapers if any are enabled
       if (clientProviderIds.length > 0) {
-        console.log("[useProviderScrape] Running client-side scrapers:", clientProviderIds);
+        console.log(
+          "[useProviderScrape] Running client-side scrapers:",
+          clientProviderIds,
+        );
         console.log("[DEBUG] clientProviderIds:", clientProviderIds);
         try {
           const clientOutput = await providers.runAll({
@@ -301,7 +368,10 @@ export function useScrape() {
           });
 
           if (clientOutput) {
-            console.log("[useProviderScrape] Client-side scrapers succeeded:", clientOutput);
+            console.log(
+              "[useProviderScrape] Client-side scrapers succeeded:",
+              clientOutput,
+            );
             if (isExtensionActiveCached()) {
               await prepareStream(clientOutput.stream);
             }
@@ -315,25 +385,35 @@ export function useScrape() {
       // Fallback to Server-Side SSE API
       if (providerApiUrl && serverProviderIds.length > 0) {
         console.log("[useProviderScrape] Scraping via Server-Side SSE API...");
-        console.log("[DEBUG] providerApiUrl:", providerApiUrl, "serverProviderIds:", serverProviderIds);
+        console.log(
+          "[DEBUG] providerApiUrl:",
+          providerApiUrl,
+          "serverProviderIds:",
+          serverProviderIds,
+        );
         try {
           const baseUrlMaker = makeProviderUrl(providerApiUrl);
           const scrapeUrl = baseUrlMaker.scrapeAll(media);
           console.log("[DEBUG] SSE URL:", scrapeUrl);
 
-          const conn = await connectServerSideEvents<RunOutput | "">(scrapeUrl, [
-            "completed",
-            "noOutput",
-          ]);
+          const conn = await connectServerSideEvents<RunOutput | "">(
+            scrapeUrl,
+            ["completed", "noOutput"],
+          );
 
-          console.log("[DEBUG] SSE connection established, registering listeners");
+          console.log(
+            "[DEBUG] SSE connection established, registering listeners",
+          );
 
           conn.on("start", (id) => {
             console.log("[DEBUG] SSE 'start' event received:", id);
             startEvent(id);
           });
           conn.on("update", (evt) => {
-            console.log("[DEBUG] SSE 'update' event received:", JSON.stringify(evt));
+            console.log(
+              "[DEBUG] SSE 'update' event received:",
+              JSON.stringify(evt),
+            );
             updateEvent(evt);
           });
           conn.on("discoverEmbeds", (evt) => {
@@ -341,20 +421,33 @@ export function useScrape() {
             discoverEmbedsEvent(evt);
           });
 
-          console.log("[DEBUG] All SSE listeners registered, awaiting promise...");
+          console.log(
+            "[DEBUG] All SSE listeners registered, awaiting promise...",
+          );
           const sseOutput = await conn.promise();
           console.log("[DEBUG] SSE promise resolved. Output:", sseOutput);
-          console.log("[DEBUG] SSE output type:", typeof sseOutput, "empty?:", sseOutput === "", "truthy:", !!sseOutput);
+          console.log(
+            "[DEBUG] SSE output type:",
+            typeof sseOutput,
+            "empty?:",
+            sseOutput === "",
+            "truthy:",
+            !!sseOutput,
+          );
 
           if (sseOutput && sseOutput !== "") {
-            console.log("[DEBUG] SSE got stream output, stream keys:", Object.keys(sseOutput));
+            console.log(
+              "[DEBUG] SSE got stream output, stream keys:",
+              Object.keys(sseOutput),
+            );
             if (isExtensionActiveCached()) {
               await prepareStream(sseOutput.stream);
             }
             return getResult(sseOutput);
-          } else {
-            console.log("[DEBUG] SSE no valid output, calling getResult(null) from SSE path");
           }
+          console.log(
+            "[DEBUG] SSE no valid output, calling getResult(null) from SSE path",
+          );
         } catch (err) {
           console.error("[DEBUG] SSE scraping error:", err);
         }
@@ -420,7 +513,8 @@ export function useListCenter(
     const topDifference = currentTop - listTop;
 
     const listNewLeft = containerWidth / 2 - listWidth / 2;
-    const listNewTop = (containerHeight - 130) / 2 - topDifference - currentHeight / 2;
+    const listNewTop =
+      (containerHeight - 130) / 2 - topDifference - currentHeight / 2;
 
     listRef.current.style.transform = `translateY(${listNewTop}px) translateX(${listNewLeft}px)`;
     setTimeout(() => {

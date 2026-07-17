@@ -109,7 +109,7 @@ export function SettingsMenu({ id }: { id: string }) {
           rightSide={<Icon className="text-xl" icon={Icons.WATCH_PARTY} />}
           className={downloadable ? "opacity-100" : "opacity-50"}
         >
-          {"Watch Party"}
+          Watch Party
         </Menu.Link>
       </Menu.Section>
 

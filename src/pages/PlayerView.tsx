@@ -8,11 +8,11 @@ import {
 } from "react-router-dom";
 import { useAsync } from "react-use";
 
+import { getLoadbalancedProviderApiUrl } from "@/backend/providers/fetchers";
 import { usePlayer } from "@/components/player/hooks/usePlayer";
 import { usePlayerMeta } from "@/components/player/hooks/usePlayerMeta";
 import { convertProviderCaption } from "@/components/player/utils/captions";
 import { convertRunoutputToSource } from "@/components/player/utils/convertRunoutputToSource";
-import { getLoadbalancedProviderApiUrl } from "@/backend/providers/fetchers";
 import { useAutoFetchLanguageVariants } from "@/hooks/useAutoFetchLanguageVariants";
 import { ScrapingItems, ScrapingSegment } from "@/hooks/useProviderScrape";
 import { useQueryParam } from "@/hooks/useQueryParams";
@@ -51,9 +51,6 @@ export function RealPlayerView() {
   const backUrl = useLastNonPlayerLink();
 
   useAutoFetchLanguageVariants();
-
-
-
 
   const paramsData = JSON.stringify({
     media: params.media,
@@ -99,9 +96,14 @@ export function RealPlayerView() {
       if (!meta) return;
       const baseUrl = getLoadbalancedProviderApiUrl();
       if (!baseUrl) return;
-      const subParams = new URLSearchParams({ tmdbId: meta.tmdbId, type: meta.type });
-      if (meta.season?.number) subParams.set("season", String(meta.season.number));
-      if (meta.episode?.number) subParams.set("episode", String(meta.episode.number));
+      const subParams = new URLSearchParams({
+        tmdbId: meta.tmdbId,
+        type: meta.type,
+      });
+      if (meta.season?.number)
+        subParams.set("season", String(meta.season.number));
+      if (meta.episode?.number)
+        subParams.set("episode", String(meta.episode.number));
       fetch(`${baseUrl}/api/subtitles?${subParams}`)
         .then((r) => r.json())
         .then((data) => {
