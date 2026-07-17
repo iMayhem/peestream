@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PeeStream Embed Player</title>
+  <title>vidcodin - Ultimate Embed Player</title>
   
-  <!-- Font -->
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&display=swap" rel="stylesheet">
   
   <!-- Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -18,6 +18,18 @@
   <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
   
   <style>
+    :root {
+      --bg-color: #030302;
+      --card-bg: #0d0c0a;
+      --accent-color: #f5a524;
+      --accent-hover: #e0921b;
+      --text-color: #ffffff;
+      --text-dim: #8a8378;
+      --border-color: rgba(255, 255, 255, 0.05);
+      --ring-bezel: 0 0 0 1px rgba(255, 255, 255, 0.05);
+      --shadow-glow: 0 0 20px rgba(245, 165, 36, 0.15);
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -27,28 +39,383 @@
     body, html {
       width: 100%;
       height: 100%;
-      background-color: #050508;
-      font-family: 'Outfit', sans-serif;
-      color: #ffffff;
-      overflow: hidden;
+      background-color: var(--bg-color);
+      font-family: 'Inter', sans-serif;
+      color: var(--text-color);
+      scroll-behavior: smooth;
     }
     
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-color);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-color);
+    }
+
     #app {
-      position: relative;
       width: 100%;
-      height: 100%;
+      min-height: 100%;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+    }
+
+    /* ----------------------------------
+       LANDING PAGE STYLES (NO TMDB ID)
+       ---------------------------------- */
+    .landing-view {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: 80px;
+    }
+
+    /* Navigation Header */
+    .nav-header {
+      width: 100%;
+      max-width: 1200px;
+      padding: 24px 20px;
+      display: flex;
+      justify-content: space-between;
       align-items: center;
     }
-    
-    /* Video Player Container */
-    .player-container {
+
+    .brand-logo {
+      font-family: 'Fraunces', serif;
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: #ffffff;
+      text-decoration: none;
+      user-select: none;
+    }
+
+    .brand-logo span {
+      font-style: italic;
+      color: var(--accent-color);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 25px;
+    }
+
+    .nav-link-item {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s ease;
+    }
+
+    .nav-link-item:hover {
+      color: #ffffff;
+    }
+
+    /* Hero Section */
+    .hero-container {
+      width: 100%;
+      max-width: 1200px;
+      padding: 80px 20px 60px 20px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .hero-title {
+      font-family: 'Fraunces', serif;
+      font-size: 3.5rem;
+      font-weight: 500;
+      line-height: 1.15;
+      margin-bottom: 20px;
+      max-width: 700px;
+    }
+
+    .hero-title span {
+      font-style: italic;
+      color: var(--accent-color);
+    }
+
+    .hero-subtitle {
+      font-size: 1.05rem;
+      color: var(--text-dim);
+      margin-bottom: 45px;
+      max-width: 600px;
+      line-height: 1.6;
+    }
+
+    /* Generator Box */
+    .generator-box {
+      width: 100%;
+      max-width: 580px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+      margin-bottom: 80px;
+    }
+
+    .tab-switcher {
+      display: flex;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.02);
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 10px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      background: rgba(255, 255, 255, 0.06);
+      color: #ffffff;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .gen-input {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+      padding: 12px 16px;
+      transition: border-color 0.2s ease;
+    }
+
+    .gen-input:focus {
+      border-color: rgba(245, 165, 36, 0.5);
+    }
+
+    .gen-input.flex-main {
+      flex: 1;
+    }
+
+    .gen-input.width-small {
+      width: 80px;
+      text-align: center;
+    }
+
+    .play-btn {
+      width: 100%;
+      padding: 14px 20px;
+      background: var(--accent-color);
+      color: var(--bg-color);
+      border: none;
+      border-radius: 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: var(--shadow-glow);
+      transition: all 0.2s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .play-btn:hover {
+      background: var(--accent-hover);
+      transform: scale(1.01);
+    }
+
+    .play-btn:active {
+      transform: scale(0.99);
+    }
+
+    /* Servers Section */
+    .section-container {
+      width: 100%;
+      max-width: 1000px;
+      padding: 0 20px;
+      margin-bottom: 80px;
+      text-align: left;
+    }
+
+    .section-title {
+      font-family: 'Fraunces', serif;
+      font-size: 1.8rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .section-desc {
+      font-size: 0.95rem;
+      color: var(--text-dim);
+      margin-bottom: 25px;
+    }
+
+    .server-list-card {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    .server-item {
+      display: flex;
+      align-items: center;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .server-item:last-child {
+      border-bottom: none;
+    }
+
+    .server-index {
+      font-family: 'Fraunces', serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--accent-color);
+      width: 40px;
+    }
+
+    .server-info {
+      flex: 1;
+    }
+
+    .server-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-transform: capitalize;
+      margin-bottom: 4px;
+    }
+
+    .server-blurb {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+
+    .server-badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-dim);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .server-badge.high {
+      background: rgba(0, 230, 118, 0.08);
+      color: #00e676;
+      border-color: rgba(0, 230, 118, 0.15);
+    }
+
+    /* Documentation Section */
+    .docs-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    @media (min-width: 768px) {
+      .docs-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .doc-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .doc-card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent-color);
+    }
+
+    .doc-code-block {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      padding: 14px;
+      border-radius: 10px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: #ffaa00;
+      word-break: break-all;
+      position: relative;
+    }
+
+    .doc-copy-btn {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-color);
+      padding: 8px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .doc-copy-btn:hover {
+      background: var(--accent-color);
+      color: var(--bg-color);
+      border-color: var(--accent-color);
+    }
+
+
+    /* ----------------------------------
+       PLAYER VIEW STYLES (WITH TMDB ID)
+       ---------------------------------- */
+    .player-view {
       position: relative;
       width: 100%;
-      height: 100%;
+      height: 100vh;
       background-color: #000000;
+      display: none; /* Toggled by JS */
+    }
+
+    .player-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
       z-index: 1;
     }
     
@@ -56,15 +423,15 @@
       width: 100%;
       height: 100%;
     }
-    
-    /* Loading / Scraping Overlay */
+
+    /* Loading Overlay */
     .overlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(5, 5, 8, 0.95);
+      background-color: rgba(3, 3, 2, 0.98);
       z-index: 10;
       display: flex;
       flex-direction: column;
@@ -83,8 +450,8 @@
       max-width: 450px;
       padding: 30px;
       border-radius: 20px;
-      background: rgba(25, 25, 35, 0.55);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
       backdrop-filter: blur(16px);
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
       text-align: center;
@@ -98,17 +465,16 @@
     }
     
     .media-title {
-      font-size: 1.5rem;
+      font-family: 'Fraunces', serif;
+      font-size: 1.6rem;
       font-weight: 600;
       margin-bottom: 6px;
-      background: linear-gradient(135deg, #ffffff 0%, #a5a5c5 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #ffffff;
     }
     
     .media-details {
-      font-size: 0.9rem;
-      color: #8e8e9f;
+      font-size: 0.85rem;
+      color: var(--text-dim);
       text-transform: uppercase;
       letter-spacing: 1px;
     }
@@ -124,8 +490,8 @@
       position: absolute;
       width: 100%;
       height: 100%;
-      border: 3px solid rgba(255, 62, 108, 0.1);
-      border-top: 3px solid #ff3e6c;
+      border: 3px solid rgba(245, 165, 36, 0.1);
+      border-top: 3px solid var(--accent-color);
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
@@ -136,8 +502,8 @@
       left: 10px;
       width: 80px;
       height: 80px;
-      border: 2px solid rgba(0, 212, 255, 0.05);
-      border-bottom: 2px solid #00d4ff;
+      border: 2px solid rgba(255, 255, 255, 0.02);
+      border-bottom: 2px solid #ffffff;
       border-radius: 50%;
       animation: spin-reverse 1.5s linear infinite;
     }
@@ -147,9 +513,9 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-weight: 600;
+      font-weight: 700;
       font-size: 1.1rem;
-      color: #ff3e6c;
+      color: var(--accent-color);
     }
     
     @keyframes spin {
@@ -163,7 +529,7 @@
     }
     
     .status-text {
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 500;
       margin-bottom: 20px;
       color: #e5e5f5;
@@ -171,7 +537,7 @@
     
     .progress-bar-container {
       width: 100%;
-      height: 6px;
+      height: 4px;
       background-color: rgba(255, 255, 255, 0.05);
       border-radius: 10px;
       overflow: hidden;
@@ -181,7 +547,7 @@
     .progress-bar-fill {
       width: 0%;
       height: 100%;
-      background: linear-gradient(90deg, #ff3e6c, #ff8a00);
+      background: linear-gradient(90deg, var(--accent-color), #ff8a00);
       border-radius: 10px;
       transition: width 0.3s cubic-bezier(0.1, 0.8, 0.3, 1);
     }
@@ -210,10 +576,10 @@
       justify-content: space-between;
       align-items: center;
       padding: 10px 14px;
-      background-color: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.04);
-      border-radius: 12px;
-      font-size: 0.85rem;
+      background-color: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 0.8rem;
     }
     
     .source-name {
@@ -229,7 +595,7 @@
     }
     
     .source-status.pending {
-      color: #ffaa00;
+      color: var(--accent-color);
     }
     
     .source-status.success {
@@ -241,7 +607,7 @@
     }
     
     .source-status.notfound {
-      color: #8e8e9f;
+      color: var(--text-dim);
     }
     
     /* Embed Code Drawer Button */
@@ -252,8 +618,8 @@
       width: 38px;
       height: 38px;
       border-radius: 50%;
-      background: rgba(25, 25, 35, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(13, 12, 10, 0.7);
+      border: 1px solid var(--border-color);
       backdrop-filter: blur(8px);
       color: #ffffff;
       display: flex;
@@ -265,9 +631,9 @@
     }
     
     .embed-trigger-btn:hover {
-      background: rgba(255, 62, 108, 0.2);
-      border-color: #ff3e6c;
-      color: #ff3e6c;
+      background: rgba(245, 165, 36, 0.15);
+      border-color: var(--accent-color);
+      color: var(--accent-color);
       transform: scale(1.05);
     }
     
@@ -278,8 +644,8 @@
       left: 0;
       width: 100%;
       height: 300px;
-      background: rgba(10, 10, 15, 0.95);
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(3, 3, 2, 0.98);
+      border-top: 1px solid var(--border-color);
       backdrop-filter: blur(20px);
       z-index: 8;
       transition: bottom 0.3s cubic-bezier(0.1, 0.8, 0.3, 1);
@@ -301,7 +667,7 @@
     }
     
     .drawer-title {
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       font-weight: 600;
       color: #ffffff;
     }
@@ -309,14 +675,14 @@
     .drawer-close-btn {
       background: none;
       border: none;
-      color: #8e8e9f;
+      color: var(--text-dim);
       font-size: 1.2rem;
       cursor: pointer;
       transition: color 0.2s ease;
     }
     
     .drawer-close-btn:hover {
-      color: #ff3e6c;
+      color: var(--accent-color);
     }
     
     .drawer-content {
@@ -332,11 +698,11 @@
     }
     
     .input-label {
-      font-size: 0.8rem;
-      color: #8e8e9f;
+      font-size: 0.75rem;
+      color: var(--text-dim);
       text-transform: uppercase;
       letter-spacing: 1px;
-      font-weight: 500;
+      font-weight: 600;
     }
     
     .code-box-wrapper {
@@ -349,30 +715,30 @@
       width: 100%;
       padding: 12px 14px;
       padding-right: 90px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 12px;
-      color: #ff8a00;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      color: var(--accent-color);
       font-family: monospace;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       outline: none;
       transition: border-color 0.2s ease;
     }
     
     .code-input:focus {
-      border-color: rgba(255, 62, 108, 0.5);
+      border-color: rgba(245, 165, 36, 0.3);
     }
     
     .copy-btn {
       position: absolute;
       right: 6px;
       padding: 7px 14px;
-      background: #ff3e6c;
+      background: var(--accent-color);
       border: none;
-      border-radius: 8px;
-      color: #ffffff;
-      font-size: 0.8rem;
-      font-weight: 600;
+      border-radius: 6px;
+      color: var(--bg-color);
+      font-size: 0.75rem;
+      font-weight: 700;
       cursor: pointer;
       transition: background 0.2s ease;
       display: flex;
@@ -381,7 +747,7 @@
     }
     
     .copy-btn:hover {
-      background: #ff1e53;
+      background: var(--accent-hover);
     }
     
     .options-row {
@@ -394,15 +760,15 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 0.9rem;
-      color: #e5e5f5;
+      font-size: 0.85rem;
+      color: var(--text-color);
       cursor: pointer;
     }
     
     .checkbox-label input {
-      accent-color: #ff3e6c;
-      width: 16px;
-      height: 16px;
+      accent-color: var(--accent-color);
+      width: 15px;
+      height: 15px;
     }
     
     /* Error View */
@@ -412,7 +778,7 @@
       max-width: 400px;
       padding: 30px;
       border-radius: 20px;
-      background: rgba(25, 25, 35, 0.8);
+      background: var(--card-bg);
       border: 1px solid rgba(255, 82, 82, 0.2);
       backdrop-filter: blur(10px);
       text-align: center;
@@ -422,35 +788,35 @@
     }
     
     .error-icon {
-      font-size: 3rem;
+      font-size: 2.8rem;
       color: #ff5252;
     }
     
     .error-title {
-      font-size: 1.3rem;
+      font-size: 1.2rem;
       font-weight: 600;
     }
     
     .error-desc {
-      font-size: 0.9rem;
-      color: #8e8e9f;
+      font-size: 0.85rem;
+      color: var(--text-dim);
       line-height: 1.4;
     }
     
     .retry-btn {
       padding: 10px 24px;
-      background: #ff3e6c;
+      background: var(--accent-color);
+      color: var(--bg-color);
       border: none;
-      border-radius: 10px;
-      color: white;
-      font-weight: 600;
+      border-radius: 8px;
+      font-weight: 700;
       cursor: pointer;
       transition: background 0.2s ease;
       margin-top: 10px;
     }
     
     .retry-btn:hover {
-      background: #ff1e53;
+      background: var(--accent-hover);
     }
   </style>
 </head>
@@ -458,83 +824,196 @@
 
   <div id="app">
     
-    <!-- Video Player Container -->
-    <div class="player-container">
-      <div id="artplayer" class="artplayer-app"></div>
+    <!-- ----------------------------------
+         1. LANDING VIEW (No tmdbId provided)
+         ---------------------------------- -->
+    <div id="landing-view" class="landing-view" style="display: none;">
       
-      <!-- Embed Drawer Button -->
-      <div id="embed-trigger" class="embed-trigger-btn" title="Get Embed Code">
-        <i class="fa-solid fa-code"></i>
-      </div>
-    </div>
-    
-    <!-- Scraping Loading Overlay -->
-    <div id="loading-overlay" class="overlay">
-      <div class="loader-card">
-        <div class="media-info">
-          <div id="loader-title" class="media-title">Loading Media</div>
-          <div id="loader-details" class="media-details">Resolving stream</div>
-        </div>
-        
-        <div class="spinner-box">
-          <div class="spinner-ring"></div>
-          <div class="spinner-ring-inner"></div>
-          <div id="progress-percent" class="spinner-text">0%</div>
-        </div>
-        
-        <div id="loader-status" class="status-text">Connecting to scrapers...</div>
-        
-        <div class="progress-bar-container">
-          <div id="progress-bar-fill" class="progress-bar-fill"></div>
-        </div>
-        
-        <div id="sources-list" class="sources-list">
-          <!-- Dynamic sources statuses -->
-        </div>
-      </div>
-    </div>
-    
-    <!-- Error Overlay -->
-    <div id="error-overlay" class="overlay" style="display: none;">
-      <div class="error-card" style="display: flex;">
-        <i class="fa-solid fa-triangle-exclamation error-icon"></i>
-        <div class="error-title">Failed to load video</div>
-        <div id="error-desc" class="error-desc">No video streams could be found for this content. Please try again later.</div>
-        <button onclick="window.location.reload()" class="retry-btn">Retry</button>
-      </div>
-    </div>
-    
-    <!-- Embed Code Drawer -->
-    <div id="embed-drawer" class="embed-drawer">
-      <div class="drawer-header">
-        <div class="drawer-title">Embed Options</div>
-        <button id="drawer-close" class="drawer-close-btn"><i class="fa-solid fa-xmark"></i></button>
-      </div>
+      <!-- Nav Header -->
+      <header class="nav-header">
+        <a href="/embed/" class="brand-logo">
+          <span>vid</span>codin
+        </a>
+        <nav class="nav-links">
+          <a href="#servers" class="nav-link-item">Servers</a>
+          <a href="#docs" class="nav-link-item">Documentation</a>
+        </nav>
+      </header>
       
-      <div class="drawer-content">
-        <div class="input-group">
-          <div class="input-label">HTML Iframe Embed Code</div>
-          <div class="code-box-wrapper">
-            <input type="text" id="iframe-code-input" class="code-input" readonly value="">
-            <button id="copy-code-btn" class="copy-btn">
-              <i class="fa-regular fa-copy"></i> Copy
+      <!-- Hero Section -->
+      <section class="hero-container">
+        <h1 class="hero-title">
+          the ultimate embed<br><span>vid</span>codin player
+        </h1>
+        <p class="hero-subtitle">
+          Vidl*nk? Vide*sy? We got it better. Whatever your site is looking for, this is it.
+        </p>
+        
+        <!-- Generator Box -->
+        <div class="generator-box">
+          <div class="tab-switcher">
+            <button id="tab-movie" class="tab-btn active" onclick="switchTab('movie')">Movie</button>
+            <button id="tab-show" class="tab-btn" onclick="switchTab('show')">TV Show</button>
+          </div>
+          
+          <div class="input-row">
+            <input type="text" id="input-tmdb" class="gen-input flex-main" placeholder="TMDB ID (e.g. 157336)">
+            
+            <input type="text" id="input-season" class="gen-input width-small" placeholder="S" style="display: none;">
+            <input type="text" id="input-episode" class="gen-input width-small" placeholder="E" style="display: none;">
+          </div>
+          
+          <button class="play-btn" onclick="generateAndPlay()">
+            <i class="fa-solid fa-play"></i> stream now
+          </button>
+        </div>
+      </section>
+      
+      <!-- Servers Section -->
+      <section id="servers" class="section-container">
+        <h2 class="section-title">Servers on the label</h2>
+        <p class="section-desc">We load balance and fetch media from multiple reliable stream sources automatically.</p>
+        
+        <div class="server-list-card">
+          <div class="server-item">
+            <div class="server-index">01</div>
+            <div class="server-info">
+              <div class="server-name">vaplayer</div>
+              <div class="server-blurb">Fast multi-source scraper with high compatibility.</div>
+            </div>
+            <div class="server-badge high">high speed</div>
+          </div>
+          
+          <div class="server-item">
+            <div class="server-index">02</div>
+            <div class="server-info">
+              <div class="server-name">moovie-catalog</div>
+              <div class="server-blurb">Athena-powered, proxied high resolution MP4 streams.</div>
+            </div>
+            <div class="server-badge high">high speed</div>
+          </div>
+          
+          <div class="server-item">
+            <div class="server-index">03</div>
+            <div class="server-info">
+              <div class="server-name">multi-embed</div>
+              <div class="server-blurb">Niche API scraper delivering multi-quality fallback backups.</div>
+            </div>
+            <div class="server-badge">stable</div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Documentation Section -->
+      <section id="docs" class="section-container">
+        <h2 class="section-title">Documentation</h2>
+        <p class="section-desc">Implement vidcodin easily using our standard iframe URL patterns.</p>
+        
+        <div class="docs-grid">
+          <div class="doc-card">
+            <div class="doc-card-title">Movies API</div>
+            <div class="doc-code-block" id="code-movie-tpl">https://peestream.in/embed/?tmdbId={tmdbId}&type=movie</div>
+            <button class="doc-copy-btn" onclick="copyText('code-movie-tpl')">
+              <i class="fa-regular fa-copy"></i> copy url template
+            </button>
+          </div>
+          
+          <div class="doc-card">
+            <div class="doc-card-title">TV Shows API</div>
+            <div class="doc-code-block" id="code-tv-tpl">https://peestream.in/embed/?tmdbId={tmdbId}&type=show&season={season}&episode={episode}</div>
+            <button class="doc-copy-btn" onclick="copyText('code-tv-tpl')">
+              <i class="fa-regular fa-copy"></i> copy url template
             </button>
           </div>
         </div>
+      </section>
+      
+    </div>
+
+    <!-- ----------------------------------
+         2. PLAYER VIEW (tmdbId is provided)
+         ---------------------------------- -->
+    <div id="player-view" class="player-view">
+      
+      <!-- Video Container -->
+      <div class="player-container">
+        <div id="artplayer" class="artplayer-app"></div>
         
-        <div class="options-row">
-          <label class="checkbox-label">
-            <input type="checkbox" id="opt-autoplay" checked>
-            <span>Autoplay video</span>
-          </label>
-          <label class="checkbox-label">
-            <input type="checkbox" id="opt-mute">
-            <span>Mute on start</span>
-          </label>
+        <!-- Embed Drawer Button -->
+        <div id="embed-trigger" class="embed-trigger-btn" title="Get Embed Code">
+          <i class="fa-solid fa-code"></i>
         </div>
       </div>
+      
+      <!-- Scraping Loading Overlay -->
+      <div id="loading-overlay" class="overlay">
+        <div class="loader-card">
+          <div class="media-info">
+            <div id="loader-title" class="media-title">Loading Media</div>
+            <div id="loader-details" class="media-details">Resolving stream</div>
+          </div>
+          
+          <div class="spinner-box">
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring-inner"></div>
+            <div id="progress-percent" class="spinner-text">0%</div>
+          </div>
+          
+          <div id="loader-status" class="status-text">Connecting to scrapers...</div>
+          
+          <div class="progress-bar-container">
+            <div id="progress-bar-fill" class="progress-bar-fill"></div>
+          </div>
+          
+          <div id="sources-list" class="sources-list">
+            <!-- Dynamic sources statuses -->
+          </div>
+        </div>
+      </div>
+      
+      <!-- Error Overlay -->
+      <div id="error-overlay" class="overlay" style="display: none;">
+        <div class="error-card" style="display: flex;">
+          <i class="fa-solid fa-triangle-exclamation error-icon"></i>
+          <div class="error-title">Failed to load video</div>
+          <div id="error-desc" class="error-desc">No video streams could be found for this content. Please try again later.</div>
+          <button onclick="window.location.reload()" class="retry-btn">Retry</button>
+        </div>
+      </div>
+      
+      <!-- Embed Code Drawer -->
+      <div id="embed-drawer" class="embed-drawer">
+        <div class="drawer-header">
+          <div class="drawer-title">Embed Options</div>
+          <button id="drawer-close" class="drawer-close-btn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        
+        <div class="drawer-content">
+          <div class="input-group">
+            <div class="input-label">HTML Iframe Embed Code</div>
+            <div class="code-box-wrapper">
+              <input type="text" id="iframe-code-input" class="code-input" readonly value="">
+              <button id="copy-code-btn" class="copy-btn">
+                <i class="fa-regular fa-copy"></i> Copy
+              </button>
+            </div>
+          </div>
+          
+          <div class="options-row">
+            <label class="checkbox-label">
+              <input type="checkbox" id="opt-autoplay" checked>
+              <span>Autoplay video</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="opt-mute">
+              <span>Mute on start</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      
     </div>
-    
+
   </div>
 
   <script>
@@ -544,9 +1023,91 @@
     const type = urlParams.get('type') || 'movie';
     const season = urlParams.get('season');
     const episode = urlParams.get('episode');
-    const title = urlParams.get('title') || 'PeeStream Media';
+    const title = urlParams.get('title') || 'Media Stream';
     
-    // Elements
+    // Page Elements
+    const landingView = document.getElementById('landing-view');
+    const playerView = document.getElementById('player-view');
+    
+    // Load Dynamic Templates Domain
+    document.getElementById('code-movie-tpl').innerText = `${window.location.origin}${window.location.pathname}?tmdbId={tmdbId}&type=movie`;
+    document.getElementById('code-tv-tpl').innerText = `${window.location.origin}${window.location.pathname}?tmdbId={tmdbId}&type=show&season={season}&episode={episode}`;
+
+    // Routing Logic
+    if (tmdbId) {
+      // Toggle views
+      landingView.style.display = 'none';
+      playerView.style.display = 'block';
+      startScraping();
+    } else {
+      // Show landing
+      landingView.style.display = 'flex';
+      playerView.style.display = 'none';
+    }
+
+    // ----------------------------------
+    // LANDING VIEW JAVASCRIPT LOGIC
+    // ----------------------------------
+    let currentTab = 'movie';
+    
+    function switchTab(tab) {
+      currentTab = tab;
+      const tabMovie = document.getElementById('tab-movie');
+      const tabShow = document.getElementById('tab-show');
+      const inputSeason = document.getElementById('input-season');
+      const inputEpisode = document.getElementById('input-episode');
+      const inputTmdb = document.getElementById('input-tmdb');
+      
+      if (tab === 'movie') {
+        tabMovie.classList.add('active');
+        tabShow.classList.remove('active');
+        inputSeason.style.display = 'none';
+        inputEpisode.style.display = 'none';
+        inputTmdb.placeholder = "TMDB ID (e.g. 157336)";
+      } else {
+        tabMovie.classList.remove('active');
+        tabShow.classList.add('active');
+        inputSeason.style.display = 'block';
+        inputEpisode.style.display = 'block';
+        inputTmdb.placeholder = "TMDB ID (e.g. 94997)";
+      }
+    }
+    
+    function generateAndPlay() {
+      const tmdbVal = document.getElementById('input-tmdb').value.trim();
+      const seasonVal = document.getElementById('input-season').value.trim();
+      const episodeVal = document.getElementById('input-episode').value.trim();
+      
+      if (!tmdbVal) {
+        alert("Please enter a valid TMDB ID.");
+        return;
+      }
+      
+      let playUrl = `${window.location.pathname}?tmdbId=${tmdbVal}&type=${currentTab === 'movie' ? 'movie' : 'show'}`;
+      if (currentTab === 'show') {
+        if (!seasonVal || !episodeVal) {
+          alert("Please enter both Season and Episode.");
+          return;
+        }
+        playUrl += `&season=${seasonVal}&episode=${episodeVal}`;
+      }
+      
+      // Navigate to play page
+      window.location.href = playUrl;
+    }
+    
+    function copyText(elemId) {
+      const txt = document.getElementById(elemId).innerText;
+      navigator.clipboard.writeText(txt).then(() => {
+        alert("URL template copied to clipboard!");
+      }).catch(err => {
+        console.error("Failed to copy:", err);
+      });
+    }
+
+    // ----------------------------------
+    // PLAYER VIEW JAVASCRIPT LOGIC
+    // ----------------------------------
     const loadingOverlay = document.getElementById('loading-overlay');
     const errorOverlay = document.getElementById('error-overlay');
     const loaderTitle = document.getElementById('loader-title');
@@ -586,31 +1147,33 @@
     }
     
     // Embed drawer open/close
-    embedTrigger.addEventListener('click', () => {
-      updateEmbedCode();
-      embedDrawer.classList.add('open');
-    });
-    
-    drawerClose.addEventListener('click', () => {
-      embedDrawer.classList.remove('open');
-    });
-    
-    optAutoplay.addEventListener('change', updateEmbedCode);
-    optMute.addEventListener('change', updateEmbedCode);
-    
-    // Copy code button
-    copyCodeBtn.addEventListener('click', () => {
-      iframeCodeInput.select();
-      document.execCommand('copy');
+    if (embedTrigger) {
+      embedTrigger.addEventListener('click', () => {
+        updateEmbedCode();
+        embedDrawer.classList.add('open');
+      });
       
-      copyCodeBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
-      copyCodeBtn.style.background = '#00e676';
+      drawerClose.addEventListener('click', () => {
+        embedDrawer.classList.remove('open');
+      });
       
-      setTimeout(() => {
-        copyCodeBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
-        copyCodeBtn.style.background = '#ff3e6c';
-      }, 2000);
-    });
+      optAutoplay.addEventListener('change', updateEmbedCode);
+      optMute.addEventListener('change', updateEmbedCode);
+      
+      // Copy code button
+      copyCodeBtn.addEventListener('click', () => {
+        iframeCodeInput.select();
+        document.execCommand('copy');
+        
+        copyCodeBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+        copyCodeBtn.style.background = '#00e676';
+        
+        setTimeout(() => {
+          copyCodeBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+          copyCodeBtn.style.background = 'var(--accent-color)';
+        }, 2000);
+      });
+    }
 
     // Scrapers mapping & progress logic
     let totalProgress = 0;
@@ -662,15 +1225,6 @@
       `;
       
       loaderStatus.innerText = `Scraping: ${id} (${percentage}%)`;
-    }
-    
-    // Connect to Server-Sent Events scraper
-    if (!tmdbId) {
-      loadingOverlay.style.display = 'none';
-      errorOverlay.style.display = 'flex';
-      document.getElementById('error-desc').innerText = 'Missing tmdbId in the URL parameters.';
-    } else {
-      startScraping();
     }
     
     function startScraping() {
@@ -809,7 +1363,7 @@
         playsInline: true,
         autoPlayback: true,
         airplay: true,
-        theme: '#ff3e6c',
+        theme: 'var(--accent-color)',
         customType: {
           m3u8: function (video, url) {
             if (Hls.isSupported()) {
