@@ -29,7 +29,7 @@ export function BrandPill(props: {
           isMobile && props.header ? "hidden sm:block" : "",
         ].join(" ")}
       >
-        {t("global.name")}
+        <span>pee<span style={{ color: "#2563eb" }}>stream</span></span>
       </span>
     </div>
   );
