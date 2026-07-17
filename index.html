@@ -161,8 +161,10 @@
       </script>
   {{/if}}
 
-    <script>
-    window.op=window.op||function(){var n=[];return new Proxy(function(){arguments.length&&n.push([].slice.call(arguments))},{get:function(t,r){return"q"===r?n:function(){n.push([r].concat([].slice.call(arguments)))}} ,has:function(t,r){return"q"===r}}) }();
+  <script>
+    window.op = window.op || function() {
+      (window.op.q = window.op.q || []).push(arguments);
+    };
     window.op('init', {
       clientId: 'be0fa489-1813-4fbf-939a-858f1b842b61',
       trackScreenViews: true,
