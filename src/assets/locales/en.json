@@ -204,6 +204,7 @@
     "menu": {
       "about": "About us",
       "logout": "Log out",
+      "login": "Login",
       "register": "Sync to peestream",
       "settings": "Settings",
       "support": "Support",
