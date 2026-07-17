@@ -1,6 +1,8 @@
 import classNames from "classnames";
-import { type DragEvent, useRef, useState } from "react";
+import Fuse from "fuse.js";
+import { type DragEvent, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useAsyncFn } from "react-use";
 import { convert } from "subsrt-ts";
 
 import { subtitleTypeList } from "@/backend/helpers/subs";
@@ -11,9 +13,13 @@ import { useCaptions } from "@/components/player/hooks/useCaptions";
 import { Menu } from "@/components/player/internals/ContextMenu";
 import { SelectableLink } from "@/components/player/internals/ContextMenu/Links";
 import { useOverlayRouter } from "@/hooks/useOverlayRouter";
+import { CaptionListItem } from "@/stores/player/slices/source";
 import { usePlayerStore } from "@/stores/player/store";
 import { useSubtitleStore } from "@/stores/subtitles";
-import { getPrettyLanguageNameFromLocale } from "@/utils/language";
+import {
+  getPrettyLanguageNameFromLocale,
+  sortLangCodes,
+} from "@/utils/language";
 
 export function CaptionOption(props: {
   countryCode?: string;
@@ -82,6 +88,33 @@ export function CustomCaptionOption() {
   );
 }
 
+export function useSubtitleList(subs: CaptionListItem[], searchQuery: string) {
+  const { t: translate } = useTranslation();
+  const unknownChoice = translate("player.menus.subtitles.unknownLanguage");
+  return useMemo(() => {
+    const input = subs.map((t) => ({
+      ...t,
+      languageName:
+        getPrettyLanguageNameFromLocale(t.language) ?? unknownChoice,
+    }));
+    const sorted = sortLangCodes(input.map((t) => t.language));
+    let results = input.sort((a, b) => {
+      return sorted.indexOf(a.language) - sorted.indexOf(b.language);
+    });
+
+    if (searchQuery.trim().length > 0) {
+      const fuse = new Fuse(input, {
+        includeScore: true,
+        keys: ["languageName"],
+      });
+
+      results = fuse.search(searchQuery).map((res) => res.item);
+    }
+
+    return results;
+  }, [subs, searchQuery, unknownChoice]);
+}
+
 export function CaptionsView({
   id,
   backLink,
@@ -92,11 +125,32 @@ export function CaptionsView({
   const { t } = useTranslation();
   const router = useOverlayRouter(id);
   const selectedCaptionId = usePlayerStore((s) => s.caption.selected?.id);
-  const { disable } = useCaptions();
+  const { disable, selectCaptionById } = useCaptions();
   const [dragging, setDragging] = useState(false);
   const setCaption = usePlayerStore((s) => s.setCaption);
-  const selectedCaptionLanguage = usePlayerStore(
-    (s) => s.caption.selected?.language,
+
+  const captionList = usePlayerStore((s) => s.captionList);
+  const getHlsCaptionList = usePlayerStore((s) => s.display?.getCaptionList);
+
+  const captions = useMemo(
+    () =>
+      captionList.length !== 0 ? captionList : (getHlsCaptionList?.() ?? []),
+    [captionList, getHlsCaptionList],
+  );
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const subtitleList = useSubtitleList(captions, searchQuery);
+
+  const [currentlyDownloading, setCurrentlyDownloading] = useState<
+    string | null
+  >(null);
+
+  const [downloadReq, startDownload] = useAsyncFn(
+    async (captionId: string) => {
+      setCurrentlyDownloading(captionId);
+      return selectCaptionById(captionId);
+    },
+    [selectCaptionById, setCurrentlyDownloading],
   );
 
   function onDrop(event: DragEvent<HTMLDivElement>) {
@@ -124,11 +178,6 @@ export function CaptionsView({
 
     reader.readAsText(firstFile);
   }
-
-  const selectedLanguagePretty = selectedCaptionLanguage
-    ? (getPrettyLanguageNameFromLocale(selectedCaptionLanguage) ??
-      t("player.menus.subtitles.unknownLanguage"))
-    : undefined;
 
   return (
     <>
@@ -193,36 +242,30 @@ export function CaptionsView({
             {t("player.menus.subtitles.offChoice")}
           </CaptionOption>
           <CustomCaptionOption />
-          <Menu.ChevronLink
-            onClick={() =>
-              router.navigate(
-                backLink ? "/captions/source" : "/captions/sourceOverlay",
-              )
-            }
-            rightText={
-              useSubtitleStore((s) => s.isOpenSubtitles)
-                ? ""
-                : selectedLanguagePretty
-            }
-          >
-            {t("player.menus.subtitles.SourceChoice")}
-          </Menu.ChevronLink>
-          <Menu.ChevronLink
-            onClick={() =>
-              router.navigate(
-                backLink
-                  ? "/captions/opensubtitles"
-                  : "/captions/opensubtitlesOverlay",
-              )
-            }
-            rightText={
-              useSubtitleStore((s) => s.isOpenSubtitles)
-                ? selectedLanguagePretty
-                : ""
-            }
-          >
-            {t("player.menus.subtitles.OpenSubtitlesChoice")}
-          </Menu.ChevronLink>
+
+          {subtitleList.map((v) => {
+            return (
+              <CaptionOption
+                key={v.id}
+                countryCode={v.language}
+                selected={v.id === selectedCaptionId}
+                loading={v.id === currentlyDownloading && downloadReq.loading}
+                error={
+                  v.id === currentlyDownloading && downloadReq.error
+                    ? downloadReq.error.toString()
+                    : undefined
+                }
+                onClick={() => startDownload(v.id)}
+              >
+                {v.languageName}
+                {v.opensubtitles && (
+                  <span className="ml-2 text-[10px] opacity-40 px-1.5 py-0.5 rounded bg-video-context-light bg-opacity-20 uppercase font-bold tracking-wider">
+                    OS
+                  </span>
+                )}
+              </CaptionOption>
+            );
+          })}
         </Menu.ScrollToActiveSection>
       </FileDropHandler>
     </>
