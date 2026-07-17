@@ -22,6 +22,7 @@ import { useBackendUrl } from "@/hooks/auth/useBackendUrl";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useSettingsState } from "@/hooks/useSettingsState";
 import { AccountActionsPart } from "@/pages/parts/settings/AccountActionsPart";
+import { SyncPart } from "@/pages/parts/settings/SyncPart";
 import { AccountEditPart } from "@/pages/parts/settings/AccountEditPart";
 import { CaptionsPart } from "@/pages/parts/settings/CaptionsPart";
 import { ConnectionsPart } from "@/pages/parts/settings/ConnectionsPart";
@@ -335,6 +336,9 @@ export function SettingsPage() {
             proxyUrls={state.proxyUrls.state}
             setProxyUrls={state.proxyUrls.set}
           />
+        </div>
+        <div id="settings-sync" className="mt-48">
+          <SyncPart />
         </div>
       </SettingsLayout>
       <Transition

@@ -569,6 +569,11 @@
       },
       "title": "Appearance"
     },
+    "sync": {
+      "title": "Sync",
+      "comingSoon": "Coming Soon",
+      "description": "Sync your bookmarks, watch progress, and settings across all your devices. This feature is currently in development."
+    },
     "connections": {
       "server": {
         "description": "If you would like to connect to a custom backend to store your data, enable this and provide the URL. <0>Instructions.</0>",

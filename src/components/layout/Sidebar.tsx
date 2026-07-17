@@ -21,14 +21,18 @@ export function SidebarLink(props: {
   children: React.ReactNode;
   icon: Icons;
   active?: boolean;
+  disabled?: boolean;
   onClick?: () => void;
 }) {
   return (
     <button
       type="button"
-      onClick={props.onClick}
+      onClick={props.disabled ? undefined : props.onClick}
       className={classNames(
-        "tabbable w-full px-3 py-2 flex items-center space-x-3 cursor-pointer rounded my-2",
+        "tabbable w-full px-3 py-2 flex items-center space-x-3 rounded my-2",
+        props.disabled
+          ? "opacity-40 cursor-not-allowed"
+          : "cursor-pointer",
         props.active
           ? "bg-settings-sidebar-activeLink text-settings-sidebar-type-activated"
           : null,
@@ -41,7 +45,14 @@ export function SidebarLink(props: {
         )}
         icon={props.icon}
       />
-      <span>{props.children}</span>
+      <span className="flex items-center gap-2">
+        {props.children}
+        {props.disabled ? (
+          <span className="text-[10px] font-bold uppercase bg-type-dimmed/20 text-type-dimmed px-1.5 py-0.5 rounded">
+            Soon
+          </span>
+        ) : null}
+      </span>
     </button>
   );
 }

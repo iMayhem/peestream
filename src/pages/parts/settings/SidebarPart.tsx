@@ -37,7 +37,12 @@ export function SidebarPart() {
   const hostname = location.hostname;
   const [activeLink, setActiveLink] = useState("");
 
-  const settingLinks = [
+  const settingLinks: {
+    textKey: string;
+    id: string;
+    icon: Icons;
+    comingSoon?: boolean;
+  }[] = [
     {
       textKey: "settings.account.title",
       id: "settings-account",
@@ -62,6 +67,12 @@ export function SidebarPart() {
       textKey: "settings.connections.title",
       id: "settings-connection",
       icon: Icons.LINK,
+    },
+    {
+      textKey: "settings.sync.title",
+      id: "settings-sync",
+      icon: Icons.CLOUD,
+      comingSoon: true,
     },
   ];
 
@@ -131,6 +142,7 @@ export function SidebarPart() {
               <SidebarLink
                 icon={v.icon}
                 active={v.id === activeLink}
+                disabled={v.comingSoon}
                 onClick={() => scrollTo(v.id)}
                 key={v.id}
               >
