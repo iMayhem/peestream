@@ -1821,7 +1821,14 @@
       // Initialize HlsJS if it is an HLS stream
       if (isHlsStream) {
         if (Hls.isSupported()) {
-          const hlsConfig = {};
+          const hlsConfig = {
+            enableWorker: true,
+            maxBufferLength: 45,        // buffer up to 45s ahead
+            maxMaxBufferLength: 90,     // cap max buffer length at 90s
+            maxBufferSize: 60 * 1024 * 1024, // 60MB max buffer size
+            maxStarvationDelay: 2,
+            progressive: true
+          };
           if (stream.headers && Object.keys(stream.headers).length > 0) {
             hlsConfig.xhrSetup = function (xhr, targetUrl) {
               const forbiddenHeaders = [
@@ -2190,26 +2197,41 @@
         updateVolumeIcon();
       });
 
-      // Seek progress
-      progressArea.addEventListener('click', (e) => {
-        const rect = progressArea.getBoundingClientRect();
-        const pos = (e.clientX - rect.left) / rect.width;
-        if (video.duration) {
-          video.currentTime = pos * video.duration;
-        }
-      });
-
-      // Seek bar scrubbing / drag support
+      // Seek bar scrubbing & dragging logic (instant UI playhead update, seek on release)
       let isDragging = false;
-      progressArea.addEventListener('mousedown', () => isDragging = true);
-      window.addEventListener('mouseup', () => isDragging = false);
-      window.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
+      
+      const seekFromEvent = (e, commit = false) => {
         const rect = progressArea.getBoundingClientRect();
         let pos = (e.clientX - rect.left) / rect.width;
         pos = Math.max(0, Math.min(1, pos));
+        
+        const percentage = pos * 100;
+        currentProgress.style.width = `${percentage}%`;
+        progressHoverDot.style.left = `${percentage}%`;
+        
         if (video.duration) {
-          video.currentTime = pos * video.duration;
+          timeCurrent.innerText = formatTime(pos * video.duration);
+          if (commit) {
+            video.currentTime = pos * video.duration;
+          }
+        }
+      };
+
+      progressArea.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        seekFromEvent(e, false);
+      });
+
+      window.addEventListener('mouseup', (e) => {
+        if (isDragging) {
+          isDragging = false;
+          seekFromEvent(e, true);
+        }
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+          seekFromEvent(e, false);
         }
       });
 
