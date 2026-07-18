@@ -1294,11 +1294,23 @@
         playerUrl = stream.playlist;
         playerType = 'm3u8';
       } else if (stream.type === 'file') {
-        // Choose highest quality
+        // Choose highest quality robustly
         const qualities = Object.keys(stream.qualities);
-        const bestQual = qualities.includes('1080P') ? '1080P' : qualities.includes('720P') ? '720P' : qualities[0];
+        let bestQual = qualities[0];
+        const priority = ['4k', '2160', '1080', '1080p', '1080P', '720', '720p', '720P', '480', '480p', '360', '360p', 'sd'];
+        for (const q of priority) {
+          if (qualities.includes(q)) {
+            bestQual = q;
+            break;
+          }
+        }
         playerUrl = stream.qualities[bestQual].url;
         playerType = stream.qualities[bestQual].type || 'mp4';
+      }
+      
+      // Make relative URLs absolute to point to the backend provider
+      if (playerUrl && playerUrl.startsWith('/')) {
+        playerUrl = `https://providers.peestream.in${playerUrl}`;
       }
       
       // Fetch Subtitles
@@ -1366,11 +1378,27 @@
         airplay: true,
         theme: 'var(--accent-color)',
         customType: {
-          m3u8: function (video, url) {
+          m3u8: function (video, url, artInstance) {
             if (Hls.isSupported()) {
-              const hls = new Hls();
+              if (artInstance.hls) artInstance.hls.destroy();
+              
+              // Setup custom headers if provided by the stream
+              const hlsConfig = {};
+              if (stream.headers && Object.keys(stream.headers).length > 0) {
+                hlsConfig.xhrSetup = function (xhr, targetUrl) {
+                  for (const [key, value] of Object.entries(stream.headers)) {
+                    if (!['host', 'connection'].includes(key.toLowerCase())) {
+                      xhr.setRequestHeader(key, value);
+                    }
+                  }
+                };
+              }
+              
+              const hls = new Hls(hlsConfig);
               hls.loadSource(url);
               hls.attachMedia(video);
+              artInstance.hls = hls;
+              artInstance.on('destroy', () => hls.destroy());
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
               video.src = url;
             }
