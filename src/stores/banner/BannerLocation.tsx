@@ -73,9 +73,6 @@ export function BannerLocation(props: { location?: string }) {
 
   return (
     <div>
-      <div className="flex items-center justify-center p-2 bg-[#C93957] text-white text-sm text-center">
-        Our VPS is suspended. Need a few hours to fix it. Thank you for your patience.
-      </div>
       {currentLocation === loc && !hideBannerFlag ? (
         !isOnline && !ignoredBannerIds.includes("offline") ? (
           <Banner id="offline" type="error">
