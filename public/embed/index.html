@@ -1302,11 +1302,11 @@
     <div id="player-view" class="player-view">
       
       <!-- Custom Video Container -->
-      <div id="video-container" class="video-container">
+      <div id="video-container" class="video-container hide-controls">
         <video id="main-video" playsinline></video>
         
         <!-- Big Play Button Overlay -->
-        <div id="big-play-btn" class="big-play-btn show">
+        <div id="big-play-btn" class="big-play-btn">
           <i class="fa-solid fa-play"></i>
         </div>
         
@@ -1821,6 +1821,10 @@
       // Setup Subtitles
       fetchSubtitles();
       setupPlayerEvents();
+
+      if (!autoplayParam) {
+        bigPlayBtn.classList.add('show');
+      }
     }
 
     function updateActiveHlsQualityBtn(activeBtn) {
