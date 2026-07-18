@@ -781,20 +781,22 @@
     .loader-card {
       width: 90%;
       max-width: 450px;
-      padding: 30px;
-      border-radius: 24px;
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      backdrop-filter: blur(16px);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      padding: 35px 30px;
+      border-radius: 28px;
+      background: rgba(15, 15, 27, 0.7);
+      border: 1px solid rgba(163, 89, 236, 0.2);
+      backdrop-filter: blur(24px);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), var(--shadow-glow);
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
+      transform: scale(1);
+      transition: transform 0.3s ease;
     }
     
     .media-info {
-      margin-bottom: 20px;
+      margin-bottom: 22px;
     }
     
     .media-title {
@@ -817,28 +819,19 @@
       width: 100px;
       height: 100px;
       margin-bottom: 25px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     
-    .spinner-ring {
+    .spinner-pulse {
       position: absolute;
-      width: 100%;
-      height: 100%;
-      border: 3px solid rgba(163, 89, 236, 0.1);
-      border-top: 3px solid var(--accent-color);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    
-    .spinner-ring-inner {
-      position: absolute;
-      top: 10px;
-      left: 10px;
       width: 80px;
       height: 80px;
-      border: 2px solid rgba(255, 255, 255, 0.02);
-      border-bottom: 2px solid #ffffff;
       border-radius: 50%;
-      animation: spin-reverse 1.5s linear infinite;
+      background: radial-gradient(circle, rgba(163, 89, 236, 0.15) 0%, transparent 70%);
+      border: 2.5px dashed rgba(163, 89, 236, 0.4);
+      animation: spin 8s linear infinite, pulse 2s ease-in-out infinite;
     }
     
     .spinner-text {
@@ -847,8 +840,9 @@
       left: 50%;
       transform: translate(-50%, -50%);
       font-weight: 800;
-      font-size: 1.1rem;
-      color: var(--accent-color);
+      font-size: 1.15rem;
+      color: var(--accent-hover);
+      text-shadow: 0 0 10px rgba(163, 89, 236, 0.5);
     }
     
     @keyframes spin {
@@ -856,43 +850,47 @@
       100% { transform: rotate(360deg); }
     }
     
-    @keyframes spin-reverse {
-      0% { transform: rotate(360deg); }
-      100% { transform: rotate(0deg); }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.15); opacity: 1; border-color: var(--accent-hover); }
     }
     
     .status-text {
-      font-size: 0.95rem;
-      font-weight: 500;
-      margin-bottom: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 18px;
       color: #e5e5f5;
+      letter-spacing: 0.2px;
     }
     
     .progress-bar-container {
       width: 100%;
-      height: 4px;
-      background-color: rgba(255, 255, 255, 0.05);
+      height: 6px;
+      background-color: rgba(255, 255, 255, 0.04);
       border-radius: 10px;
       overflow: hidden;
       margin-bottom: 25px;
+      border: 1px solid rgba(255, 255, 255, 0.02);
     }
     
     .progress-bar-fill {
       width: 0%;
       height: 100%;
-      background: linear-gradient(90deg, var(--accent-color), #bd84f7);
+      background: linear-gradient(90deg, #8e2de2, #4a00e0, var(--accent-hover));
       border-radius: 10px;
-      transition: width 0.3s cubic-bezier(0.1, 0.8, 0.3, 1);
+      box-shadow: 0 0 12px rgba(163, 89, 236, 0.8);
+      transition: width 0.4s cubic-bezier(0.1, 0.8, 0.3, 1);
     }
     
     .sources-list {
       width: 100%;
-      max-height: 140px;
+      max-height: 180px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 10px;
       padding-right: 5px;
+      margin-top: 5px;
     }
     
     .sources-list::-webkit-scrollbar {
@@ -908,39 +906,60 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 14px;
-      background-color: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      font-size: 0.8rem;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 14px;
+      font-size: 0.85rem;
+      transition: all 0.25s ease;
+    }
+    
+    .source-item:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(163, 89, 236, 0.15);
     }
     
     .source-name {
-      font-weight: 500;
-      color: #e5e5f5;
+      font-weight: 600;
+      color: #dfdfea;
       text-transform: capitalize;
     }
     
     .source-status {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid transparent;
     }
     
     .source-status.pending {
+      background: rgba(163, 89, 236, 0.08);
       color: var(--accent-color);
+      border-color: rgba(163, 89, 236, 0.15);
     }
     
     .source-status.success {
+      background: rgba(0, 230, 118, 0.08);
       color: #00e676;
+      border-color: rgba(0, 230, 118, 0.15);
+      box-shadow: 0 0 10px rgba(0, 230, 118, 0.1);
     }
     
     .source-status.failure {
+      background: rgba(255, 82, 82, 0.08);
       color: #ff5252;
+      border-color: rgba(255, 82, 82, 0.15);
     }
     
     .source-status.notfound {
+      background: rgba(255, 255, 255, 0.03);
       color: var(--text-dim);
+      border-color: rgba(255, 255, 255, 0.05);
     }
     
     /* Embed Code Drawer Button */
@@ -1364,8 +1383,7 @@
           </div>
           
           <div class="spinner-box">
-            <div class="spinner-ring"></div>
-            <div class="spinner-ring-inner"></div>
+            <div class="spinner-pulse"></div>
             <div id="progress-percent" class="spinner-text">0%</div>
           </div>
           
@@ -1820,9 +1838,39 @@
           hlsInstance.loadSource(playerUrl);
           hlsInstance.attachMedia(video);
           
+          // Setup HLS Quality Menu dynamically
           hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+            const levels = hlsInstance.levels;
+            if (levels && levels.length > 1) {
+              qualityMenuContainer.style.display = 'block';
+              qualitiesList.innerHTML = '';
+              
+              // Auto option
+              const autoBtn = document.createElement('button');
+              autoBtn.className = 'menu-option active';
+              autoBtn.innerHTML = 'AUTO <i class="fa-solid fa-check" style="font-size:0.75rem;opacity:0.8"></i>';
+              autoBtn.onclick = () => {
+                hlsInstance.currentLevel = -1;
+                updateActiveHlsQualityBtn(autoBtn);
+              };
+              qualitiesList.appendChild(autoBtn);
+              
+              // Specific level options
+              levels.forEach((level, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'menu-option';
+                const label = level.name || (level.height ? `${level.height}p` : `Level ${index}`);
+                btn.innerText = label.toUpperCase();
+                btn.onclick = () => {
+                  hlsInstance.currentLevel = index;
+                  updateActiveHlsQualityBtn(btn);
+                };
+                qualitiesList.appendChild(btn);
+              });
+            }
+
             if (autoplayParam) video.play().catch(() => {
-              // Browser blocked autoplay (needs user interaction)
+              // Browser blocked autoplay
               bigPlayBtn.classList.add('show');
             });
           });
@@ -1840,9 +1888,19 @@
       setupPlayerEvents();
     }
 
-    // Playback Quality selector
+    function updateActiveHlsQualityBtn(activeBtn) {
+      document.querySelectorAll('#qualities-list .menu-option').forEach(btn => {
+        btn.classList.remove('active');
+        const checkIcon = btn.querySelector('i');
+        if (checkIcon) checkIcon.remove();
+      });
+      activeBtn.classList.add('active');
+      activeBtn.innerHTML += ' <i class="fa-solid fa-check" style="font-size:0.75rem;opacity:0.8"></i>';
+      qualityMenu.classList.remove('show');
+    }
+
+    // Playback Quality selector for file streams
     function selectQuality(quality, url, btnElement) {
-      // Save current timestamp
       const currentTime = video.currentTime;
       const isPlaying = !video.paused;
       
@@ -1851,9 +1909,14 @@
         finalUrl = `https://providers.peestream.in${finalUrl}`;
       }
 
-      // Update quality active states
-      document.querySelectorAll('#qualities-list .menu-option').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('#qualities-list .menu-option').forEach(btn => {
+        btn.classList.remove('active');
+        const checkIcon = btn.querySelector('i');
+        if (checkIcon) checkIcon.remove();
+      });
+      
       btnElement.classList.add('active');
+      btnElement.innerHTML += ' <i class="fa-solid fa-check" style="font-size:0.75rem;opacity:0.8"></i>';
 
       video.src = finalUrl;
       video.currentTime = currentTime;
