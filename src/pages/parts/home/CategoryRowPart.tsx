@@ -93,7 +93,7 @@ export function CategoryRowPart({ category }: { category: Category }) {
             id: r.id,
             title: r.title || r.name || "",
             poster: r.poster_path
-              ? `https://providers.peestream.in/tmdb-image/w500${r.poster_path}`
+              ? `https://image.tmdb.org/t/p/w500${r.poster_path}`
               : null,
             rating: r.vote_average || 0,
             type: category.isTv ? ("tv" as const) : ("movie" as const),
