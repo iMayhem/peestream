@@ -1590,7 +1590,7 @@
       currentUrl.searchParams.delete('autoplay');
       currentUrl.searchParams.delete('muted');
       
-      const autoplay = optAutoplay.checked ? '&autoplay=true' : '';
+      const autoplay = optAutoplay.checked ? '' : '&autoplay=false';
       const mute = optMute.checked ? '&muted=true' : '';
       
       const embedUrl = `${currentUrl.origin}${currentUrl.pathname}?tmdbId=${tmdbId}&type=${type}${season ? `&season=${season}` : ''}${episode ? `&episode=${episode}` : ''}&title=${encodeURIComponent(title)}${autoplay}${mute}`;
@@ -1738,7 +1738,7 @@
       }
 
       // Autoplay / Mute config
-      const autoplayParam = urlParams.get('autoplay') === 'true';
+      const autoplayParam = urlParams.get('autoplay') !== 'false';
       const mutedParam = urlParams.get('muted') === 'true';
 
       if (mutedParam) {
