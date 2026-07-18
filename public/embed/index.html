@@ -1244,8 +1244,8 @@
           <div class="server-item">
             <div class="server-index">01</div>
             <div class="server-info">
-              <div class="server-name">vaplayer</div>
-              <div class="server-blurb">Fast multi-source scraper with high compatibility.</div>
+              <div class="server-name">zeus</div>
+              <div class="server-blurb">Ultra-fast multi-source streaming server.</div>
             </div>
             <div class="server-badge high">high speed</div>
           </div>
@@ -1253,8 +1253,8 @@
           <div class="server-item">
             <div class="server-index">02</div>
             <div class="server-info">
-              <div class="server-name">moovie-catalog</div>
-              <div class="server-blurb">Athena-powered, proxied high resolution MP4 streams.</div>
+              <div class="server-name">athena</div>
+              <div class="server-blurb">High resolution proxied media server with fallback levels.</div>
             </div>
             <div class="server-badge high">high speed</div>
           </div>
@@ -1262,8 +1262,8 @@
           <div class="server-item">
             <div class="server-index">03</div>
             <div class="server-info">
-              <div class="server-name">multi-embed</div>
-              <div class="server-blurb">Niche API scraper delivering multi-quality fallback backups.</div>
+              <div class="server-name">poseidon</div>
+              <div class="server-blurb">Stable media stream catalog and load-balancer.</div>
             </div>
             <div class="server-badge">stable</div>
           </div>
@@ -1376,27 +1376,10 @@
       
       <!-- Scraping Loading Overlay -->
       <div id="loading-overlay" class="overlay">
-        <div class="loader-card">
-          <div class="media-info">
-            <div id="loader-title" class="media-title">Loading Media</div>
-            <div id="loader-details" class="media-details">Resolving stream</div>
-          </div>
-          
-          <div class="spinner-box">
-            <div class="spinner-pulse"></div>
-            <div id="progress-percent" class="spinner-text">0%</div>
-          </div>
-          
-          <div id="loader-status" class="status-text">Connecting to scrapers...</div>
-          
-          <div class="progress-bar-container">
-            <div id="progress-bar-fill" class="progress-bar-fill"></div>
-          </div>
-          
-          <div id="sources-list" class="sources-list">
-            <!-- Dynamic sources statuses -->
-          </div>
+        <div class="spinner-box">
+          <div class="spinner-pulse"></div>
         </div>
+        <div id="loader-status" class="status-text" style="margin-top: 15px; font-weight: 500; font-size: 0.95rem;">Resolving stream...</div>
       </div>
       
       <!-- Error Overlay -->
@@ -1564,12 +1547,7 @@
     // ----------------------------------
     const loadingOverlay = document.getElementById('loading-overlay');
     const errorOverlay = document.getElementById('error-overlay');
-    const loaderTitle = document.getElementById('loader-title');
-    const loaderDetails = document.getElementById('loader-details');
     const loaderStatus = document.getElementById('loader-status');
-    const progressBarFill = document.getElementById('progress-bar-fill');
-    const progressPercent = document.getElementById('progress-percent');
-    const sourcesList = document.getElementById('sources-list');
     
     const embedTrigger = document.getElementById('embed-trigger');
     const embedDrawer = document.getElementById('embed-drawer');
@@ -1604,13 +1582,7 @@
     const progressHoverDot = document.getElementById('progress-hover-dot');
     const subtitleOverlay = document.getElementById('subtitle-overlay');
     
-    // Set UI Media Info
-    loaderTitle.innerText = title;
-    if (type === 'show' || type === 'tv') {
-      loaderDetails.innerText = `Season ${season} • Episode ${episode}`;
-    } else {
-      loaderDetails.innerText = 'Movie';
-    }
+
     
     // Setup initial iframe code
     function updateEmbedCode() {
@@ -1654,90 +1626,45 @@
       });
     }
 
-    // Scrapers mapping & progress logic
-    let totalProgress = 0;
-    let sourceProgresses = {};
-    
-    function updateProgressUI() {
-      const keys = Object.keys(sourceProgresses);
-      if (keys.length === 0) return;
-      
-      let sum = 0;
-      keys.forEach(k => {
-        sum += sourceProgresses[k].percentage;
-      });
-      
-      totalProgress = Math.round(sum / keys.length);
-      progressBarFill.style.width = `${totalProgress}%`;
-      progressPercent.innerText = `${totalProgress}%`;
+    function getFriendlyServerName(providerId) {
+      const mapping = {
+        'vaplayer': 'Zeus',
+        'moovie-catalog': 'Athena',
+        'streamvault': 'Poseidon',
+        'vidrift': 'Poseidon'
+      };
+      return mapping[providerId] || 'Zeus';
     }
-    
-    function setSourceStatus(id, percentage, status, reason = '') {
-      sourceProgresses[id] = { percentage, status };
-      updateProgressUI();
-      
-      let item = document.getElementById(`src-${id}`);
-      if (!item) {
-        item = document.createElement('div');
-        item.id = `src-${id}`;
-        item.className = 'source-item';
-        sourcesList.appendChild(item);
-      }
-      
-      let statusIcon = '';
-      if (status === 'pending') {
-        statusIcon = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
-      } else if (status === 'success') {
-        statusIcon = '<i class="fa-solid fa-circle-check"></i>';
-      } else if (status === 'failure') {
-        statusIcon = '<i class="fa-solid fa-circle-xmark"></i>';
-      } else if (status === 'notfound') {
-        statusIcon = '<i class="fa-solid fa-circle-minus"></i>';
-      }
-      
-      item.innerHTML = `
-        <span class="source-name">${id}</span>
-        <span class="source-status ${status}">
-          ${statusIcon} <span>${status}</span>
-        </span>
-      `;
-      
-      loaderStatus.innerText = `Scraping: ${id} (${percentage}%)`;
-    }
-    
+
     function startScraping() {
       const scrapeUrl = `https://providers.peestream.in/scrape?tmdbId=${tmdbId}&type=${type}${season ? `&season=${season}` : ''}${episode ? `&episode=${episode}` : ''}`;
       const eventSource = new EventSource(scrapeUrl);
       
       eventSource.addEventListener('init', (e) => {
-        const data = JSON.parse(e.data);
-        data.sourceIds.forEach(id => {
-          setSourceStatus(id, 0, 'pending');
-        });
+        loaderStatus.innerText = "Connecting to servers...";
       });
       
       eventSource.addEventListener('start', (e) => {
         const id = e.data;
-        setSourceStatus(id, 0, 'pending');
+        loaderStatus.innerText = `Searching ${getFriendlyServerName(id)} server...`;
       });
       
       eventSource.addEventListener('update', (e) => {
         const data = JSON.parse(e.data);
-        setSourceStatus(data.id, data.percentage, data.status, data.reason || data.error);
+        if (data.status === 'success') {
+          loaderStatus.innerText = `Resolving stream on ${getFriendlyServerName(data.id)}...`;
+        }
       });
       
       eventSource.addEventListener('completed', (e) => {
         const data = JSON.parse(e.data);
         eventSource.close();
-        
-        progressBarFill.style.width = '100%';
-        progressPercent.innerText = '100%';
-        loaderStatus.innerText = 'Initializing player...';
+        loaderStatus.innerText = "Initializing player...";
         
         setTimeout(() => {
           loadingOverlay.classList.add('hidden');
           initPlayer(data.stream);
-        }, 800);
+        }, 850);
       });
       
       eventSource.addEventListener('done', (e) => {
