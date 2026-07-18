@@ -253,6 +253,60 @@
       transform: translateY(1px);
     }
 
+    .preview-container {
+      width: 100%;
+      max-width: 800px;
+      aspect-ratio: 16 / 9;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      margin-top: 50px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+    
+    .preview-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: none;
+    }
+    
+    .preview-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      color: var(--text-dim);
+      font-size: 0.95rem;
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .preview-placeholder i {
+      font-size: 2.8rem;
+      color: var(--accent-color);
+      opacity: 0.85;
+    }
+
+    .preview-btn {
+      background: rgba(255, 255, 255, 0.03) !important;
+      border: 1px solid var(--border-color) !important;
+      box-shadow: none !important;
+    }
+    
+    .preview-btn:hover {
+      background: rgba(255, 255, 255, 0.08) !important;
+      border-color: rgba(255, 255, 255, 0.15) !important;
+      color: #ffffff !important;
+      transform: translateY(-1px);
+      box-shadow: none !important;
+    }
+
     /* Section layout */
     .section-container {
       width: 100%;
@@ -864,9 +918,23 @@
             <input type="text" id="input-episode" class="gen-input width-small" placeholder="E" style="display: none;">
           </div>
           
-          <button class="play-btn" onclick="generateAndPlay()">
-            <i class="fa-solid fa-play"></i> stream now
-          </button>
+          <div style="display: flex; gap: 12px; width: 100%;">
+            <button class="play-btn" style="flex: 1;" onclick="generateAndPlay()">
+              <i class="fa-solid fa-expand"></i> Standalone
+            </button>
+            <button class="play-btn preview-btn" style="flex: 1;" onclick="loadPreview()">
+              <i class="fa-solid fa-circle-play"></i> Live Preview
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Preview Container -->
+        <div id="live-preview-section" class="preview-container">
+          <div id="preview-placeholder" class="preview-placeholder">
+            <i class="fa-solid fa-tv"></i>
+            <span>Enter a TMDB ID above and click "Live Preview" to test the player here.</span>
+          </div>
+          <iframe id="preview-iframe" class="preview-iframe" allowfullscreen allow="autoplay; encrypted-media"></iframe>
         </div>
       </section>
       
@@ -1095,6 +1163,36 @@
       
       // Navigate to play page
       window.location.href = playUrl;
+    }
+    
+    function loadPreview() {
+      const tmdbVal = document.getElementById('input-tmdb').value.trim();
+      const seasonVal = document.getElementById('input-season').value.trim();
+      const episodeVal = document.getElementById('input-episode').value.trim();
+      
+      if (!tmdbVal) {
+        alert("Please enter a valid TMDB ID.");
+        return;
+      }
+      
+      let playUrl = `${window.location.pathname}?tmdbId=${tmdbVal}&type=${currentTab === 'movie' ? 'movie' : 'show'}`;
+      if (currentTab === 'show') {
+        if (!seasonVal || !episodeVal) {
+          alert("Please enter both Season and Episode.");
+          return;
+        }
+        playUrl += `&season=${seasonVal}&episode=${episodeVal}`;
+      }
+      
+      const embedUrl = `${window.location.origin}${playUrl}&title=Preview%20Player`;
+      const iframe = document.getElementById('preview-iframe');
+      const placeholder = document.getElementById('preview-placeholder');
+      
+      placeholder.style.display = 'none';
+      iframe.style.display = 'block';
+      iframe.src = embedUrl;
+      
+      document.getElementById('live-preview-section').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
     
     function copyText(elemId) {
