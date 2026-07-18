@@ -69,17 +69,19 @@ export function BannerLocation(props: { location?: string }) {
     };
   }, [setLocation, loc]);
 
-  if (currentLocation !== loc) return null;
-
   const hideBannerFlag = sessionStorage.getItem("hideBanner");
-  if (hideBannerFlag) return null;
 
   return (
     <div>
-      {!isOnline && !ignoredBannerIds.includes("offline") ? (
-        <Banner id="offline" type="error">
-          {t("navigation.banner.offline")}
-        </Banner>
+      <div className="flex items-center justify-center p-2 bg-[#C93957] text-white text-sm text-center">
+        Our VPS is suspended. Need a few hours to fix it. Thank you for your patience.
+      </div>
+      {currentLocation === loc && !hideBannerFlag ? (
+        !isOnline && !ignoredBannerIds.includes("offline") ? (
+          <Banner id="offline" type="error">
+            {t("navigation.banner.offline")}
+          </Banner>
+        ) : null
       ) : null}
     </div>
   );
