@@ -174,10 +174,36 @@
     });
   </script>
   <script>
+    function safeReload() {
+      try {
+        const key = 'peestream_last_reload';
+        const now = Date.now();
+        const lastReload = parseInt(sessionStorage.getItem(key) || '0', 10);
+        if (now - lastReload > 5000) {
+          sessionStorage.setItem(key, now.toString());
+          window.location.reload();
+        } else {
+          console.error('Reload loop detected, stopping reload.');
+        }
+      } catch (e) {
+        window.location.reload();
+      }
+    }
+
     window.addEventListener('vite:preloadError', (event) => {
-      console.warn('Vite preload error detected, reloading page...', event);
-      window.location.reload();
+      console.warn('Vite preload error detected', event);
+      safeReload();
     });
+
+    window.addEventListener('error', (event) => {
+      if (event.target && (event.target.tagName === 'SCRIPT' || event.target.tagName === 'LINK')) {
+        const src = event.target.src || event.target.href;
+        if (src && (src.includes('/assets/') || src.includes('/src/'))) {
+          console.warn('Resource failed to load:', src);
+          safeReload();
+        }
+      }
+    }, true);
   </script>
   <script src="https://openpanel.dev/op1.js" defer async></script>
 </head>
