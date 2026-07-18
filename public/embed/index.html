@@ -1659,12 +1659,14 @@
       
       eventSource.addEventListener('start', (e) => {
         const id = e.data;
-        loaderStatus.innerText = `Searching ${getFriendlyServerName(id)} server...`;
+        if (!activeServerId) {
+          loaderStatus.innerText = `Searching ${getFriendlyServerName(id)} server...`;
+        }
       });
       
       eventSource.addEventListener('update', (e) => {
         const data = JSON.parse(e.data);
-        if (data.status === 'success') {
+        if (data.status === 'success' && !activeServerId) {
           loaderStatus.innerText = `Resolving stream on ${getFriendlyServerName(data.id)}...`;
         }
       });
