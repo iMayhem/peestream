@@ -5,6 +5,12 @@
   Referrer-Policy: origin-when-cross-origin
   Cache-Control: public, max-age=0, s-maxage=0, must-revalidate
 
+/embed
+  ! X-Frame-Options
+
+/embed/*
+  ! X-Frame-Options
+
 /manifest.webmanifest
   Content-Type: application/manifest+json
 
