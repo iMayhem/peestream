@@ -1337,6 +1337,15 @@
             </div>
             
             <div class="controls-right">
+              <!-- Server Menu -->
+              <div id="server-menu-container" class="control-menu-container" style="display: none;">
+                <button id="ctrl-server" class="control-btn" title="Servers"><i class="fa-solid fa-server"></i></button>
+                <div id="server-menu" class="control-menu">
+                  <div class="menu-header">Servers</div>
+                  <div id="player-servers-list" class="menu-options"></div>
+                </div>
+              </div>
+
               <!-- Subtitles Menu -->
               <div class="control-menu-container">
                 <button id="ctrl-subtitles" class="control-btn" title="Subtitles"><i class="fa-solid fa-closed-captioning"></i></button>
@@ -1569,6 +1578,10 @@
     const subtitlesBtn = document.getElementById('ctrl-subtitles');
     const subtitlesMenu = document.getElementById('subtitles-menu');
     const subtitlesList = document.getElementById('subtitles-list');
+    const serverBtn = document.getElementById('ctrl-server');
+    const serverMenu = document.getElementById('server-menu');
+    const playerServersList = document.getElementById('player-servers-list');
+    const serverMenuContainer = document.getElementById('server-menu-container');
     const qualityBtn = document.getElementById('ctrl-quality');
     const qualityMenu = document.getElementById('quality-menu');
     const qualitiesList = document.getElementById('qualities-list');
@@ -1658,18 +1671,35 @@
       
       eventSource.addEventListener('completed', (e) => {
         const data = JSON.parse(e.data);
-        eventSource.close();
-        loaderStatus.innerText = "Initializing player...";
         
-        setTimeout(() => {
-          loadingOverlay.classList.add('hidden');
-          initPlayer(data.stream);
-        }, 850);
+        // Accumulate unique resolved streams
+        if (!resolvedStreams.some(s => s.id === data.sourceId)) {
+          resolvedStreams.push({
+            id: data.sourceId,
+            name: getFriendlyServerName(data.sourceId),
+            stream: data.stream
+          });
+        }
+        
+        // Load first stream resolved
+        if (!activeServerId) {
+          activeServerId = data.sourceId;
+          loaderStatus.innerText = "Initializing player...";
+          
+          setTimeout(() => {
+            loadingOverlay.classList.add('hidden');
+            initPlayer(data.stream);
+            updateServerMenuUI();
+          }, 850);
+        } else {
+          updateServerMenuUI();
+        }
       });
       
       eventSource.addEventListener('done', (e) => {
         eventSource.close();
         setTimeout(() => {
+          if (activeServerId) return; // ignore failure if we already resolved a stream
           if (loadingOverlay.classList.contains('hidden')) return;
           loadingOverlay.style.display = 'none';
           errorOverlay.style.display = 'flex';
@@ -1679,6 +1709,7 @@
       eventSource.onerror = (err) => {
         eventSource.close();
         setTimeout(() => {
+          if (activeServerId) return; // ignore connection error if already playing
           if (loadingOverlay.classList.contains('hidden')) return;
           loadingOverlay.style.display = 'none';
           errorOverlay.style.display = 'flex';
@@ -1694,8 +1725,46 @@
     let currentSubtitleIndex = -1;
     let subtitleCues = [];
     let hlsInstance = null;
+    let playerEventsInitialized = false;
+    let resolvedStreams = [];
+    let activeServerId = null;
 
-    async function initPlayer(stream) {
+    function updateServerMenuUI() {
+      playerServersList.innerHTML = '';
+      resolvedStreams.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = `menu-option ${item.id === activeServerId ? 'active' : ''}`;
+        btn.innerHTML = `${item.name.toUpperCase()} ${item.id === activeServerId ? '<i class="fa-solid fa-check" style="font-size:0.75rem;opacity:0.8;margin-left:5px;"></i>' : ''}`;
+        btn.onclick = () => {
+          if (item.id === activeServerId) return;
+          switchServer(item.id);
+        };
+        playerServersList.appendChild(btn);
+      });
+      serverMenuContainer.style.display = resolvedStreams.length > 1 ? 'block' : 'none';
+    }
+
+    function switchServer(sourceId) {
+      const item = resolvedStreams.find(s => s.id === sourceId);
+      if (!item) return;
+      
+      activeServerId = sourceId;
+      
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+      
+      const currentTime = video.currentTime;
+      const isPlaying = !video.paused;
+      
+      subtitleOverlay.style.display = 'none';
+      
+      initPlayer(item.stream, currentTime, isPlaying);
+      updateServerMenuUI();
+    }
+
+    async function initPlayer(stream, startTime = 0, forcePlay = null) {
       let playerUrl = '';
       let isHlsStream = false;
       let qualities = {};
@@ -1729,6 +1798,8 @@
             btn.onclick = () => selectQuality(q, qualities[q].url, btn);
             qualitiesList.appendChild(btn);
           });
+        } else {
+          qualityMenuContainer.style.display = 'none';
         }
       }
 
@@ -1776,6 +1847,21 @@
           // Setup HLS Quality Menu dynamically
           hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
             const levels = hlsInstance.levels;
+            
+            // Set HLS to play highest quality first
+            if (levels && levels.length > 0) {
+              let maxLevelIndex = 0;
+              let maxAttr = 0;
+              levels.forEach((lvl, idx) => {
+                const val = lvl.height || lvl.bitrate || 0;
+                if (val > maxAttr) {
+                  maxAttr = val;
+                  maxLevelIndex = idx;
+                }
+              });
+              hlsInstance.nextLevel = maxLevelIndex;
+            }
+
             if (levels && levels.length > 1) {
               qualityMenuContainer.style.display = 'block';
               qualitiesList.innerHTML = '';
@@ -1802,28 +1888,56 @@
                 };
                 qualitiesList.appendChild(btn);
               });
+            } else {
+              qualityMenuContainer.style.display = 'none';
             }
 
-            if (autoplayParam) video.play().catch(() => {
-              // Browser blocked autoplay
+            if (startTime > 0) {
+              video.currentTime = startTime;
+            }
+            
+            const shouldPlay = forcePlay !== null ? forcePlay : autoplayParam;
+            if (shouldPlay) {
+              video.play().catch(() => bigPlayBtn.classList.add('show'));
+            } else {
+              video.pause();
               bigPlayBtn.classList.add('show');
-            });
+            }
           });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
           video.src = playerUrl;
-          if (autoplayParam) video.play().catch(() => bigPlayBtn.classList.add('show'));
+          video.addEventListener('loadedmetadata', function onLoaded() {
+            if (startTime > 0) video.currentTime = startTime;
+            video.removeEventListener('loadedmetadata', onLoaded);
+          });
+          const shouldPlay = forcePlay !== null ? forcePlay : autoplayParam;
+          if (shouldPlay) {
+            video.play().catch(() => bigPlayBtn.classList.add('show'));
+          } else {
+            video.pause();
+            bigPlayBtn.classList.add('show');
+          }
         }
       } else {
         video.src = playerUrl;
-        if (autoplayParam) video.play().catch(() => bigPlayBtn.classList.add('show'));
+        video.addEventListener('loadedmetadata', function onLoaded() {
+          if (startTime > 0) video.currentTime = startTime;
+          video.removeEventListener('loadedmetadata', onLoaded);
+        });
+        const shouldPlay = forcePlay !== null ? forcePlay : autoplayParam;
+        if (shouldPlay) {
+          video.play().catch(() => bigPlayBtn.classList.add('show'));
+        } else {
+          video.pause();
+          bigPlayBtn.classList.add('show');
+        }
       }
 
-      // Setup Subtitles
-      fetchSubtitles();
-      setupPlayerEvents();
-
-      if (!autoplayParam) {
-        bigPlayBtn.classList.add('show');
+      // Setup Subtitles (only once)
+      if (!playerEventsInitialized) {
+        fetchSubtitles();
+        setupPlayerEvents();
+        playerEventsInitialized = true;
       }
     }
 
@@ -1858,8 +1972,17 @@
       btnElement.innerHTML += ' <i class="fa-solid fa-check" style="font-size:0.75rem;opacity:0.8"></i>';
 
       video.src = finalUrl;
-      video.currentTime = currentTime;
-      if (isPlaying) video.play();
+      video.addEventListener('loadedmetadata', function onLoaded() {
+        if (currentTime > 0) video.currentTime = currentTime;
+        video.removeEventListener('loadedmetadata', onLoaded);
+      });
+      
+      if (isPlaying) {
+        video.play().catch(() => bigPlayBtn.classList.add('show'));
+      } else {
+        video.pause();
+        bigPlayBtn.classList.add('show');
+      }
       
       qualityMenu.classList.remove('show');
     }
@@ -2090,23 +2213,33 @@
         }
       });
 
-      // Subtitles & Quality menus toggle
+      // Subtitles & Quality & Server menus toggle
       subtitlesBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         qualityMenu.classList.remove('show');
+        serverMenu.classList.remove('show');
         subtitlesMenu.classList.toggle('show');
       });
 
       qualityBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         subtitlesMenu.classList.remove('show');
+        serverMenu.classList.remove('show');
         qualityMenu.classList.toggle('show');
+      });
+
+      serverBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        subtitlesMenu.classList.remove('show');
+        qualityMenu.classList.remove('show');
+        serverMenu.classList.toggle('show');
       });
 
       // Close menus on click outside
       window.addEventListener('click', () => {
         subtitlesMenu.classList.remove('show');
         qualityMenu.classList.remove('show');
+        serverMenu.classList.remove('show');
       });
 
       // Fullscreen
