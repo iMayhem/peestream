@@ -1826,8 +1826,16 @@
           const hlsConfig = {};
           if (stream.headers && Object.keys(stream.headers).length > 0) {
             hlsConfig.xhrSetup = function (xhr, targetUrl) {
+              const forbiddenHeaders = [
+                'accept-charset', 'accept-encoding', 'access-control-request-headers',
+                'access-control-request-method', 'connection', 'content-length',
+                'cookie', 'cookie2', 'date', 'dnt', 'expect', 'host', 'keep-alive',
+                'origin', 'referer', 'te', 'trailer', 'transfer-encoding', 'upgrade',
+                'user-agent', 'via'
+              ];
               for (const [key, value] of Object.entries(stream.headers)) {
-                if (!['host', 'connection'].includes(key.toLowerCase())) {
+                const kLower = key.toLowerCase();
+                if (!forbiddenHeaders.includes(kLower) && !kLower.startsWith('proxy-') && !kLower.startsWith('sec-')) {
                   xhr.setRequestHeader(key, value);
                 }
               }
