@@ -72,7 +72,6 @@ export function SidebarPart() {
       textKey: "settings.sync.title",
       id: "settings-sync",
       icon: Icons.CLOUD,
-      comingSoon: true,
     },
   ];
 
