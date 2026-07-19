@@ -124,15 +124,9 @@ export function LinksDropdown(props: { children: React.ReactNode }) {
             </DropdownLink>
           ) : (
             <>
-              <div className="flex gap-3 items-center m-3 p-1 rounded font-medium opacity-40 cursor-not-allowed select-none">
-                <Icon icon={Icons.CLOUD} className="text-xl" />
-                <span className="flex items-center gap-2">
-                  {t("navigation.menu.register")}
-                  <span className="text-[10px] font-bold uppercase bg-type-dimmed/20 text-type-dimmed px-1.5 py-0.5 rounded">
-                    Soon
-                  </span>
-                </span>
-              </div>
+              <DropdownLink href="/register" icon={Icons.CLOUD}>
+                {t("navigation.menu.register")}
+              </DropdownLink>
               <DropdownLink href="/login" icon={Icons.RISING_STAR} highlight>
                 {t("navigation.menu.login")}
               </DropdownLink>
