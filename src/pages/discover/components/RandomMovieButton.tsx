@@ -26,7 +26,6 @@ export function RandomMovieButton() {
     const fetchMovies = async () => {
       try {
         const data = await get<TMDBMovieResponse>("/movie/popular", {
-          api_key: conf().TMDB_READ_API_KEY,
           language: formattedLanguage,
           page: 2,
         });

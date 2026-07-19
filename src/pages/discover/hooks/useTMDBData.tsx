@@ -32,7 +32,6 @@ export function useTMDBData(
         // Reduce the number of pages to improve performance
         for (let page = 1; page <= 2; page += 1) {
           const data = await get<any>(endpoint, {
-            api_key: conf().TMDB_READ_API_KEY,
             language: formattedLanguage,
             page: page.toString(),
             ...(isGenre ? { with_genres: key } : {}),
@@ -118,7 +117,6 @@ export function useLazyTMDBData(
         const mediaItems: Movie[] | TVShow[] = [];
         // Only fetch one page for better performance
         const data = await get<any>(endpoint, {
-          api_key: conf().TMDB_READ_API_KEY,
           language: formattedLanguage,
           page: "1",
           ...(isGenre ? { with_genres: key } : {}),
