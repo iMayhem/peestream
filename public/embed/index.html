@@ -1303,7 +1303,7 @@
       
       <!-- Custom Video Container -->
       <div id="video-container" class="video-container hide-controls">
-        <video id="main-video" playsinline></video>
+        <video id="main-video" playsinline crossorigin="anonymous"></video>
         
         <!-- Big Play Button Overlay -->
         <div id="big-play-btn" class="big-play-btn">
@@ -1607,7 +1607,7 @@
       const mute = optMute.checked ? '&muted=true' : '';
       
       const embedUrl = `${currentUrl.origin}${currentUrl.pathname}?tmdbId=${tmdbId}&type=${type}${season ? `&season=${season}` : ''}${episode ? `&episode=${episode}` : ''}&title=${encodeURIComponent(title)}${autoplay}${mute}`;
-      iframeCodeInput.value = `<iframe src="${embedUrl}" width="100%" height="100%" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
+      iframeCodeInput.value = `<iframe src="${embedUrl}" width="100%" height="100%" frameborder="0" scrolling="no" referrerpolicy="origin" allowfullscreen allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"></iframe>`;
     }
     
     // Embed drawer open/close
@@ -2352,6 +2352,62 @@
       };
       return names[code.toLowerCase()] || code.toUpperCase();
     }
+
+    // ─── postMessage API ─────────────────────────────────────────────────────
+    // Lets parent pages control the player and receive state events.
+    // Usage from parent frame:
+    //   iframe.contentWindow.postMessage({ api: 'peestream', method: 'play' }, '*');
+    //   iframe.contentWindow.postMessage({ api: 'peestream', method: 'pause' }, '*');
+    //   iframe.contentWindow.postMessage({ api: 'peestream', method: 'seek', value: 120 }, '*');
+    //   iframe.contentWindow.postMessage({ api: 'peestream', method: 'mute' }, '*');
+    //   iframe.contentWindow.postMessage({ api: 'peestream', method: 'unmute' }, '*');
+    //   iframe.contentWindow.postMessage({ api: 'peestream', method: 'setVolume', value: 0.5 }, '*');
+    //   iframe.contentWindow.postMessage({ api: 'peestream', method: 'getState' }, '*');
+    // Events emitted to parent:
+    //   { api: 'peestream', event: 'ready' }
+    //   { api: 'peestream', event: 'play' }
+    //   { api: 'peestream', event: 'pause' }
+    //   { api: 'peestream', event: 'timeupdate', currentTime, duration }
+    //   { api: 'peestream', event: 'ended' }
+    //   { api: 'peestream', event: 'error', message }
+    //   { api: 'peestream', event: 'state', currentTime, duration, paused, muted, volume }
+
+    const _video = document.getElementById('main-video');
+
+    function _postToParent(payload) {
+      try { window.parent.postMessage(Object.assign({ api: 'peestream' }, payload), '*'); } catch(e) {}
+    }
+
+    // Emit ready once the embed boots
+    window.addEventListener('load', () => _postToParent({ event: 'ready' }));
+
+    // Forward video events to parent
+    _video.addEventListener('play',  () => _postToParent({ event: 'play' }));
+    _video.addEventListener('pause', () => _postToParent({ event: 'pause' }));
+    _video.addEventListener('ended', () => _postToParent({ event: 'ended' }));
+    _video.addEventListener('timeupdate', () => {
+      _postToParent({ event: 'timeupdate', currentTime: _video.currentTime, duration: _video.duration || 0 });
+    });
+    _video.addEventListener('error', () => {
+      _postToParent({ event: 'error', message: 'Media error' });
+    });
+
+    // Listen for commands from the parent
+    window.addEventListener('message', (e) => {
+      if (!e.data || e.data.api !== 'peestream') return;
+      const { method, value } = e.data;
+      switch (method) {
+        case 'play':      _video.play().catch(() => {}); break;
+        case 'pause':     _video.pause(); break;
+        case 'seek':      if (typeof value === 'number' && _video.duration) _video.currentTime = value; break;
+        case 'mute':      _video.muted = true; break;
+        case 'unmute':    _video.muted = false; break;
+        case 'setVolume': if (typeof value === 'number') _video.volume = Math.max(0, Math.min(1, value)); break;
+        case 'getState':
+          _postToParent({ event: 'state', currentTime: _video.currentTime, duration: _video.duration || 0, paused: _video.paused, muted: _video.muted, volume: _video.volume });
+          break;
+      }
+    });
   </script>
 </body>
 </html>
