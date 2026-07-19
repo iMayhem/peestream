@@ -3,6 +3,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 
+import { isFirefox } from "@/utils/detectFeatures";
+
 export interface SubtitleStyling {
   /**
    * Text color of subtitles, hex string
@@ -25,9 +27,30 @@ export interface SubtitleStyling {
   backgroundBlur: number;
 
   /**
+   * whether background blur is enabled (disabled by default on Firefox due to flickering issues)
+   */
+  backgroundBlurEnabled: boolean;
+
+  /**
    * bold, boolean
    */
   bold: boolean;
+
+  /**
+   * vertical position percentage, ranges between 1 and 3 (rem)
+   */
+  verticalPosition: number;
+
+  /**
+   * font style for text rendering
+   * "default" | "raised" | "depressed" | "Border" | "dropShadow"
+   */
+  fontStyle: string;
+
+  /**
+   * border thickness for Border font style, ranges between 0 and 10
+   */
+  borderThickness: number;
 }
 
 export interface SubtitleStore {
@@ -36,18 +59,25 @@ export interface SubtitleStore {
   };
   enabled: boolean;
   lastSelectedLanguage: string | null;
+  lastSelectedSubtitleId: string | null;
   isOpenSubtitles: boolean;
   styling: SubtitleStyling;
   overrideCasing: boolean;
   delay: number;
+  showDelayIndicator: boolean;
   updateStyling(newStyling: Partial<SubtitleStyling>): void;
-  setLanguage(language: string | null): void;
+  resetStyling(): void;
+  setSubtitle(
+    enabled: boolean,
+    language?: string | null,
+    subtitleId?: string | null,
+  ): void;
   setIsOpenSubtitles(isOpenSubtitles: boolean): void;
-  setCustomSubs(): void;
   setOverrideCasing(enabled: boolean): void;
   setDelay(delay: number): void;
   importSubtitleLanguage(lang: string | null): void;
   resetSubtitleSpecificSettings(): void;
+  setShowDelayIndicator: (show: boolean) => void;
 }
 
 export const useSubtitleStore = create(
@@ -58,6 +88,7 @@ export const useSubtitleStore = create(
         lastSelectedLanguage: null,
       },
       lastSelectedLanguage: null,
+      lastSelectedSubtitleId: null,
       isOpenSubtitles: false,
       overrideCasing: false,
       delay: 0,
@@ -66,12 +97,22 @@ export const useSubtitleStore = create(
         backgroundOpacity: 0.5,
         size: 1,
         backgroundBlur: 0.5,
+        backgroundBlurEnabled: !isFirefox,
         bold: false,
+        verticalPosition: 1,
+        fontStyle: "default",
+        borderThickness: 1,
       },
+      showDelayIndicator: false,
       resetSubtitleSpecificSettings() {
         set((s) => {
           s.delay = 0;
           s.overrideCasing = false;
+        });
+      },
+      setIsOpenSubtitles(isOpenSubtitles) {
+        set((s) => {
+          s.isOpenSubtitles = isOpenSubtitles;
         });
       },
       updateStyling(newStyling) {
@@ -86,28 +127,52 @@ export const useSubtitleStore = create(
               1,
               Math.max(0, newStyling.backgroundBlur),
             );
+          if (newStyling.backgroundBlurEnabled !== undefined)
+            s.styling.backgroundBlurEnabled = newStyling.backgroundBlurEnabled;
           if (newStyling.color !== undefined)
             s.styling.color = newStyling.color.toLowerCase();
           if (newStyling.size !== undefined)
             s.styling.size = Math.min(10, Math.max(0.01, newStyling.size));
           if (newStyling.bold !== undefined) s.styling.bold = newStyling.bold;
+          if (newStyling.verticalPosition !== undefined)
+            s.styling.verticalPosition = Math.min(
+              100,
+              Math.max(0, newStyling.verticalPosition),
+            );
+          if (newStyling.fontStyle !== undefined)
+            s.styling.fontStyle = newStyling.fontStyle;
+          if (newStyling.borderThickness !== undefined)
+            s.styling.borderThickness = Math.min(
+              10,
+              Math.max(0, newStyling.borderThickness),
+            );
         });
       },
-      setLanguage(lang) {
+      resetStyling() {
         set((s) => {
-          s.enabled = !!lang;
-          if (lang) s.lastSelectedLanguage = lang;
+          s.styling = {
+            color: "#ffffff",
+            backgroundOpacity: 0.5,
+            size: 1,
+            backgroundBlur: 0.5,
+            backgroundBlurEnabled: !isFirefox,
+            bold: false,
+            verticalPosition: 1,
+            fontStyle: "default",
+            borderThickness: 1,
+          };
         });
       },
-      setIsOpenSubtitles(isOpenSubtitles) {
+      setSubtitle(enabled, language, subtitleId) {
         set((s) => {
-          s.isOpenSubtitles = isOpenSubtitles;
-        });
-      },
-      setCustomSubs() {
-        set((s) => {
-          s.enabled = true;
-          s.lastSelectedLanguage = null;
+          s.enabled = enabled;
+          if (enabled) {
+            s.lastSelectedLanguage = language ?? null;
+            s.lastSelectedSubtitleId = subtitleId ?? null;
+          } else {
+            s.lastSelectedLanguage = null;
+            s.lastSelectedSubtitleId = null;
+          }
         });
       },
       setOverrideCasing(enabled) {
@@ -124,6 +189,11 @@ export const useSubtitleStore = create(
         set((s) => {
           s.lastSelectedLanguage = lang;
           s.lastSync.lastSelectedLanguage = lang;
+        });
+      },
+      setShowDelayIndicator(show: boolean) {
+        set((s) => {
+          s.showDelayIndicator = show;
         });
       },
     })),

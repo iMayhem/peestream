@@ -52,7 +52,7 @@ function SortableItem(props: { item: Item }) {
       )}
     >
       <span className="flex-1 text-white font-bold">{props.item.name}</span>
-      {props.item.disabled && <Icon icon={Icons.WARNING} />}
+      {props.item.disabled && <Icon icon={Icons.UNPLUG} />}
       <Icon icon={Icons.MENU} />
     </div>
   );

@@ -15,5 +15,8 @@ window.__CONFIG__ = {
   VITE_NORMAL_ROUTER: true,
 
   // A comma separated list of disallowed IDs in the case of a DMCA claim - in the format "series-<id>" and "movie-<id>"
-  VITE_DISALLOWED_IDS: ""
+  VITE_DISALLOWED_IDS: "",
+
+  // Enable Febbox (Aurora API) support
+  VITE_ALLOW_FEBBOX_KEY: "true"
 };

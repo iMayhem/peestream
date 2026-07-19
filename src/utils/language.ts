@@ -23,6 +23,7 @@ const defaultLanguageCodes: string[] = [
   "ca-AD",
   "da-DK",
   "de-DE",
+  "de-CH",
   "el-GR",
   "en-US",
   "es-ES",
@@ -85,6 +86,11 @@ const extraLanguages: Record<string, LocaleInfo> = {
     name: "Toki pona",
     nativeName: "Toki pona",
   },
+  futhark: {
+    code: "futhark",
+    name: "Elder Futhark (EN)",
+    nativeName: "ᛖᛚᛞᛖᚱ ᚠᚢᚦᚨᚱᚲ",
+  },
 };
 
 function populateLanguageCode(language: string): string {
@@ -117,16 +123,21 @@ export function getPrettyLanguageNameFromLocale(locale: string): string | null {
 /**
  * Sort locale codes by occurrence, rest on alphabetical order
  * @param langCodes list language codes to sort
+ * @param appLanguage optional app language to prioritize
  * @returns sorted version of inputted list
  */
-export function sortLangCodes(langCodes: string[]) {
-  const languagesOrder = [...languageOrder].reverse(); // Reverse is necessary, not sure why
+export function sortLangCodes(langCodes: string[], appLanguage?: string) {
+  const languagesOrder = [...languageOrder];
+  if (appLanguage && !languagesOrder.includes(appLanguage)) {
+    languagesOrder.unshift(appLanguage);
+  }
+  const reversedOrder = [...languagesOrder].reverse(); // Reverse is necessary, not sure why
 
   const results = langCodes.sort((a, b) => {
-    const langOrderA = languagesOrder.findIndex(
+    const langOrderA = reversedOrder.findIndex(
       (v) => a.startsWith(`${v}-`) || a === v,
     );
-    const langOrderB = languagesOrder.findIndex(
+    const langOrderB = reversedOrder.findIndex(
       (v) => b.startsWith(`${v}-`) || b === v,
     );
     if (langOrderA !== -1 || langOrderB !== -1) return langOrderB - langOrderA;
@@ -143,11 +154,6 @@ export function sortLangCodes(langCodes: string[]) {
  * @returns country code or null
  */
 export function getCountryCodeForLocale(locale: string): string | null {
-  const parts = locale.split("-");
-  const region = parts[parts.length - 1].toLowerCase();
-  if (region === "in") return "in";
-  if (region === "sa") return "sa";
-
   let output: LanguageObj | null = null as any as LanguageObj;
   const tag = getTag(populateLanguageCode(locale), true);
 
@@ -191,8 +197,16 @@ export function getCountryCodeForLocale(locale: string): string | null {
  */
 export function getLocaleInfo(locale: string): LocaleInfo | null {
   const realLocale = populateLanguageCode(locale);
+
+  document.body.style.wordSpacing = "normal";
+
   const extraLang = extraLanguages[realLocale];
-  if (extraLang) return extraLang;
+  if (extraLang) {
+    if (extraLang.code === "futhark") {
+      document.body.style.wordSpacing = "5px";
+    }
+    return extraLang;
+  }
 
   const tag = getTag(realLocale, true);
   if (!tag?.language?.Subtag) return null;
@@ -215,4 +229,36 @@ export function getLocaleInfo(locale: string): LocaleInfo | null {
     name: output.name[0] + (extraStringified ? ` ${extraStringified}` : ""),
     nativeName: output.nativeName[0] ?? undefined,
   };
+}
+
+/**
+ * Converts a language code to a TMDB-compatible format (ISO 639-1 with region)
+ * @param language The language code to convert
+ * @returns A TMDB-compatible language code (e.g., "en-US", "el-GR")
+ */
+export function getTmdbLanguageCode(language: string): string {
+  // Handle empty or undefined
+  if (!language) return "en-US";
+
+  // If it already has a region code (e.g., "en-US"), use it directly
+  if (language.includes("-")) return language;
+
+  // Handle special/custom languages by defaulting to English
+  if (language.length > 2 || Object.keys(extraLanguages).includes(language))
+    return "en-US";
+
+  // For standard language codes, find the appropriate region from the existing defaultLanguageCodes array
+  const defaultCode = defaultLanguageCodes.find((code) =>
+    code.startsWith(`${language}-`),
+  );
+
+  if (defaultCode) return defaultCode;
+
+  // If we can't find a good match, create a standard format like "fr-FR" from "fr"
+  if (language.length === 2) {
+    return `${language}-${language.toUpperCase()}`;
+  }
+
+  // Last resort fallback
+  return "en-US";
 }
