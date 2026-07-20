@@ -7,6 +7,8 @@ import { immer } from "zustand/middleware/immer";
 export interface ThemeStore {
   theme: string | null;
   setTheme(v: string | null): void;
+  customTheme: { primary: string; secondary: string; tertiary: string };
+  setCustomTheme(v: { primary: string; secondary: string; tertiary: string }): void;
 }
 
 const currentDate = new Date();
@@ -19,6 +21,12 @@ export const useThemeStore = create(
       setTheme(v) {
         set((s) => {
           s.theme = v;
+        });
+      },
+      customTheme: { primary: "default", secondary: "default", tertiary: "default" },
+      setCustomTheme(v) {
+        set((s) => {
+          s.customTheme = v;
         });
       },
     })),
