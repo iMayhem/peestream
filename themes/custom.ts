@@ -1,7 +1,26 @@
-import merge from "lodash.merge";
 import { createTheme } from "./types";
 import { defaultTheme } from "./default";
 import { allThemes } from "./all";
+
+function deepMerge(target: any, ...sources: any[]): any {
+  if (!sources.length) return target;
+  const source = sources.shift();
+
+  if (source !== undefined && source !== null) {
+    for (const key of Object.keys(source)) {
+      if (typeof source[key] === "object" && source[key] !== null) {
+        if (!target[key] || typeof target[key] !== "object") {
+          target[key] = {};
+        }
+        deepMerge(target[key], source[key]);
+      } else {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return deepMerge(target, ...sources);
+}
 
 function hexToRgb(hex: string): string | null {
   hex = hex.replace(/^#/, "");
@@ -243,7 +262,7 @@ function extractColors(theme: any, keys: string[]) {
 
 // Generate options for each part
 export const primaryOptions = availableThemes.map((t) => {
-  const merged = merge({}, defaultTheme, t.theme);
+  const merged = deepMerge({}, defaultTheme, t.theme);
   return {
     id: t.id,
     colors: extractColors(merged, parts.primary),
@@ -251,7 +270,7 @@ export const primaryOptions = availableThemes.map((t) => {
 });
 
 export const secondaryOptions = availableThemes.map((t) => {
-  const merged = merge({}, defaultTheme, t.theme);
+  const merged = deepMerge({}, defaultTheme, t.theme);
   return {
     id: t.id,
     colors: extractColors(merged, parts.secondary),
@@ -259,7 +278,7 @@ export const secondaryOptions = availableThemes.map((t) => {
 });
 
 export const tertiaryOptions = availableThemes.map((t) => {
-  const merged = merge({}, defaultTheme, t.theme);
+  const merged = deepMerge({}, defaultTheme, t.theme);
   return {
     id: t.id,
     colors: extractColors(merged, parts.tertiary),
