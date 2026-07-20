@@ -54,36 +54,6 @@ export function MetaPart(props: MetaPartProps) {
       if (!info.hasPermission) throw new Error("extension-no-permission");
     }
 
-    // use api metadata or providers metadata
-    const providerApiUrl = getLoadbalancedProviderApiUrl();
-    console.log("[MetaPart] providerApiUrl resolved:", providerApiUrl);
-    if (providerApiUrl) {
-      try {
-        console.log(
-          "[MetaPart] Attempting to fetch metadata from:",
-          providerApiUrl,
-        );
-        await fetchMetadata(providerApiUrl);
-        console.log(
-          "[MetaPart] Metadata fetched successfully. Count:",
-          getCachedMetadata().length,
-          getCachedMetadata(),
-        );
-      } catch (err) {
-        console.error("[MetaPart] Error fetching metadata:", err);
-        throw new Error("failed-api-metadata");
-      }
-    } else {
-      console.log(
-        "[MetaPart] No provider API URL, using default local providers list.",
-      );
-      setCachedMetadata([
-        ...getProviders().listSources(),
-        ...getProviders().listEmbeds(),
-      ]);
-    }
-
-    // get media meta data
     let data: ReturnType<typeof decodeTMDBId> = null;
     try {
       if (!params.media) throw new Error("no media params");
@@ -95,15 +65,25 @@ export function MetaPart(props: MetaPartProps) {
 
     if (isDisallowedMedia(data.id, data.type)) throw new Error("dmca");
 
-    let meta: AsyncReturnType<typeof getMetaFromId> = null;
-    try {
-      meta = await getMetaFromId(data.type, data.id, params.season);
-    } catch (err) {
-      if ((err as any).status === 404) {
-        return null;
-      }
-      throw err;
-    }
+    const providerApiUrl = getLoadbalancedProviderApiUrl();
+    const [meta] = await Promise.all([
+      getMetaFromId(data.type, data.id, params.season).catch((err) => {
+        if ((err as any).status === 404) return null;
+        throw err;
+      }),
+      providerApiUrl
+        ? fetchMetadata(providerApiUrl).catch((err) => {
+            console.error("[MetaPart] Error fetching metadata:", err);
+            throw new Error("failed-api-metadata");
+          })
+        : new Promise<void>((resolve) => {
+            setCachedMetadata([
+              ...getProviders().listSources(),
+              ...getProviders().listEmbeds(),
+            ]);
+            resolve();
+          }),
+    ]);
     if (!meta) return null;
 
     // replace link with new link if youre not already on the right link

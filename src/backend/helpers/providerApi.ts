@@ -4,14 +4,51 @@ import { jwtDecode } from "jwt-decode";
 import { mwFetch } from "@/backend/helpers/fetch";
 import { getTurnstileToken, isTurnstileInitialized } from "@/stores/turnstile";
 
+const CACHE_KEY = "__MW::providerMeta";
+const CACHE_TTL = 5 * 60 * 1000;
+
+interface CacheEntry {
+  data: MetaOutput[];
+  timestamp: number;
+}
+
 let metaDataCache: MetaOutput[] | null = null;
 let token: null | string = null;
 
+function loadPersistedCache(): MetaOutput[] | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const entry: CacheEntry = JSON.parse(raw);
+    if (Date.now() - entry.timestamp > CACHE_TTL) {
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    return entry.data;
+  } catch {
+    return null;
+  }
+}
+
+function persistCache(data: MetaOutput[]) {
+  try {
+    const entry: CacheEntry = { data, timestamp: Date.now() };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(entry));
+  } catch {
+    // storage full or unavailable
+  }
+}
+
 export function setCachedMetadata(data: MetaOutput[]) {
   metaDataCache = data;
+  persistCache(data);
 }
 
 export function getCachedMetadata(): MetaOutput[] {
+  if (metaDataCache === null) {
+    const persisted = loadPersistedCache();
+    if (persisted) metaDataCache = persisted;
+  }
   return metaDataCache ?? [];
 }
 
@@ -33,8 +70,13 @@ function getTokenIfValid(): null | string {
 
 export async function fetchMetadata(base: string) {
   if (metaDataCache) return;
+  const persisted = loadPersistedCache();
+  if (persisted) {
+    metaDataCache = persisted;
+    return;
+  }
   const data = await mwFetch<MetaOutput[][]>(`${base}/metadata`);
-  metaDataCache = data.flat();
+  setCachedMetadata(data.flat());
 }
 
 function scrapeMediaToQueryMedia(media: ScrapeMedia) {
