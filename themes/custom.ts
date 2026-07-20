@@ -1,8 +1,51 @@
 import merge from "lodash.merge";
 import { createTheme } from "./types";
 import { defaultTheme } from "./default";
-import { colorToRgbString } from "../src/utils/color";
 import { allThemes } from "./all";
+
+function hexToRgb(hex: string): string | null {
+  hex = hex.replace(/^#/, "");
+  if (hex.length === 3) {
+    hex = hex.split("").map((c) => c + c).join("");
+  }
+  const result = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})?$/i.exec(hex);
+  return result
+    ? `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}`
+    : null;
+}
+
+function hslToRgb(h: number, s: number, l: number): string {
+  s /= 100;
+  l /= 100;
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) =>
+    l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return `${Math.round(255 * f(0))} ${Math.round(255 * f(8))} ${Math.round(255 * f(4))}`;
+}
+
+function parseHsla(hsla: string): string | null {
+  const match = hsla.match(/hsla?\((\d+),\s*(\d+)%,\s*(\d+)%(?:,\s*[\d.]+)?\)/);
+  if (match) {
+    return hslToRgb(
+      parseInt(match[1], 10),
+      parseInt(match[2], 10),
+      parseInt(match[3], 10),
+    );
+  }
+  return null;
+}
+
+function colorToRgbString(color: string): string {
+  if (color.startsWith("#")) {
+    const rgb = hexToRgb(color);
+    if (rgb) return rgb;
+  } else if (color.startsWith("hsl")) {
+    const rgb = parseHsla(color);
+    if (rgb) return rgb;
+  }
+  return color;
+}
 
 const availableThemes = [
   { id: "default", theme: defaultTheme },
