@@ -13,13 +13,20 @@ import { usePreviewThemeStore } from "@/stores/theme";
 
 export function useDerived<T>(
   initial: T,
+  label?: string,
 ): [T, Dispatch<SetStateAction<T>>, () => void, boolean] {
+  console.log(`[useDerived:${label}] called with initial:`, initial);
   const [overwrite, setOverwrite] = useState<T | undefined>(undefined);
   useEffect(() => {
+    console.log(`[useDerived:${label}] initial changed, resetting overwrite`);
     setOverwrite(undefined);
   }, [initial]);
   const changed = useMemo(
-    () => !isEqual(overwrite, initial) && overwrite !== undefined,
+    () => {
+      const result = !isEqual(overwrite, initial) && overwrite !== undefined;
+      if (result) console.log(`[useDerived:${label}] changed!`, { overwrite, initial });
+      return result;
+    },
     [overwrite, initial],
   );
   const setter = useCallback<Dispatch<SetStateAction<T>>>(
@@ -33,6 +40,7 @@ export function useDerived<T>(
 
   const reset = useCallback(() => setOverwrite(undefined), [setOverwrite]);
 
+  console.log(`[useDerived:${label}] returning`, { data, changed });
   return [data, setter, reset, changed];
 }
 
@@ -55,11 +63,13 @@ export function useSettingsState(
   sourceOrder: string[],
   enableSourceOrder: boolean,
 ) {
+  console.log('[useSettingsState] CALLED', { theme, appLanguage, subtitleStyling, deviceName, proxyUrls, backendUrl, profile, enableThumbnails, enableAutoplay, sourceOrder, enableSourceOrder });
+  
   const [proxyUrlsState, setProxyUrls, resetProxyUrls, proxyUrlsChanged] =
-    useDerived(proxyUrls);
+    useDerived(proxyUrls, 'proxyUrls');
   const [backendUrlState, setBackendUrl, resetBackendUrl, backendUrlChanged] =
-    useDerived(backendUrl);
-  const [themeState, setTheme, resetTheme, themeChanged] = useDerived(theme);
+    useDerived(backendUrl, 'backendUrl');
+  const [themeState, setTheme, resetTheme, themeChanged] = useDerived(theme, 'theme');
   const setPreviewTheme = usePreviewThemeStore((s) => s.setPreviewTheme);
   const resetPreviewTheme = useCallback(
     () => setPreviewTheme(theme),
@@ -70,43 +80,44 @@ export function useSettingsState(
     setAppLanguage,
     resetAppLanguage,
     appLanguageChanged,
-  ] = useDerived(appLanguage);
+  ] = useDerived(appLanguage, 'appLanguage');
   const [subStylingState, setSubStyling, resetSubStyling, subStylingChanged] =
-    useDerived(subtitleStyling);
+    useDerived(subtitleStyling, 'subtitleStyling');
   const [
     deviceNameState,
     setDeviceNameState,
     resetDeviceName,
     deviceNameChanged,
-  ] = useDerived(deviceName);
+  ] = useDerived(deviceName, 'deviceName');
   const [profileState, setProfileState, resetProfile, profileChanged] =
-    useDerived(profile);
+    useDerived(profile, 'profile');
   const [
     enableThumbnailsState,
     setEnableThumbnailsState,
     resetEnableThumbnails,
     enableThumbnailsChanged,
-  ] = useDerived(enableThumbnails);
+  ] = useDerived(enableThumbnails, 'enableThumbnails');
   const [
     enableAutoplayState,
     setEnableAutoplayState,
     resetEnableAutoplay,
     enableAutoplayChanged,
-  ] = useDerived(enableAutoplay);
+  ] = useDerived(enableAutoplay, 'enableAutoplay');
   const [
     sourceOrderState,
     setSourceOrderState,
     resetSourceOrder,
     sourceOrderChanged,
-  ] = useDerived(sourceOrder);
+  ] = useDerived(sourceOrder, 'sourceOrder');
   const [
     enableSourceOrderState,
     setEnableSourceOrderState,
     resetEnableSourceOrder,
     enableSourceOrderChanged,
-  ] = useDerived(enableSourceOrder);
+  ] = useDerived(enableSourceOrder, 'enableSourceOrder');
 
   function reset() {
+    console.log('[useSettingsState] reset called');
     resetTheme();
     resetPreviewTheme();
     resetAppLanguage();
@@ -133,6 +144,8 @@ export function useSettingsState(
     enableAutoplayChanged ||
     sourceOrderChanged ||
     enableSourceOrderChanged;
+
+  console.log('[useSettingsState] returning, changed:', changed);
 
   return {
     reset,

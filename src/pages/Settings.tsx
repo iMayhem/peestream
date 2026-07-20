@@ -104,51 +104,72 @@ export function AccountSettings(props: {
 }
 
 export function SettingsPage() {
+  console.log('[SettingsPage] RENDERING START');
   const { t } = useTranslation();
-  const activeTheme = useThemeStore((s) => s.theme);
+  console.log('[SettingsPage] useTranslation OK');
+  
+  const activeTheme = useThemeStore((s) => { console.log('[SettingsPage] useThemeStore.theme selector'); return s.theme; });
   const setTheme = useThemeStore((s) => s.setTheme);
+  console.log('[SettingsPage] useThemeStore OK, theme:', activeTheme);
+  
   const previewTheme = usePreviewThemeStore((s) => s.previewTheme);
   const setPreviewTheme = usePreviewThemeStore((s) => s.setPreviewTheme);
+  console.log('[SettingsPage] usePreviewThemeStore OK');
 
   const appLanguage = useLanguageStore((s) => s.language);
   const setAppLanguage = useLanguageStore((s) => s.setLanguage);
+  console.log('[SettingsPage] useLanguageStore OK');
 
-  const subStyling = useSubtitleStore((s) => s.styling);
+  const subStyling = useSubtitleStore((s) => { const v = s.styling; console.log('[SettingsPage] useSubtitleStore.styling:', v); return v; });
   const setSubStyling = useSubtitleStore((s) => s.updateStyling);
+  console.log('[SettingsPage] useSubtitleStore OK');
 
   const proxySet = useAuthStore((s) => s.proxySet);
   const setProxySet = useAuthStore((s) => s.setProxySet);
+  console.log('[SettingsPage] useAuthStore OK, proxySet:', proxySet);
 
   const backendUrlSetting = useAuthStore((s) => s.backendUrl);
   const setBackendUrl = useAuthStore((s) => s.setBackendUrl);
+  console.log('[SettingsPage] backendUrlSetting:', backendUrlSetting);
 
   const enableThumbnails = usePreferencesStore((s) => s.enableThumbnails);
   const setEnableThumbnails = usePreferencesStore((s) => s.setEnableThumbnails);
+  console.log('[SettingsPage] enableThumbnails:', enableThumbnails);
 
   const enableAutoplay = usePreferencesStore((s) => s.enableAutoplay);
   const setEnableAutoplay = usePreferencesStore((s) => s.setEnableAutoplay);
+  console.log('[SettingsPage] enableAutoplay:', enableAutoplay);
 
   const sourceOrder = usePreferencesStore((s) => s.sourceOrder);
   const setSourceOrder = usePreferencesStore((s) => s.setSourceOrder);
+  console.log('[SettingsPage] sourceOrder:', sourceOrder);
 
   const enableSourceOrder = usePreferencesStore((s) => s.enableSourceOrder);
   const setEnableSourceOrder = usePreferencesStore(
     (s) => s.setEnableSourceOrder,
   );
+  console.log('[SettingsPage] enableSourceOrder:', enableSourceOrder);
 
   const account = useAuthStore((s) => s.account);
   const updateProfile = useAuthStore((s) => s.setAccountProfile);
   const updateDeviceName = useAuthStore((s) => s.updateDeviceName);
+  console.log('[SettingsPage] account:', account ? 'present' : 'null');
+  
   const decryptedName = useMemo(() => {
+    console.log('[SettingsPage] useMemo: decrypting device name');
     if (!account) return "";
     return decryptData(account.deviceName, base64ToBuffer(account.seed));
   }, [account]);
+  console.log('[SettingsPage] decryptedName:', decryptedName);
 
   const backendUrl = useBackendUrl();
+  console.log('[SettingsPage] backendUrl:', backendUrl);
 
   const { logout } = useAuth();
   const user = useAuthStore();
+  console.log('[SettingsPage] useAuth OK');
 
+  console.log('[SettingsPage] about to call useSettingsState');
   const state = useSettingsState(
     activeTheme,
     appLanguage,
@@ -162,6 +183,7 @@ export function SettingsPage() {
     sourceOrder,
     enableSourceOrder,
   );
+  console.log('[SettingsPage] useSettingsState returned, state.changed:', state.changed);
 
   const availableSources = useMemo(() => {
     const sources = getAllProviders().listSources();
