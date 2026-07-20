@@ -52,7 +52,10 @@ function parseHsla(hsla: string): string | null {
   return null;
 }
 
-export function colorToRgbString(color: string): string {
+export function colorToRgbString(color: any): string {
+  if (typeof color !== "string") {
+    return "";
+  }
   if (color.startsWith("#")) {
     const rgb = hexToRgb(color);
     if (rgb) return rgb;

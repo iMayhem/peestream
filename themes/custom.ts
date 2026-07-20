@@ -55,7 +55,10 @@ function parseHsla(hsla: string): string | null {
   return null;
 }
 
-function colorToRgbString(color: string): string {
+function colorToRgbString(color: any): string {
+  if (typeof color !== "string") {
+    return "";
+  }
   if (color.startsWith("#")) {
     const rgb = hexToRgb(color);
     if (rgb) return rgb;
@@ -68,10 +71,13 @@ function colorToRgbString(color: string): string {
 
 const availableThemes = [
   { id: "default", theme: defaultTheme },
-  ...allThemes.map((t) => ({
-    id: t.name,
-    theme: { extend: t.extend },
-  })),
+  ...allThemes.map((t: any) => {
+    const themeObj = t && t.default ? t.default : t;
+    return {
+      id: themeObj?.name || "unknown",
+      theme: { extend: themeObj?.extend },
+    };
+  }),
 ];
 
 function cssVarName(path: string) {
