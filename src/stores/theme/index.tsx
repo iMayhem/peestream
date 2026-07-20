@@ -32,6 +32,16 @@ export const useThemeStore = create(
     })),
     {
       name: "__MW::theme",
+      version: 1,
+      migrate: (persistedState: any, version: number) => {
+        if (version === 0) {
+          return {
+            ...persistedState,
+            customTheme: { primary: "default", secondary: "default", tertiary: "default" },
+          };
+        }
+        return persistedState as ThemeStore;
+      },
     },
   ),
 );
