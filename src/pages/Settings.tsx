@@ -280,6 +280,7 @@ export function SettingsPage() {
   const previewTheme = usePreviewThemeStore((s) => s.previewTheme);
   const setPreviewTheme = usePreviewThemeStore((s) => s.setPreviewTheme);
 
+  const defaultCustomTheme = { primary: "default", secondary: "default", tertiary: "default" };
   // Baseline for custom theme so "changed" is detected when only colors change.
   // Only updated on load from backend or after save; prevents useDerived from
   // resetting when we update the store for preview.
@@ -665,7 +666,7 @@ export function SettingsPage() {
           setCustomTheme(settings.customTheme);
           setCustomThemeBaseline(settings.customTheme);
         } else {
-          setCustomThemeBaseline(useThemeStore.getState().customTheme);
+          setCustomThemeBaseline(useThemeStore.getState().customTheme ?? defaultCustomTheme);
         }
       }
     };
@@ -745,7 +746,7 @@ export function SettingsPage() {
     enableDoubleClickToSeek,
     enableAutoResumeOnPlaybackError,
     enablePauseOverlay,
-    customThemeBaseline ?? customTheme,
+    customThemeBaseline ?? customTheme ?? defaultCustomTheme,
   );
 
   const availableSources = useMemo(() => {
