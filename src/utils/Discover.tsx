@@ -104,7 +104,7 @@ async function enrichWatchmodeItems(items: MediaItem[]): Promise<void> {
           const mType = mediaType(item);
           const data = await tmdbGet<any>(`/${mType}/${item.tmdbId}`);
           if (data?.poster_path)
-            item.poster = `https://image.tmdb.org/t/p/w500${data.poster_path}`;
+            item.poster = `https://image.tmdb.org/t/p/w342${data.poster_path}`;
           if (data?.vote_average) item.rating = data.vote_average;
         } catch {
           // poster stays null
@@ -130,7 +130,7 @@ async function fetchTMDBPage(
     id: r.id,
     title: r.title || r.name || "",
     poster: r.poster_path
-      ? `https://image.tmdb.org/t/p/w500${r.poster_path}`
+      ? `https://image.tmdb.org/t/p/w342${r.poster_path}`
       : null,
     year: new Date(r.release_date || r.first_air_date || 0).getFullYear() || 0,
     rating: r.vote_average || 0,

@@ -3,7 +3,11 @@ import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
-import { mediaItemToId } from "@/backend/metadata/tmdb";
+import { getMetaFromId } from "@/backend/metadata/getmeta";
+import {
+  mediaItemToId,
+  mediaItemTypeToMediaType,
+} from "@/backend/metadata/tmdb";
 import { DotList } from "@/components/text/DotList";
 import { Flare } from "@/components/utils/Flare";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -57,6 +61,18 @@ function MediaCardContent({
 
   const canLink = linkable && !closable && isReleased();
 
+  const handlePrefetch = useCallback(() => {
+    if (!canLink || !media.id || !media.type) return;
+    try {
+      const mwType = mediaItemTypeToMediaType(media.type);
+      getMetaFromId(mwType, media.id.toString(), series?.seasonId).catch(
+        () => {},
+      );
+    } catch {
+      // ignore prefetch errors
+    }
+  }, [canLink, media.id, media.type, series?.seasonId]);
+
   const dotListContent = [t(`media.types.${media.type}`)];
 
   const [searchQuery] = useSearchQuery();
@@ -77,6 +93,8 @@ function MediaCardContent({
         canLink ? "hover:bg-mediaCard-hoverBackground tabbable" : ""
       }`}
       tabIndex={canLink ? 0 : -1}
+      onMouseEnter={handlePrefetch}
+      onFocus={handlePrefetch}
       onKeyUp={(e) => e.key === "Enter" && e.currentTarget.click()}
     >
       <Flare.Light
@@ -94,15 +112,24 @@ function MediaCardContent({
       >
         <div
           className={classNames(
-            "relative mb-4 pb-[150%] w-full overflow-hidden rounded-xl bg-mediaCard-hoverBackground bg-cover bg-center transition-[border-radius] duration-300",
+            "relative mb-4 pb-[150%] w-full overflow-hidden rounded-xl bg-mediaCard-hoverBackground transition-[border-radius] duration-300",
             {
               "group-hover:rounded-lg": canLink,
             },
           )}
-          style={{
-            backgroundImage: media.poster ? `url(${media.poster})` : undefined,
-          }}
         >
+          {media.poster ? (
+            <img
+              src={media.poster}
+              alt={media.title}
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover transition-opacity duration-300"
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = "none";
+              }}
+            />
+          ) : null}
           {series ? (
             <div
               className={[
