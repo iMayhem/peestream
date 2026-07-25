@@ -213,7 +213,7 @@ function getNextProxy(proxyUrls: string[]): string | undefined {
 export async function get<T>(url: string, params?: object): Promise<T> {
   const proxyUrls = getProxyUrls();
   const proxy = getNextProxy(proxyUrls);
-  const shouldProxyTmdb = usePreferencesStore.getState().proxyTmdb;
+  const shouldProxyTmdb = false;
   const userLanguage = useLanguageStore.getState().language;
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
 
@@ -469,28 +469,11 @@ export async function getMediaDetails<
 export function getMediaBackdrop(
   backdropPath: string | null,
 ): string | undefined {
-  const shouldProxyTmdb = usePreferencesStore.getState().proxyTmdb;
-  const imgUrl = `https://image.tmdb.org/t/p/original${backdropPath}`;
-  const proxyUrl = getProxyUrls()[0];
-  if (proxyUrl && shouldProxyTmdb) {
-    return `${proxyUrl}/?destination=${imgUrl}`;
-  }
-  if (backdropPath) return imgUrl;
+  if (backdropPath) return `https://image.tmdb.org/t/p/original${backdropPath}`;
 }
 
 export function getMediaPoster(posterPath: string | null): string | undefined {
-  const shouldProxyTmdb = usePreferencesStore.getState().proxyTmdb;
-  const imgUrl = `https://image.tmdb.org/t/p/w342/${posterPath}`;
-
-  if (shouldProxyTmdb) {
-    const proxyUrls = getProxyUrls();
-    const proxy = getNextProxy(proxyUrls);
-    if (proxy) {
-      return `${proxy}/?destination=${imgUrl}`;
-    }
-  }
-
-  if (posterPath) return imgUrl;
+  if (posterPath) return `https://image.tmdb.org/t/p/w342/${posterPath}`;
 }
 
 /**
