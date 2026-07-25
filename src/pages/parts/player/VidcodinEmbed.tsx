@@ -39,12 +39,12 @@ export function VidcodinEmbed() {
     : `https://vidcodin.net/embed/movie/${tmdbId}`;
 
   return (
-    <div className="absolute inset-0 w-full h-full bg-black z-0">
+    <div className="absolute inset-0 w-full h-full bg-black z-30 pointer-events-auto">
       <iframe
         key={embedUrl}
         src={embedUrl}
         title="Vidcodin Player"
-        className="w-full h-full border-0 absolute inset-0"
+        className="w-full h-full border-0 absolute inset-0 pointer-events-auto"
         allowFullScreen
         allow="autoplay; encrypted-media; picture-in-picture; accelerometer; gyroscope"
       />
