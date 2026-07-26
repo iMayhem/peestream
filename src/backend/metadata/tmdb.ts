@@ -213,7 +213,7 @@ function getNextProxy(proxyUrls: string[]): string | undefined {
 export async function get<T>(url: string, params?: object): Promise<T> {
   const proxyUrls = getProxyUrls();
   const proxy = getNextProxy(proxyUrls);
-  const shouldProxyTmdb = false;
+  const shouldProxyTmdb = true;
   const userLanguage = useLanguageStore.getState().language;
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
 
@@ -248,16 +248,15 @@ export async function get<T>(url: string, params?: object): Promise<T> {
 
   if (proxy && shouldProxyTmdb) {
     try {
-      result = await mwFetch<T>(
-        `/?destination=${encodeURIComponent(fullUrl.toString())}`,
-        {
-          headers: tmdbHeaders,
-          baseURL: proxy,
-          signal: abortOnTimeout(5000),
-        },
-      );
+      const cleanUrl = url.startsWith("/") ? url.slice(1) : url;
+      result = await mwFetch<T>(cleanUrl, {
+        headers: tmdbHeaders,
+        baseURL: `${proxy}/tmdb-api/`,
+        params: allParams,
+        signal: abortOnTimeout(5000),
+      });
     } catch (err) {
-      console.error(err);
+      console.error("[TMDB Proxy Error]", err);
       // Fall through to try direct connection
     }
   }
@@ -469,11 +468,25 @@ export async function getMediaDetails<
 export function getMediaBackdrop(
   backdropPath: string | null,
 ): string | undefined {
-  if (backdropPath) return `https://image.tmdb.org/t/p/original${backdropPath}`;
+  if (!backdropPath) return undefined;
+  const proxyUrls = getProxyUrls();
+  const proxy = getNextProxy(proxyUrls);
+  const imgUrl = `https://image.tmdb.org/t/p/original${backdropPath}`;
+  if (proxy) {
+    return `${proxy}/tmdb-image/original${backdropPath}`;
+  }
+  return imgUrl;
 }
 
 export function getMediaPoster(posterPath: string | null): string | undefined {
-  if (posterPath) return `https://image.tmdb.org/t/p/w342/${posterPath}`;
+  if (!posterPath) return undefined;
+  const proxyUrls = getProxyUrls();
+  const proxy = getNextProxy(proxyUrls);
+  const imgUrl = `https://image.tmdb.org/t/p/w342/${posterPath}`;
+  if (proxy) {
+    return `${proxy}/tmdb-image/w342/${posterPath}`;
+  }
+  return imgUrl;
 }
 
 /**
