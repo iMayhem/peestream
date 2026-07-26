@@ -21,7 +21,6 @@ import { PlaybackErrorPart } from "@/pages/parts/player/PlaybackErrorPart";
 import { PlayerPart } from "@/pages/parts/player/PlayerPart";
 import { ScrapeErrorPart } from "@/pages/parts/player/ScrapeErrorPart";
 import { ScrapingPart } from "@/pages/parts/player/ScrapingPart";
-import { VidcodinEmbed } from "@/pages/parts/player/VidcodinEmbed";
 import { useLastNonPlayerLink } from "@/stores/history";
 import { PlayerMeta, playerStatus } from "@/stores/player/slices/source";
 import { usePlayerStore } from "@/stores/player/store";
@@ -128,10 +127,26 @@ export function RealPlayerView() {
 
   return (
     <PlayerPart backUrl={backUrl} onMetaChange={metaChange}>
-      <VidcodinEmbed />
       {status === playerStatus.IDLE ? (
         <MetaPart onGetMeta={setPlayerMeta} />
       ) : null}
+      {status === playerStatus.SCRAPING && scrapeMedia ? (
+        <ScrapingPart
+          media={scrapeMedia}
+          onResult={(sources, sourceOrder) => {
+            setErrorData({
+              sourceOrder,
+              sources,
+            });
+            setScrapeNotFound();
+          }}
+          onGetStream={playAfterScrape}
+        />
+      ) : null}
+      {status === playerStatus.SCRAPE_NOT_FOUND && errorData ? (
+        <ScrapeErrorPart data={errorData} />
+      ) : null}
+      {status === playerStatus.PLAYBACK_ERROR ? <PlaybackErrorPart /> : null}
     </PlayerPart>
   );
 }
