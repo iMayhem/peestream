@@ -679,6 +679,20 @@ export function CaptionsView({
             {t("player.menus.subtitles.offChoice")}
           </CaptionOption>
 
+          {/* Subtitle Alignment & Delay Sync direct link */}
+          <Menu.ChevronLink
+            onClick={() =>
+              router.navigate(
+                backLink ? "/captions/settings" : "/captions/settingsOverlay",
+              )
+            }
+          >
+            <span className="flex items-center text-video-context-type-accent font-medium">
+              <Icon icon={Icons.GEAR} className="mr-2 text-lg" />
+              Subtitle Alignment & Delay Sync
+            </span>
+          </Menu.ChevronLink>
+
           {/* Automatically select subtitles option */}
           {captions.length > 0 && (
             <CaptionOption
