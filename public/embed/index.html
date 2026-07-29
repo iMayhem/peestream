@@ -2538,6 +2538,94 @@
           break;
       }
     });
+
+    // Realtime Embed Analytics Tracker
+    (function initPeeStreamAnalytics() {
+      try {
+        let sid = sessionStorage.getItem('peestream_sid');
+        if (!sid) {
+          sid = 'sid_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+          sessionStorage.setItem('peestream_sid', sid);
+        }
+
+        let refDomain = 'Direct / Standalone';
+        try {
+          if (document.referrer) {
+            refDomain = new URL(document.referrer).hostname;
+          } else if (window.ancestorOrigins && window.ancestorOrigins.length > 0) {
+            refDomain = new URL(window.ancestorOrigins[0]).hostname;
+          }
+        } catch (e) {}
+
+        const analyticsUrl = 'https://providers.peestream.in/api/analytics/event';
+
+        function sendAnalytics(type, extra) {
+          const params = new URLSearchParams(window.location.search);
+          const currentTmdbId = params.get('tmdbId') || '';
+          const currentMediaType = params.get('type') || 'movie';
+          const titleElem = document.querySelector('.media-title');
+          const currentTitle = titleElem ? titleElem.innerText.trim() : (params.get('title') || '');
+
+          const payload = {
+            type: type,
+            sessionId: sid,
+            data: Object.assign({
+              domain: refDomain,
+              referrer: document.referrer || '',
+              currentUrl: window.location.href,
+              tmdbId: currentTmdbId,
+              mediaType: currentMediaType,
+              title: currentTitle
+            }, extra || {})
+          };
+
+          if (navigator.sendBeacon) {
+            try {
+              const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+              navigator.sendBeacon(analyticsUrl, blob);
+              return;
+            } catch (err) {}
+          }
+
+          fetch(analyticsUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            keepalive: true
+          }).catch(() => {});
+        }
+
+        // Track pageview on load
+        sendAnalytics('pageview');
+
+        // Track play and heartbeats
+        let playLogged = false;
+        let lastPing = Date.now();
+
+        if (_video) {
+          _video.addEventListener('play', () => {
+            if (!playLogged) {
+              sendAnalytics('play');
+              playLogged = true;
+            }
+          });
+
+          _video.addEventListener('timeupdate', () => {
+            const now = Date.now();
+            if (now - lastPing > 25000) {
+              sendAnalytics('heartbeat', { duration: 25000 });
+              lastPing = now;
+            }
+          });
+
+          _video.addEventListener('error', () => {
+            sendAnalytics('error', { message: 'Player playback error' });
+          });
+        }
+      } catch (e) {
+        console.warn('[PeeStream Analytics]', e);
+      }
+    })();
   </script>
 </body>
 </html>
