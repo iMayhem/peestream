@@ -124,6 +124,7 @@ export function PlayerPart(props: PlayerPartProps) {
             {status === playerStatus.PLAYBACK_ERROR ||
             status === playerStatus.PLAYING ? (
               <>
+                <Player.SubtitleSync />
                 <Player.Captions />
                 <Player.Settings />
               </>
