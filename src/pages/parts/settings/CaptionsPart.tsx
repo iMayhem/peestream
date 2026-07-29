@@ -84,6 +84,17 @@ export function CaptionsPart(props: {
       <div className="grid md:grid-cols-[1fr,356px] gap-8">
         <div className="space-y-6">
           <CaptionSetting
+            label="Subtitle Position (Vertical Offset)"
+            max={15}
+            min={0}
+            onChange={(v) =>
+              props.setStyling({ ...props.styling, verticalPosition: v })
+            }
+            value={props.styling.verticalPosition ?? 0}
+            textTransformer={(s) => `+${s}rem`}
+            decimalsAllowed={1}
+          />
+          <CaptionSetting
             label={t("settings.subtitles.backgroundLabel")}
             max={100}
             min={0}
@@ -105,8 +116,8 @@ export function CaptionsPart(props: {
           />
           <CaptionSetting
             label={t("settings.subtitles.textSizeLabel")}
-            max={200}
-            min={1}
+            max={250}
+            min={50}
             textTransformer={(s) => `${s}%`}
             onChange={(v) =>
               props.setStyling({ ...props.styling, size: v / 100 })

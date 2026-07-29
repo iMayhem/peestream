@@ -113,9 +113,12 @@ export function SubtitleView(props: { controlsShown: boolean }) {
   const caption = usePlayerStore((s) => s.caption.selected);
   const captionAsTrack = usePlayerStore((s) => s.caption.asTrack);
   const display = usePlayerStore((s) => s.display);
+  const styling = useSubtitleStore((s) => s.styling);
   const isCasting = display?.getType() === "casting";
 
   if (captionAsTrack || !caption || isCasting) return null;
+
+  const extraBottom = styling.verticalPosition ?? 0;
 
   return (
     <Transition
@@ -124,10 +127,10 @@ export function SubtitleView(props: { controlsShown: boolean }) {
       show
     >
       <div
-        className={classNames([
-          "text-white absolute flex w-full flex-col items-center transition-[bottom]",
-          props.controlsShown ? "bottom-24" : "bottom-12",
-        ])}
+        className="text-white absolute flex w-full flex-col items-center transition-[bottom]"
+        style={{
+          bottom: `calc(${props.controlsShown ? "6rem" : "3rem"} + ${extraBottom}rem)`,
+        }}
       >
         <SubtitleRenderer />
       </div>

@@ -22,8 +22,7 @@
       "@sozialhelden/ietf-language-tags": [
         "../node_modules/@sozialhelden/ietf-language-tags/dist/cjs"
       ]
-    },
-    "typeRoots": ["node_modules/@types"]
+    }
   },
   "include": ["src", "themes"]
 }

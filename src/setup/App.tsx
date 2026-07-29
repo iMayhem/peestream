@@ -87,6 +87,22 @@ function QueryView() {
   return null;
 }
 
+function EmbedMovieRedirect() {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate replace to={`/media/tmdb-movie-${id}`} />;
+}
+
+function EmbedTvRedirect() {
+  const { id, season, episode } = useParams<{
+    id: string;
+    season: string;
+    episode: string;
+  }>();
+  return (
+    <Navigate replace to={`/media/tmdb-show-${id}/${season}/${episode}`} />
+  );
+}
+
 function App() {
   useHistoryListener();
   useOnlineListener();
@@ -115,6 +131,32 @@ function App() {
           <Route path="/search/:type" element={<Navigate to="/browse" />} />
           <Route path="/search/:type/:query?" element={<QueryView />} />
           {/* pages */}
+          {/* embed & player routes */}
+          <Route path="/embed/movie/:id" element={<EmbedMovieRedirect />} />
+          <Route
+            path="/embed/tv/:id/:season/:episode"
+            element={<EmbedTvRedirect />}
+          />
+          <Route
+            path="/embed/:media"
+            element={
+              <LegacyUrlView>
+                <Suspense fallback={null}>
+                  <PlayerView />
+                </Suspense>
+              </LegacyUrlView>
+            }
+          />
+          <Route
+            path="/embed/:media/:season/:episode"
+            element={
+              <LegacyUrlView>
+                <Suspense fallback={null}>
+                  <PlayerView />
+                </Suspense>
+              </LegacyUrlView>
+            }
+          />
           <Route
             path="/media/:media"
             element={

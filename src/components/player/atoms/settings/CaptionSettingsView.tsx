@@ -214,7 +214,16 @@ export function CaptionSetting(props: {
   );
 }
 
-export const colors = ["#ffffff", "#b0b0b0", "#80b1fa", "#e2e535"];
+export const colors = [
+  "#ffffff",
+  "#b0b0b0",
+  "#e2e535",
+  "#00f0ff",
+  "#80b1fa",
+  "#50e3c2",
+  "#ff4d4d",
+  "#ff9f43",
+];
 
 export function CaptionSettingsView({
   id,
@@ -242,16 +251,66 @@ export function CaptionSettingsView({
         {t("player.menus.subtitles.settings.backlink")}
       </Menu.BackLink>
       <Menu.Section className="space-y-6 pb-5">
+        <div>
+          <CaptionSetting
+            label={t("player.menus.subtitles.settings.delay")}
+            max={30}
+            min={-30}
+            onChange={(v) => setDelay(v)}
+            value={delay}
+            textTransformer={(s) => `${s}s`}
+            decimalsAllowed={1}
+            controlButtons
+          />
+          <div className="flex flex-wrap gap-1.5 pt-2">
+            <button
+              type="button"
+              className="px-2 py-1 bg-video-context-inputBg hover:bg-video-context-buttonOverInputHover text-xs text-white rounded transition-colors"
+              onClick={() => setDelay(Number((delay - 1).toFixed(1)))}
+            >
+              -1.0s
+            </button>
+            <button
+              type="button"
+              className="px-2 py-1 bg-video-context-inputBg hover:bg-video-context-buttonOverInputHover text-xs text-white rounded transition-colors"
+              onClick={() => setDelay(Number((delay - 0.5).toFixed(1)))}
+            >
+              -0.5s
+            </button>
+            <button
+              type="button"
+              className="px-2 py-1 bg-video-context-inputBg hover:bg-video-context-buttonOverInputHover text-xs text-white rounded transition-colors font-medium"
+              onClick={() => setDelay(0)}
+            >
+              Reset (0s)
+            </button>
+            <button
+              type="button"
+              className="px-2 py-1 bg-video-context-inputBg hover:bg-video-context-buttonOverInputHover text-xs text-white rounded transition-colors"
+              onClick={() => setDelay(Number((delay + 0.5).toFixed(1)))}
+            >
+              +0.5s
+            </button>
+            <button
+              type="button"
+              className="px-2 py-1 bg-video-context-inputBg hover:bg-video-context-buttonOverInputHover text-xs text-white rounded transition-colors"
+              onClick={() => setDelay(Number((delay + 1).toFixed(1)))}
+            >
+              +1.0s
+            </button>
+          </div>
+        </div>
+
         <CaptionSetting
-          label={t("player.menus.subtitles.settings.delay")}
-          max={10}
-          min={-10}
-          onChange={(v) => setDelay(v)}
-          value={delay}
-          textTransformer={(s) => `${s}s`}
+          label="Subtitle Position (Vertical Offset)"
+          max={15}
+          min={0}
+          onChange={(v) => updateStyling({ verticalPosition: v })}
+          value={styling.verticalPosition ?? 0}
+          textTransformer={(s) => `+${s}rem`}
           decimalsAllowed={1}
-          controlButtons
         />
+
         <div className="flex justify-between items-center">
           <Menu.FieldTitle>
             {t("player.menus.subtitles.settings.fixCapitals")}
@@ -293,8 +352,8 @@ export function CaptionSettingsView({
         />
         <CaptionSetting
           label={t("settings.subtitles.textSizeLabel")}
-          max={200}
-          min={1}
+          max={250}
+          min={50}
           textTransformer={(s) => `${s}%`}
           onChange={(v) => updateStyling({ size: v / 100 })}
           value={styling.size * 100}
@@ -303,7 +362,7 @@ export function CaptionSettingsView({
           <Menu.FieldTitle>
             {t("settings.subtitles.colorLabel")}
           </Menu.FieldTitle>
-          <div className="flex justify-center items-center">
+          <div className="flex justify-center items-center gap-0.5">
             {colors.map((v) => (
               <ColorOption
                 onClick={() => updateStyling({ color: v })}
