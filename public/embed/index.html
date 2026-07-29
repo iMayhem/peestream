@@ -1509,6 +1509,7 @@
     if (tmdbId) {
       landingView.style.display = 'none';
       playerView.style.display = 'block';
+      fetchSubtitles();
       startScraping();
     } else {
       landingView.style.display = 'flex';
@@ -2085,8 +2086,14 @@
       qualityMenu.classList.remove('show');
     }
 
-    // Custom Subtitle Fetching & Parsing
+    // High-Performance Parallel Subtitle Loader & Cache
+    const subtitleCache = new Map();
+    let subtitlesFetched = false;
+
     async function fetchSubtitles() {
+      if (subtitlesFetched || !tmdbId) return;
+      subtitlesFetched = true;
+
       try {
         const subUrl = `https://providers.peestream.in/api/subtitles?tmdbId=${tmdbId}&type=${type}${season ? `&season=${season}` : ''}${episode ? `&episode=${episode}` : ''}`;
         const resp = await fetch(subUrl);
@@ -2095,6 +2102,11 @@
           if (subData && Array.isArray(subData.captions) && subData.captions.length > 0) {
             activeSubtitles = subData.captions;
             
+            // Clear existing non-Off options
+            while (subtitlesList.children.length > 1) {
+              subtitlesList.removeChild(subtitlesList.lastChild);
+            }
+
             // Populate menu
             activeSubtitles.forEach((sub, index) => {
               const btn = document.createElement('button');
@@ -2104,11 +2116,13 @@
               subtitlesList.appendChild(btn);
             });
 
-            // Auto-select English subtitles
-            const engIndex = activeSubtitles.findIndex(s => s.language === 'en');
-            if (engIndex !== -1) {
-              const engBtn = subtitlesList.children[engIndex + 1]; // +1 offset for "Off" button
-              selectSubtitle(engIndex, engBtn);
+            // Auto-select English or first subtitle & PREFETCH IMMEDIATELY in parallel
+            let targetIndex = activeSubtitles.findIndex(s => s.language === 'en' || s.language === 'eng');
+            if (targetIndex === -1) targetIndex = 0;
+
+            if (targetIndex !== -1 && subtitlesList.children[targetIndex + 1]) {
+              const targetBtn = subtitlesList.children[targetIndex + 1];
+              selectSubtitle(targetIndex, targetBtn);
             }
           }
         }
@@ -2117,9 +2131,56 @@
       }
     }
 
+    async function loadSubtitleContent(subtitle) {
+      if (!subtitle || !subtitle.url) return [];
+      if (subtitleCache.has(subtitle.url)) {
+        return subtitleCache.get(subtitle.url);
+      }
+
+      const directUrl = subtitle.url;
+      const proxyUrl = `https://providers.peestream.in/proxy?u=${btoa(subtitle.url).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')}`;
+
+      // Fast race / fallback between direct & proxy fetch
+      async function tryFetch(url, timeoutMs = 4000) {
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const res = await fetch(url, { signal: controller.signal });
+          clearTimeout(tid);
+          if (res.ok) {
+            const text = await res.text();
+            if (text && text.trim().length > 0) return text;
+          }
+        } catch (e) {
+          clearTimeout(tid);
+        }
+        return null;
+      }
+
+      let text = null;
+      if (!subtitle.needsProxy) {
+        text = await tryFetch(directUrl, 3500);
+      }
+      if (!text) {
+        text = await tryFetch(proxyUrl, 6000);
+      }
+      if (!text && subtitle.needsProxy) {
+        text = await tryFetch(directUrl, 3500);
+      }
+
+      if (text) {
+        const parsed = parseSRT(text);
+        subtitleCache.set(subtitle.url, parsed);
+        return parsed;
+      }
+      return [];
+    }
+
     async function selectSubtitle(index, btnElement) {
-      document.querySelectorAll('#subtitles-list .menu-option').forEach(btn => btn.classList.remove('active'));
-      btnElement.classList.add('active');
+      if (btnElement) {
+        document.querySelectorAll('#subtitles-list .menu-option').forEach(btn => btn.classList.remove('active'));
+        btnElement.classList.add('active');
+      }
       subtitlesMenu.classList.remove('show');
 
       if (index === 'off') {
@@ -2131,21 +2192,11 @@
 
       currentSubtitleIndex = index;
       const subtitle = activeSubtitles[index];
-      
-      let targetUrl = subtitle.url;
-      if (subtitle.needsProxy) {
-        const u = btoa(subtitle.url).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-        targetUrl = `https://providers.peestream.in/proxy?u=${u}`;
-      }
+      if (!subtitle) return;
 
-      try {
-        const resp = await fetch(targetUrl);
-        if (resp.ok) {
-          const text = await resp.text();
-          subtitleCues = parseSRT(text);
-        }
-      } catch (e) {
-        console.error("Failed to parse subtitle text:", e);
+      const cues = await loadSubtitleContent(subtitle);
+      if (currentSubtitleIndex === index) {
+        subtitleCues = cues;
       }
     }
 
