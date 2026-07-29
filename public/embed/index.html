@@ -746,7 +746,7 @@
       text-align: center;
       max-width: 80%;
       pointer-events: none;
-      z-index: 3;
+      z-index: 6;
       transition: bottom 0.25s ease;
       line-height: 1.45;
       font-weight: 500;
@@ -2149,18 +2149,38 @@
       }
     }
 
-    // SRT Parsing Logic
+    // Robust SRT & WebVTT Subtitle Parsing
     function parseSRT(data) {
       const cues = [];
-      const items = data.replace(/\r\n/g, '\n').split('\n\n');
-      for (const item of items) {
-        const lines = item.trim().split('\n');
-        if (lines.length >= 3) {
-          const timeMatch = lines[1].match(/(\d+:\d+:\d+,\d+)\s+-->\s+(\d+:\d+:\d+,\d+)/);
-          if (timeMatch) {
-            const start = parseSrtTime(timeMatch[1]);
-            const end = parseSrtTime(timeMatch[2]);
-            const text = lines.slice(2).join('<br>');
+      if (!data || typeof data !== 'string') return cues;
+
+      const cleanData = data.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      const blocks = cleanData.split(/\n\s*\n/);
+
+      const timeRegex = /(?:(\d{1,2}):)?(\d{2}):(\d{2})[,.](\d{2,3})\s*-->\s*(?:(\d{1,2}):)?(\d{2}):(\d{2})[,.](\d{2,3})/;
+
+      for (const block of blocks) {
+        const lines = block.trim().split('\n');
+        let timeIndex = -1;
+        let match = null;
+
+        for (let i = 0; i < lines.length; i++) {
+          const m = lines[i].match(timeRegex);
+          if (m) {
+            match = m;
+            timeIndex = i;
+            break;
+          }
+        }
+
+        if (match && timeIndex !== -1) {
+          const start = parseTimestampMatch(match[1], match[2], match[3], match[4]);
+          const end = parseTimestampMatch(match[5], match[6], match[7], match[8]);
+          
+          const textLines = lines.slice(timeIndex + 1).filter(l => l.trim().length > 0 && !l.startsWith('WEBVTT') && !l.startsWith('NOTE'));
+          const text = textLines.join('<br>').replace(/<font[^>]*>/gi, '').replace(/<\/font>/gi, '');
+          
+          if (text) {
             cues.push({ start, end, text });
           }
         }
@@ -2168,14 +2188,13 @@
       return cues;
     }
 
-    function parseSrtTime(timeStr) {
-      const parts = timeStr.split(',');
-      const timeParts = parts[0].split(':');
-      const ms = parseInt(parts[1] || '0', 10) / 1000;
-      const hours = parseInt(timeParts[0], 10);
-      const minutes = parseInt(timeParts[1], 10);
-      const seconds = parseInt(timeParts[2], 10);
-      return hours * 3600 + minutes * 60 + seconds + ms;
+    function parseTimestampMatch(h, m, s, ms) {
+      const hours = parseInt(h || '0', 10);
+      const mins = parseInt(m, 10);
+      const secs = parseInt(s, 10);
+      let millis = parseInt(ms, 10);
+      if (ms && ms.length === 2) millis *= 10;
+      return hours * 3600 + mins * 60 + secs + (millis / 1000);
     }
 
     // Format seconds to H:MM:SS / M:SS
