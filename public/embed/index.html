@@ -1346,6 +1346,58 @@
                 </div>
               </div>
 
+              <!-- Subtitle Sync Menu -->
+              <div class="control-menu-container">
+                <button id="ctrl-sub-sync" class="control-btn" title="Subtitle Sync & Alignment"><i class="fa-solid fa-clock"></i></button>
+                <div id="sub-sync-menu" class="control-menu" style="width: 230px; padding: 12px;">
+                  <div class="menu-header" style="margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">Subtitle Sync & Style</div>
+                  
+                  <!-- Delay Sync Section -->
+                  <div style="margin-bottom: 12px;">
+                    <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 6px; display: flex; justify-content: space-between;">
+                      <span>DELAY SYNC</span>
+                      <span id="delay-val" style="color: var(--accent-color); font-weight: 700;">0.0s</span>
+                    </div>
+                    <div style="display: flex; gap: 4px; margin-bottom: 8px;">
+                      <button type="button" class="menu-option" style="padding: 4px; justify-content: center; font-size: 0.75rem; border-radius: 4px; background: rgba(255,255,255,0.06);" onclick="adjustSubDelay(-1.0)">-1s</button>
+                      <button type="button" class="menu-option" style="padding: 4px; justify-content: center; font-size: 0.75rem; border-radius: 4px; background: rgba(255,255,255,0.06);" onclick="adjustSubDelay(-0.5)">-0.5s</button>
+                      <button type="button" class="menu-option" style="padding: 4px; justify-content: center; font-size: 0.75rem; border-radius: 4px; background: rgba(255,255,255,0.06);" onclick="resetSubDelay()">Reset</button>
+                      <button type="button" class="menu-option" style="padding: 4px; justify-content: center; font-size: 0.75rem; border-radius: 4px; background: rgba(255,255,255,0.06);" onclick="adjustSubDelay(0.5)">+0.5s</button>
+                      <button type="button" class="menu-option" style="padding: 4px; justify-content: center; font-size: 0.75rem; border-radius: 4px; background: rgba(255,255,255,0.06);" onclick="adjustSubDelay(1.0)">+1s</button>
+                    </div>
+                    <input type="range" id="delay-slider" min="-30" max="30" step="0.1" value="0" style="width: 100%; accent-color: var(--accent-color); cursor: pointer;" oninput="onSubDelayInput(this.value)">
+                  </div>
+
+                  <!-- Vertical Position Section -->
+                  <div style="margin-bottom: 12px;">
+                    <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px; display: flex; justify-content: space-between;">
+                      <span>VERTICAL POSITION</span>
+                      <span id="pos-val" style="color: var(--text-color); font-weight: 600;">0px</span>
+                    </div>
+                    <input type="range" id="pos-slider" min="0" max="150" step="5" value="0" style="width: 100%; accent-color: var(--accent-color); cursor: pointer;" oninput="onSubPosInput(this.value)">
+                  </div>
+
+                  <!-- Text Size Section -->
+                  <div style="margin-bottom: 12px;">
+                    <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px; display: flex; justify-content: space-between;">
+                      <span>TEXT SIZE</span>
+                      <span id="size-val" style="color: var(--text-color); font-weight: 600;">20px</span>
+                    </div>
+                    <input type="range" id="size-slider" min="12" max="40" step="1" value="20" style="width: 100%; accent-color: var(--accent-color); cursor: pointer;" oninput="onSubSizeInput(this.value)">
+                  </div>
+
+                  <!-- Background Opacity Section -->
+                  <div>
+                    <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px; display: flex; justify-content: space-between;">
+                      <span>BACKGROUND OPACITY</span>
+                      <span id="opacity-val" style="color: var(--text-color); font-weight: 600;">75%</span>
+                    </div>
+                    <input type="range" id="opacity-slider" min="0" max="100" step="5" value="75" style="width: 100%; accent-color: var(--accent-color); cursor: pointer;" oninput="onSubOpacityInput(this.value)">
+                  </div>
+
+                </div>
+              </div>
+
               <!-- Subtitles Menu -->
               <div class="control-menu-container">
                 <button id="ctrl-subtitles" class="control-btn" title="Subtitles"><i class="fa-solid fa-closed-captioning"></i></button>
@@ -1730,6 +1782,43 @@
     let playerEventsInitialized = false;
     let resolvedStreams = [];
     let activeServerId = null;
+
+    let subtitleDelay = 0;
+    let subtitleVerticalPos = 0;
+    let subtitleSize = 20;
+    let subtitleBgOpacity = 0.75;
+
+    function adjustSubDelay(delta) {
+      subtitleDelay = parseFloat((subtitleDelay + delta).toFixed(1));
+      document.getElementById('delay-slider').value = subtitleDelay;
+      document.getElementById('delay-val').innerText = `${subtitleDelay > 0 ? '+' : ''}${subtitleDelay.toFixed(1)}s`;
+    }
+
+    function resetSubDelay() {
+      subtitleDelay = 0;
+      document.getElementById('delay-slider').value = 0;
+      document.getElementById('delay-val').innerText = '0.0s';
+    }
+
+    function onSubDelayInput(val) {
+      subtitleDelay = parseFloat(parseFloat(val).toFixed(1));
+      document.getElementById('delay-val').innerText = `${subtitleDelay > 0 ? '+' : ''}${subtitleDelay.toFixed(1)}s`;
+    }
+
+    function onSubPosInput(val) {
+      subtitleVerticalPos = parseInt(val, 10);
+      document.getElementById('pos-val').innerText = `${subtitleVerticalPos}px`;
+    }
+
+    function onSubSizeInput(val) {
+      subtitleSize = parseInt(val, 10);
+      document.getElementById('size-val').innerText = `${subtitleSize}px`;
+    }
+
+    function onSubOpacityInput(val) {
+      subtitleBgOpacity = parseInt(val, 10) / 100;
+      document.getElementById('opacity-val').innerText = `${val}%`;
+    }
 
     function updateServerMenuUI() {
       playerServersList.innerHTML = '';
@@ -2147,10 +2236,15 @@
 
         // Render current subtitles cue
         if (subtitleCues.length > 0) {
-          const activeCue = subtitleCues.find(cue => curr >= cue.start && curr <= cue.end);
+          const adjustedTime = curr + subtitleDelay;
+          const activeCue = subtitleCues.find(cue => adjustedTime >= cue.start && adjustedTime <= cue.end);
           if (activeCue) {
             subtitleOverlay.style.display = 'block';
             subtitleOverlay.innerHTML = activeCue.text;
+            const baseBottom = videoContainer.classList.contains('hide-controls') ? 35 : 95;
+            subtitleOverlay.style.bottom = `${baseBottom + subtitleVerticalPos}px`;
+            subtitleOverlay.style.fontSize = `${subtitleSize}px`;
+            subtitleOverlay.style.background = `rgba(0, 0, 0, ${subtitleBgOpacity})`;
           } else {
             subtitleOverlay.style.display = 'none';
           }
@@ -2237,9 +2331,23 @@
         }
       });
 
-      // Subtitles & Quality & Server menus toggle
+      // Subtitles & Sync & Quality & Server menus toggle
+      const subSyncBtn = document.getElementById('ctrl-sub-sync');
+      const subSyncMenu = document.getElementById('sub-sync-menu');
+
+      if (subSyncBtn && subSyncMenu) {
+        subSyncBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          subtitlesMenu.classList.remove('show');
+          qualityMenu.classList.remove('show');
+          serverMenu.classList.remove('show');
+          subSyncMenu.classList.toggle('show');
+        });
+      }
+
       subtitlesBtn.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (subSyncMenu) subSyncMenu.classList.remove('show');
         qualityMenu.classList.remove('show');
         serverMenu.classList.remove('show');
         subtitlesMenu.classList.toggle('show');
@@ -2247,6 +2355,7 @@
 
       qualityBtn.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (subSyncMenu) subSyncMenu.classList.remove('show');
         subtitlesMenu.classList.remove('show');
         serverMenu.classList.remove('show');
         qualityMenu.classList.toggle('show');
@@ -2254,6 +2363,7 @@
 
       serverBtn.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (subSyncMenu) subSyncMenu.classList.remove('show');
         subtitlesMenu.classList.remove('show');
         qualityMenu.classList.remove('show');
         serverMenu.classList.toggle('show');
@@ -2261,6 +2371,7 @@
 
       // Close menus on click outside
       window.addEventListener('click', () => {
+        if (subSyncMenu) subSyncMenu.classList.remove('show');
         subtitlesMenu.classList.remove('show');
         qualityMenu.classList.remove('show');
         serverMenu.classList.remove('show');
