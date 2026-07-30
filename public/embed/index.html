@@ -2649,6 +2649,8 @@
             try {
               const opEvent = type === 'pageview' ? 'embed_viewed' : type === 'play' ? 'video_started' : type;
               window.op('track', opEvent, {
+                is_embed: true,
+                embed_source: 'iframe',
                 embedding_domain: refDomain,
                 referrer_url: document.referrer || '',
                 current_url: window.location.href,
