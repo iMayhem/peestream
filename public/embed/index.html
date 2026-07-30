@@ -1922,19 +1922,33 @@
       document.getElementById('delay-val').innerText = `${subtitleDelay > 0 ? '+' : ''}${subtitleDelay.toFixed(1)}s`;
     }
 
+    function applySubtitleStyles() {
+      const subOverlay = document.getElementById('subtitle-overlay');
+      const vContainer = document.getElementById('video-container');
+      if (!subOverlay) return;
+      const baseBottom = (vContainer && vContainer.classList.contains('hide-controls')) ? 35 : 95;
+      subOverlay.style.bottom = `${baseBottom + subtitleVerticalPos}px`;
+      subOverlay.style.fontSize = `${subtitleSize}px`;
+      subOverlay.style.background = `rgba(0, 0, 0, ${subtitleBgOpacity})`;
+      subOverlay.style.borderColor = `rgba(255, 255, 255, ${subtitleBgOpacity > 0 ? 0.05 : 0})`;
+    }
+
     function onSubPosInput(val) {
       subtitleVerticalPos = parseInt(val, 10);
       document.getElementById('pos-val').innerText = `${subtitleVerticalPos}px`;
+      applySubtitleStyles();
     }
 
     function onSubSizeInput(val) {
       subtitleSize = parseInt(val, 10);
       document.getElementById('size-val').innerText = `${subtitleSize}px`;
+      applySubtitleStyles();
     }
 
     function onSubOpacityInput(val) {
       subtitleBgOpacity = parseInt(val, 10) / 100;
       document.getElementById('opacity-val').innerText = `${val}%`;
+      applySubtitleStyles();
     }
 
     function updateServerMenuUI() {
