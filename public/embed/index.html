@@ -1358,7 +1358,7 @@
           <div class="server-item">
             <div class="server-index">01</div>
             <div class="server-info">
-              <div class="server-name">zeus</div>
+              <div class="server-name">poseidon</div>
               <div class="server-blurb">Ultra-fast multi-source streaming server.</div>
             </div>
             <div class="server-badge high">high speed</div>
@@ -1544,11 +1544,6 @@
         
         <!-- Custom Subtitle Overlay -->
         <div id="subtitle-overlay" class="subtitle-overlay" style="display: none;"></div>
-        
-        <!-- Embed Drawer Button -->
-        <div id="embed-trigger" class="embed-trigger-btn" title="Get Embed Code">
-          <i class="fa-solid fa-code"></i>
-        </div>
       </div>
       
       <!-- Scraping Loading Overlay -->
@@ -1811,11 +1806,14 @@
     function getFriendlyServerName(providerId) {
       const mapping = {
         'vaplayer': 'Poseidon',
-        'moovie-catalog': 'Athena',
-        'streamvault': 'Zeus',
-        'vidrift': 'Zeus'
+        'moovie-catalog': 'Poseidon',
+        'streamvault': 'Poseidon',
+        'vidrift': 'Poseidon',
+        'thor': 'Thor',
+        '4khdhub': '4KHDHub',
+        '4khdhubnew': '4KHDHub'
       };
-      return mapping[providerId] || 'Zeus';
+      return mapping[providerId] || 'Poseidon';
     }
 
     function startScraping() {
