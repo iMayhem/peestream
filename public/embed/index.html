@@ -16,6 +16,9 @@
   <!-- HlsJS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.0/dist/hls.min.js"></script>
   
+  <!-- OpenPanel Analytics -->
+  <script defer src="https://openpanel.dev/op1.js" data-client-id="be0fa489-1813-4fbf-939a-858f1b842b61"></script>
+  
   <style>
     :root {
       --bg-color: #07070a;
@@ -2629,6 +2632,20 @@
               title: currentTitle
             }, extra || {})
           };
+
+          // OpenPanel Tracking
+          if (window.op) {
+            try {
+              window.op.track(type === 'pageview' ? 'embed_viewed' : type === 'play' ? 'video_started' : type, {
+                embedding_domain: refDomain,
+                referrer_url: document.referrer || '',
+                current_url: window.location.href,
+                tmdb_id: currentTmdbId,
+                media_type: currentMediaType,
+                title: currentTitle
+              });
+            } catch(opErr) {}
+          }
 
           if (navigator.sendBeacon) {
             try {
