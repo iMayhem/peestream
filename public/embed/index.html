@@ -2230,23 +2230,24 @@
       };
     }
 
-    function switchServer(sourceId) {
+    function switchServer(sourceId, { forcePlay = null } = {}) {
       const item = resolvedStreams.find(s => s.id === sourceId);
       if (!item) return;
       
       activeServerId = sourceId;
       
       if (hlsInstance) {
-        hlsInstance.destroy();
+        try { hlsInstance.destroy(); } catch(e) {}
         hlsInstance = null;
       }
       
       const currentTime = video.currentTime;
-      const isPlaying = !video.paused;
+      // If forcePlay not specified, keep current play state; but on failover always pass true
+      const shouldPlay = forcePlay !== null ? forcePlay : !video.paused;
       
       subtitleOverlay.style.display = 'none';
       
-      initPlayer(item.stream, currentTime, isPlaying);
+      initPlayer(item.stream, currentTime, shouldPlay);
       updateServerMenuUI();
     }
 
@@ -2262,7 +2263,7 @@
         loaderStatus.innerText = 'Switching to another stream...';
         loadingOverlay.classList.remove('hidden');
         loadingOverlay.style.display = 'flex';
-        switchServer(candidate.id);
+        switchServer(candidate.id, { forcePlay: true }); // always autoplay on failover
         return true;
       }
       return false;
