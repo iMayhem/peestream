@@ -1848,9 +1848,21 @@
 
     let scrapeAttempts = 0;
     const MAX_SCRAPE_ATTEMPTS = 3;
+    let lastScrapeGotStream = false;
+
+    function clLog(type, message) {
+      try {
+        fetch('https://providers.peestream.in/api/scrape/client-log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type, message, tmdbId })
+        }).catch(() => {});
+      } catch (e) {}
+    }
 
     function startScraping() {
       scrapeAttempts++;
+      clLog('info', `scrape attempt ${scrapeAttempts}: tmdbId=${tmdbId} type=${type}${season ? ` S${season}E${episode || ''}` : ''}`);
       const scrapeUrl = `https://providers.peestream.in/scrape?tmdbId=${tmdbId}&type=${type}${season ? `&season=${season}` : ''}${episode ? `&episode=${episode}` : ''}`;
       const eventSource = new EventSource(scrapeUrl);
       
@@ -1874,6 +1886,7 @@
       
       eventSource.addEventListener('completed', (e) => {
         const data = JSON.parse(e.data);
+        lastScrapeGotStream = true;
         
         // Accumulate unique resolved streams
         if (!resolvedStreams.some(s => s.id === data.sourceId)) {
@@ -1888,6 +1901,7 @@
         if (!activeServerId) {
           activeServerId = data.sourceId;
           loaderStatus.innerText = "Initializing player...";
+          clLog('success', `stream found from ${getFriendlyServerName(data.sourceId)}, initializing player`);
           
           setTimeout(() => {
             loadingOverlay.classList.add('hidden');
@@ -1901,6 +1915,7 @@
       
       eventSource.addEventListener('done', (e) => {
         eventSource.close();
+        clLog('info', `scrape done event received (gotStream=${lastScrapeGotStream})`);
         setTimeout(() => {
           if (activeServerId) return; // ignore failure if we already resolved a stream
           if (loadingOverlay.classList.contains('hidden')) return;
@@ -1912,11 +1927,14 @@
       
       eventSource.onerror = (err) => {
         eventSource.close();
+        clLog('error', `SSE connection error (gotStream=${lastScrapeGotStream}, attempts=${scrapeAttempts})`);
         setTimeout(() => {
           if (activeServerId) return; // ignore connection error if already playing
           if (loadingOverlay.classList.contains('hidden')) return;
+          if (lastScrapeGotStream) return; // stream was found, player is initializing
           if (scrapeAttempts < MAX_SCRAPE_ATTEMPTS) {
             loaderStatus.innerText = `Scraper connection lost. Retrying (${scrapeAttempts}/${MAX_SCRAPE_ATTEMPTS})...`;
+            clLog('info', `retrying scrape...`);
             setTimeout(startScraping, 1200);
           } else {
             loadingOverlay.style.display = 'none';
@@ -2032,6 +2050,7 @@
         const candidate = resolvedStreams[i];
         if (failedStreamIds.has(candidate.id)) continue;
         failedStreamIds.add(candidate.id);
+        clLog('info', `switching from ${getFriendlyServerName(activeServerId)} to ${getFriendlyServerName(candidate.id)}`);
         loaderStatus.innerText = `Stream failed on ${getFriendlyServerName(activeServerId)}, switching to ${getFriendlyServerName(candidate.id)}...`;
         loadingOverlay.classList.remove('hidden');
         loadingOverlay.style.display = 'flex';
@@ -2129,6 +2148,7 @@
           hlsInstance.attachMedia(video);
 
           hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+            clLog('error', `HLS error: ${data.type} ${data.details} fatal=${data.fatal}`);
             if (!data || !data.fatal) return;
             if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
               hlsInstance.startLoad();
@@ -2137,6 +2157,7 @@
             }
             setTimeout(() => {
               if (video.readyState < 2) {
+                clLog('warn', 'playback stalled after HLS error, trying next server');
                 if (!tryNextServer()) {
                   loadingOverlay.classList.add('hidden');
                   errorOverlay.style.display = 'flex';
@@ -2149,6 +2170,7 @@
           // Setup HLS Quality Menu dynamically
           hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
             const levels = hlsInstance.levels;
+            clLog('success', `HLS manifest parsed (${levels ? levels.length : 0} qualities)`);
             
             // Set HLS to play highest quality first
             if (levels && levels.length > 0) {
