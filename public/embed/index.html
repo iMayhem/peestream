@@ -2024,6 +2024,23 @@
       updateServerMenuUI();
     }
 
+    let failedStreamIds = new Set();
+
+    function tryNextServer() {
+      const idx = resolvedStreams.findIndex(s => s.id === activeServerId);
+      for (let i = idx + 1; i < resolvedStreams.length; i++) {
+        const candidate = resolvedStreams[i];
+        if (failedStreamIds.has(candidate.id)) continue;
+        failedStreamIds.add(candidate.id);
+        loaderStatus.innerText = `Stream failed on ${getFriendlyServerName(activeServerId)}, switching to ${getFriendlyServerName(candidate.id)}...`;
+        loadingOverlay.classList.remove('hidden');
+        loadingOverlay.style.display = 'flex';
+        switchServer(candidate.id);
+        return true;
+      }
+      return false;
+    }
+
     async function initPlayer(stream, startTime = 0, forcePlay = null) {
       let playerUrl = '';
       let isHlsStream = false;
@@ -2110,6 +2127,24 @@
           hlsInstance = new Hls(hlsConfig);
           hlsInstance.loadSource(playerUrl);
           hlsInstance.attachMedia(video);
+
+          hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+            if (!data || !data.fatal) return;
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+              hlsInstance.startLoad();
+            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+              hlsInstance.recoverMediaError();
+            }
+            setTimeout(() => {
+              if (video.readyState < 2) {
+                if (!tryNextServer()) {
+                  loadingOverlay.classList.add('hidden');
+                  errorOverlay.style.display = 'flex';
+                  document.getElementById('error-desc').innerText = 'All servers failed to play this stream. Please try again later.';
+                }
+              }
+            }, 6000);
+          });
           
           // Setup HLS Quality Menu dynamically
           hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -2184,6 +2219,19 @@
             video.pause();
             bigPlayBtn.classList.add('show');
           }
+
+          const onNativeError = () => {
+            setTimeout(() => {
+              if (video.readyState < 2) {
+                if (!tryNextServer()) {
+                  loadingOverlay.classList.add('hidden');
+                  errorOverlay.style.display = 'flex';
+                  document.getElementById('error-desc').innerText = 'All servers failed to play this stream. Please try again later.';
+                }
+              }
+            }, 6000);
+          };
+          video.addEventListener('error', onNativeError, { once: true });
         }
       } else {
         video.src = playerUrl;
@@ -2198,6 +2246,18 @@
           video.pause();
           bigPlayBtn.classList.add('show');
         }
+
+        video.addEventListener('error', function onFileError() {
+          setTimeout(() => {
+            if (video.readyState < 2) {
+              if (!tryNextServer()) {
+                loadingOverlay.classList.add('hidden');
+                errorOverlay.style.display = 'flex';
+                document.getElementById('error-desc').innerText = 'All servers failed to play this stream. Please try again later.';
+              }
+            }
+          }, 6000);
+        }, { once: true });
       }
 
       // Setup Subtitles (only once)
