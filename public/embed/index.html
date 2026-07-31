@@ -2469,11 +2469,12 @@
                 }
               });
 
-              // Stall detector: if video hasn't started playing within 6s of manifest, skip to next link
+              // Stall detector: if video hasn't buffered within 6s of manifest, stream is broken — skip to next link.
+              // readyState < 3 works whether or not autoplay was blocked (HLS.js buffers even when paused).
               const stallTimer = setTimeout(() => {
                 if (thisHls !== hlsInstance) return; // stale, skip
-                if (video.readyState < 3 && !video.paused) {
-                  clLog('warn', 'Stream stalled after manifest, trying next HLS link...');
+                if (video.readyState < 3) {
+                  clLog('warn', 'Stream not buffering after manifest, trying next HLS link...');
                   failedStreamIds.add(activeServerId);
                   if (!tryNextServer()) {
                     loadingOverlay.classList.add('hidden');
@@ -2482,7 +2483,8 @@
                   }
                 }
               }, 6000);
-              // Clear stall timer once video actually starts playing
+              // Clear stall timer once stream is actually buffered (canplay fires before playing)
+              video.addEventListener('canplay', () => clearTimeout(stallTimer), { once: true });
               video.addEventListener('playing', () => clearTimeout(stallTimer), { once: true });
             } else {
               video.pause();
