@@ -1846,8 +1846,6 @@
       return mapping[providerId] || 'Poseidon';
     }
 
-    let scrapeAttempts = 0;
-    const MAX_SCRAPE_ATTEMPTS = 3;
     let lastScrapeGotStream = false;
 
     function clLog(type, message) {
@@ -1861,8 +1859,7 @@
     }
 
     function startScraping() {
-      scrapeAttempts++;
-      clLog('info', `scrape attempt ${scrapeAttempts}: tmdbId=${tmdbId} type=${type}${season ? ` S${season}E${episode || ''}` : ''}`);
+      clLog('info', `scrape: tmdbId=${tmdbId} type=${type}${season ? ` S${season}E${episode || ''}` : ''}`);
       const scrapeUrl = `https://providers.peestream.in/scrape?tmdbId=${tmdbId}&type=${type}${season ? `&season=${season}` : ''}${episode ? `&episode=${episode}` : ''}`;
       const eventSource = new EventSource(scrapeUrl);
       
@@ -1927,20 +1924,14 @@
       
       eventSource.onerror = (err) => {
         eventSource.close();
-        clLog('error', `SSE connection error (gotStream=${lastScrapeGotStream}, attempts=${scrapeAttempts})`);
+        clLog('error', `SSE connection error (gotStream=${lastScrapeGotStream})`);
         setTimeout(() => {
           if (activeServerId) return; // ignore connection error if already playing
           if (loadingOverlay.classList.contains('hidden')) return;
           if (lastScrapeGotStream) return; // stream was found, player is initializing
-          if (scrapeAttempts < MAX_SCRAPE_ATTEMPTS) {
-            loaderStatus.innerText = `Scraper connection lost. Retrying (${scrapeAttempts}/${MAX_SCRAPE_ATTEMPTS})...`;
-            clLog('info', `retrying scrape...`);
-            setTimeout(startScraping, 1200);
-          } else {
-            loadingOverlay.style.display = 'none';
-            errorOverlay.style.display = 'flex';
-            document.getElementById('error-desc').innerText = 'Scraper connection lost. Retrying...';
-          }
+          loadingOverlay.style.display = 'none';
+          errorOverlay.style.display = 'flex';
+          document.getElementById('error-desc').innerText = 'Scraper connection lost. Please try again.';
         }, 1500);
       };
     }
