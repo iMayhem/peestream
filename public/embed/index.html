@@ -1954,7 +1954,7 @@
         fetch('https://providers.peestream.in/api/scrape/client-log', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type, message, tmdbId })
+          body: JSON.stringify({ type, message, tmdbId, sid: sessionStorage.getItem('peestream_sid') })
         }).catch(() => {});
       } catch (e) {}
     }
