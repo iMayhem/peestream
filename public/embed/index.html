@@ -587,6 +587,12 @@
       pointer-events: none;
     }
 
+    .video-container.hide-controls .video-controls:has(.control-menu.show) {
+      opacity: 1;
+      transform: none;
+      pointer-events: auto;
+    }
+
     .video-container.hide-controls {
       cursor: none;
     }
@@ -2080,8 +2086,7 @@
           <span class="server-option-row">
             <span>${name.toUpperCase()}</span>
             <span class="server-status ${meta.cls}">${meta.label}${isActive ? ' ✓' : ''}</span>
-          </span>
-          <span class="server-sub">${entry.id}${resolved ? ' · loaded' : ''}</span>`;
+          </span>`;
         btn.title = entry.error || `Load ${name} server`;
         btn.onclick = () => handleServerClick(entry.id);
         playerServersList.appendChild(btn);
@@ -2968,12 +2973,13 @@
 
       // Auto-hide controls bar on mouse inactivity
       let mouseTimer;
+      const anyMenuOpen = () => [serverMenu, subSyncMenu, subtitlesMenu, qualityMenu].some(m => m && m.classList.contains('show'));
       const showControls = () => {
         videoContainer.classList.remove('hide-controls');
         clearTimeout(mouseTimer);
         if (!video.paused) {
           mouseTimer = setTimeout(() => {
-            videoContainer.classList.add('hide-controls');
+            if (!anyMenuOpen()) videoContainer.classList.add('hide-controls');
           }, 3000);
         }
       };
