@@ -2457,10 +2457,21 @@
             if (shouldPlay) {
               video.play().catch((err) => {
                 if (err && err.name === 'NotAllowedError') {
-                  // Browser blocked autoplay — user needs to interact first, show play button
-                  bigPlayBtn.classList.add('show');
+                  // Browser blocked autoplay — silently try muted (always allowed by browsers)
+                  const wasMuted = video.muted;
+                  video.muted = true;
+                  video.play().then(() => {
+                    // Muted play worked — unmute immediately if user hadn't muted it
+                    if (!wasMuted) {
+                      video.muted = false;
+                    }
+                  }).catch(() => {
+                    // Even muted failed — fall back to play button
+                    video.muted = wasMuted;
+                    bigPlayBtn.classList.add('show');
+                  });
                 } else {
-                  // Actual stream error (format issue, decode error, etc.) — try next link
+                  // Actual stream error — try next link
                   clLog('warn', `video.play() failed (${err && err.name}), trying next stream link`);
                   failedStreamIds.add(activeServerId);
                   if (!tryNextServer()) {
