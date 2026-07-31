@@ -2118,7 +2118,16 @@
 
     function handleServerClick(sourceId, { auto = false } = {}) {
       if (sourceId === activeServerId) return;
-      if (!auto) autoScrapes.clear();
+      if (!auto) {
+        for (const aid of autoScrapes) {
+          const ses = targetedScrapes.get(aid);
+          if (ses) {
+            ses.close();
+            targetedScrapes.delete(aid);
+          }
+        }
+        autoScrapes.clear();
+      }
       const resolved = resolvedStreams.find(s => s.id === sourceId);
       if (resolved) {
         switchServer(sourceId);
