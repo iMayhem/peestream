@@ -2398,6 +2398,9 @@
           hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
             const levels = hlsInstance.levels;
             clLog('success', `HLS manifest parsed (${levels ? levels.length : 0} qualities)`);
+            // Hide loading overlay — stream is ready (covers case when switching between HLS links)
+            loadingOverlay.classList.add('hidden');
+            loadingOverlay.style.display = 'none';
             
             // Set HLS to play highest quality first
             if (levels && levels.length > 0) {
