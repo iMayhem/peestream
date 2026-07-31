@@ -2075,8 +2075,8 @@
       updateServerMenuUI();
       const next = enabledServers.find(s => s.id !== sourceId && !failedStreamIds.has(s.id) && !targetedScrapes.has(s.id));
       if (next) {
-        clLog('warn', `server ${getFriendlyServerName(sourceId)} unavailable, auto-trying next server ${getFriendlyServerName(next.id)}`);
-        loaderStatus.innerText = `No streams found on ${getFriendlyServerName(sourceId)}. Trying ${getFriendlyServerName(next.id)}...`;
+        clLog('warn', `server ${sourceId} unavailable, auto-trying next server ${next.id}`);
+        loaderStatus.innerText = 'Trying another stream...';
         loadingOverlay.classList.remove('hidden');
         loadingOverlay.style.display = 'flex';
         autoScrapes.add(next.id);
@@ -2107,13 +2107,13 @@
         return;
       }
       if (targetedScrapes.has(sourceId)) return; // already loading this server
-      clLog('info', `${auto ? 'auto' : 'user clicked'} server ${getFriendlyServerName(sourceId)} (${sourceId}), scraping exact server`);
+      clLog('info', `${auto ? 'auto' : 'user clicked'} server ${sourceId}`);
       setServerStatus(sourceId, 'searching');
       renderOverlayServers();
       updateServerMenuUI();
       loadingOverlay.classList.remove('hidden');
       loadingOverlay.style.display = 'flex';
-      loaderStatus.innerText = `Searching ${getFriendlyServerName(sourceId)}...`;
+      loaderStatus.innerText = 'Searching for stream...';
 
       const es = new EventSource(`https://providers.peestream.in/scrape/source?id=${sourceId}&tmdbId=${tmdbId}&type=${type}${season ? `&season=${season}` : ''}${episode ? `&episode=${episode}` : ''}&fallback=false`);
       targetedScrapes.set(sourceId, es);
@@ -2183,7 +2183,7 @@
           renderOverlayServers();
           updateServerMenuUI();
           if (activeServerId) {
-            loaderStatus.innerText = `No streams found on ${getFriendlyServerName(sourceId)}.`;
+            loaderStatus.innerText = 'No stream found. Trying next...';
             loadingOverlay.classList.remove('hidden');
             loadingOverlay.style.display = 'flex';
             setTimeout(() => {
@@ -2192,7 +2192,7 @@
             }, 2500);
             clLog('warn', `server ${sourceId} has no streams, continuing playback`);
           } else {
-            loaderStatus.innerText = `No streams found on ${getFriendlyServerName(sourceId)}.`;
+            loaderStatus.innerText = 'No stream found. Trying next...';
             loadingOverlay.classList.remove('hidden');
             loadingOverlay.style.display = 'flex';
           }
@@ -2214,11 +2214,11 @@
             return;
           }
           if (!activeServerId) {
-            loaderStatus.innerText = `Connection to ${getFriendlyServerName(sourceId)} server lost. Click a server to retry.`;
+            loaderStatus.innerText = 'Connection lost. Please refresh.';
             loadingOverlay.classList.remove('hidden');
             loadingOverlay.style.display = 'flex';
           } else {
-            loaderStatus.innerText = `Connection to ${getFriendlyServerName(sourceId)} server lost.`;
+            loaderStatus.innerText = 'Connection lost, retrying...';
             loadingOverlay.classList.remove('hidden');
             loadingOverlay.style.display = 'flex';
             setTimeout(() => {
@@ -2258,8 +2258,8 @@
         const candidate = resolvedStreams[i];
         if (failedStreamIds.has(candidate.id)) continue;
         failedStreamIds.add(candidate.id);
-        clLog('info', `switching from ${getFriendlyServerName(activeServerId)} to ${getFriendlyServerName(candidate.id)}`);
-        loaderStatus.innerText = `Stream failed on ${getFriendlyServerName(activeServerId)}, switching to ${getFriendlyServerName(candidate.id)}...`;
+        clLog('info', `switching from ${activeServerId} to ${candidate.id}`);
+        loaderStatus.innerText = 'Switching to another stream...';
         loadingOverlay.classList.remove('hidden');
         loadingOverlay.style.display = 'flex';
         switchServer(candidate.id);
