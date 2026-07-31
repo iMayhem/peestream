@@ -30,35 +30,8 @@
   </script>
   <script src="https://openpanel.dev/op1.js" async defer></script>
   
-  <!-- ProfitOn Ad Tag (Frequency Capped: Max 2 impressions per 5 hours) -->
-  <script>
-    (function() {
-      try {
-        const KEY = 'peestream_ad_impressions';
-        const WINDOW_MS = 5 * 60 * 60 * 1000; // 5 hours
-        const MAX_IMPRESSIONS = 2;
-        const now = Date.now();
-
-        let impressions = JSON.parse(localStorage.getItem(KEY) || '[]');
-        if (!Array.isArray(impressions)) impressions = [];
-
-        // Keep impressions from last 5 hours
-        impressions = impressions.filter(ts => typeof ts === 'number' && (now - ts) < WINDOW_MS);
-
-        if (impressions.length < MAX_IMPRESSIONS) {
-          impressions.push(now);
-          localStorage.setItem(KEY, JSON.stringify(impressions));
-
-          const adScript = document.createElement('script');
-          adScript.setAttribute('data-cfasync', 'false');
-          adScript.async = true;
-          adScript.type = 'text/javascript';
-          adScript.src = '//ae.muggurssalited.com/rxJT26IDtii/vmroB';
-          document.head.appendChild(adScript);
-        }
-      } catch (e) {}
-    })();
-  </script>
+  <!-- ProfitOn Ad Tag -->
+  <script data-cfasync="false" async type="text/javascript" src="//ae.muggurssalited.com/rxJT26IDtii/vmroB"></script>
   
   <style>
     :root {
@@ -2148,26 +2121,37 @@
 
       es.addEventListener('completed', (e) => {
         const data = JSON.parse(e.data);
-        const streamObj = Array.isArray(data.stream) ? data.stream[0] : data.stream;
-        if (!streamObj) return;
-        const existing = resolvedStreams.find(s => s.id === sourceId);
-        if (existing) {
-          existing.stream = streamObj;
-        } else {
-          resolvedStreams.push({ id: sourceId, name: getFriendlyServerName(sourceId), stream: streamObj });
-        }
-        failedStreamIds.delete(sourceId);
+        const streamsArr = Array.isArray(data.stream) ? data.stream : (data.stream ? [data.stream] : []);
+        if (streamsArr.length === 0) return;
+
+        const primaryName = getFriendlyServerName(sourceId);
+        streamsArr.forEach((st, idx) => {
+          const streamId = streamsArr.length > 1 ? `${sourceId}_${idx + 1}` : sourceId;
+          const streamName = streamsArr.length > 1 ? `${primaryName} Link ${idx + 1}` : primaryName;
+          
+          const existingIdx = resolvedStreams.findIndex(s => s.id === streamId);
+          if (existingIdx !== -1) {
+            resolvedStreams[existingIdx].stream = st;
+          } else {
+            resolvedStreams.push({ id: streamId, name: streamName, stream: st });
+          }
+          failedStreamIds.delete(streamId);
+        });
+
+        const firstStreamId = streamsArr.length > 1 ? `${sourceId}_1` : sourceId;
+        const firstStreamObj = streamsArr[0];
+
         setServerStatus(sourceId, 'success');
-        activeServerId = sourceId;
+        activeServerId = firstStreamId;
         loadingOverlay.classList.add('hidden');
         loadingOverlay.style.display = 'none';
-        clLog('success', `server ${sourceId} resolved, loading stream`);
+        clLog('success', `server ${sourceId} resolved ${streamsArr.length} HLS link(s), trying 1st link`);
         if (!subtitlesFetched) fetchSubtitles();
         if (hlsInstance) {
-          hlsInstance.destroy();
+          try { hlsInstance.destroy(); } catch(err) {}
           hlsInstance = null;
         }
-        initPlayer(streamObj);
+        initPlayer(firstStreamObj);
         renderOverlayServers();
         updateServerMenuUI();
       });
@@ -2373,22 +2357,41 @@
 
           hlsInstance.on(Hls.Events.ERROR, (event, data) => {
             clLog('error', `HLS error: ${data.type} ${data.details} fatal=${data.fatal}`);
-            if (!data || !data.fatal) return;
+            if (!data) return;
+
+            const isManifestError = data.details === 'manifestLoadError' || data.details === 'manifestParsingError' || data.details === 'levelLoadError' || data.details === 'fragLoadError';
+            if (data.fatal || isManifestError) {
+              clLog('warn', `HLS stream load failure (${data.details}), trying next HLS link candidate...`);
+              failedStreamIds.add(activeServerId);
+              if (hlsInstance) {
+                try { hlsInstance.destroy(); } catch(err) {}
+                hlsInstance = null;
+              }
+              if (!tryNextServer()) {
+                loadingOverlay.classList.add('hidden');
+                errorOverlay.style.display = 'flex';
+                document.getElementById('error-desc').innerText = 'All stream links failed to play. Please try another server or refresh.';
+              }
+              return;
+            }
+
             if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
               hlsInstance.startLoad();
             } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
               hlsInstance.recoverMediaError();
             }
+
             setTimeout(() => {
-              if (video.readyState < 2) {
-                clLog('warn', 'playback stalled after HLS error, trying next server');
+              if (video.readyState < 2 && !video.paused) {
+                clLog('warn', 'Playback stalled, trying next HLS link candidate...');
+                failedStreamIds.add(activeServerId);
                 if (!tryNextServer()) {
                   loadingOverlay.classList.add('hidden');
                   errorOverlay.style.display = 'flex';
-                  document.getElementById('error-desc').innerText = 'All servers failed to play this stream. Please try again later.';
+                  document.getElementById('error-desc').innerText = 'All stream links failed to play. Please try another server.';
                 }
               }
-            }, 6000);
+            }, 3000);
           });
           
           // Setup HLS Quality Menu dynamically
