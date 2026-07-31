@@ -2455,7 +2455,35 @@
             
             const shouldPlay = forcePlay !== null ? forcePlay : autoplayParam;
             if (shouldPlay) {
-              video.play().catch(() => bigPlayBtn.classList.add('show'));
+              video.play().catch((err) => {
+                if (err && err.name === 'NotAllowedError') {
+                  // Browser blocked autoplay — user needs to interact first, show play button
+                  bigPlayBtn.classList.add('show');
+                } else {
+                  // Actual stream error (format issue, decode error, etc.) — try next link
+                  clLog('warn', `video.play() failed (${err && err.name}), trying next stream link`);
+                  failedStreamIds.add(activeServerId);
+                  if (!tryNextServer()) {
+                    bigPlayBtn.classList.add('show');
+                  }
+                }
+              });
+
+              // Stall detector: if video hasn't started playing within 6s of manifest, skip to next link
+              const stallTimer = setTimeout(() => {
+                if (thisHls !== hlsInstance) return; // stale, skip
+                if (video.readyState < 3 && !video.paused) {
+                  clLog('warn', 'Stream stalled after manifest, trying next HLS link...');
+                  failedStreamIds.add(activeServerId);
+                  if (!tryNextServer()) {
+                    loadingOverlay.classList.add('hidden');
+                    errorOverlay.style.display = 'flex';
+                    document.getElementById('error-desc').innerText = 'All stream links failed to play. Please try another server.';
+                  }
+                }
+              }, 6000);
+              // Clear stall timer once video actually starts playing
+              video.addEventListener('playing', () => clearTimeout(stallTimer), { once: true });
             } else {
               video.pause();
               bigPlayBtn.classList.add('show');
