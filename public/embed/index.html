@@ -2154,6 +2154,10 @@
         loadingOverlay.style.display = 'none';
         clLog('success', `server ${sourceId} resolved, loading stream`);
         if (!subtitlesFetched) fetchSubtitles();
+        if (hlsInstance) {
+          hlsInstance.destroy();
+          hlsInstance = null;
+        }
         initPlayer(streamObj);
         renderOverlayServers();
         updateServerMenuUI();
