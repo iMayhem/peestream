@@ -2352,11 +2352,13 @@
             };
           }
           
-          hlsInstance = new Hls(hlsConfig);
-          hlsInstance.loadSource(playerUrl);
-          hlsInstance.attachMedia(video);
+          const thisHls = new Hls(hlsConfig);
+          hlsInstance = thisHls;
+          thisHls.loadSource(playerUrl);
+          thisHls.attachMedia(video);
 
-          hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+          thisHls.on(Hls.Events.ERROR, (event, data) => {
+            if (thisHls !== hlsInstance) return; // stale handler from a destroyed instance, ignore
             clLog('error', `HLS error: ${data.type} ${data.details} fatal=${data.fatal}`);
             if (!data) return;
 
@@ -2364,10 +2366,8 @@
             if (data.fatal || isManifestError) {
               clLog('warn', `HLS stream load failure (${data.details}), trying next HLS link candidate...`);
               failedStreamIds.add(activeServerId);
-              if (hlsInstance) {
-                try { hlsInstance.destroy(); } catch(err) {}
-                hlsInstance = null;
-              }
+              try { thisHls.destroy(); } catch(err) {}
+              if (hlsInstance === thisHls) hlsInstance = null;
               if (!tryNextServer()) {
                 loadingOverlay.classList.add('hidden');
                 errorOverlay.style.display = 'flex';
@@ -2377,12 +2377,13 @@
             }
 
             if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-              hlsInstance.startLoad();
+              thisHls.startLoad();
             } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-              hlsInstance.recoverMediaError();
+              thisHls.recoverMediaError();
             }
 
             setTimeout(() => {
+              if (thisHls !== hlsInstance) return; // stale, skip
               if (video.readyState < 2 && !video.paused) {
                 clLog('warn', 'Playback stalled, trying next HLS link candidate...');
                 failedStreamIds.add(activeServerId);
@@ -2396,8 +2397,9 @@
           });
           
           // Setup HLS Quality Menu dynamically
-          hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-            const levels = hlsInstance.levels;
+          thisHls.on(Hls.Events.MANIFEST_PARSED, () => {
+            if (thisHls !== hlsInstance) return; // stale, skip
+            const levels = thisHls.levels;
             clLog('success', `HLS manifest parsed (${levels ? levels.length : 0} qualities)`);
             // Hide loading overlay — stream is ready (covers case when switching between HLS links)
             loadingOverlay.classList.add('hidden');
