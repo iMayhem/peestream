@@ -1846,7 +1846,11 @@
       return mapping[providerId] || 'Poseidon';
     }
 
+    let scrapeAttempts = 0;
+    const MAX_SCRAPE_ATTEMPTS = 3;
+
     function startScraping() {
+      scrapeAttempts++;
       const scrapeUrl = `https://providers.peestream.in/scrape?tmdbId=${tmdbId}&type=${type}${season ? `&season=${season}` : ''}${episode ? `&episode=${episode}` : ''}`;
       const eventSource = new EventSource(scrapeUrl);
       
@@ -1902,6 +1906,7 @@
           if (loadingOverlay.classList.contains('hidden')) return;
           loadingOverlay.style.display = 'none';
           errorOverlay.style.display = 'flex';
+          document.getElementById('error-desc').innerText = 'No video streams could be found for this content. Please try again later.';
         }, 1000);
       });
       
@@ -1910,9 +1915,14 @@
         setTimeout(() => {
           if (activeServerId) return; // ignore connection error if already playing
           if (loadingOverlay.classList.contains('hidden')) return;
-          loadingOverlay.style.display = 'none';
-          errorOverlay.style.display = 'flex';
-          document.getElementById('error-desc').innerText = 'Scraper connection lost. Retrying...';
+          if (scrapeAttempts < MAX_SCRAPE_ATTEMPTS) {
+            loaderStatus.innerText = `Scraper connection lost. Retrying (${scrapeAttempts}/${MAX_SCRAPE_ATTEMPTS})...`;
+            setTimeout(startScraping, 1200);
+          } else {
+            loadingOverlay.style.display = 'none';
+            errorOverlay.style.display = 'flex';
+            document.getElementById('error-desc').innerText = 'Scraper connection lost. Retrying...';
+          }
         }, 1500);
       };
     }
