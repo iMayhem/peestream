@@ -1646,6 +1646,10 @@
     document.getElementById('code-movie-tpl').innerText = `${window.location.origin}${window.location.pathname}?tmdbId={tmdbId}&type=movie`;
     document.getElementById('code-tv-tpl').innerText = `${window.location.origin}${window.location.pathname}?tmdbId={tmdbId}&type=show&season={season}&episode={episode}`;
 
+    // High-Performance Parallel Subtitle Loader & Cache
+    const subtitleCache = new Map();
+    let subtitlesFetched = false;
+
     // Routing Logic
     if (tmdbId) {
       landingView.style.display = 'none';
@@ -2328,9 +2332,6 @@
     }
 
     // High-Performance Parallel Subtitle Loader & Cache
-    const subtitleCache = new Map();
-    let subtitlesFetched = false;
-
     async function fetchSubtitles() {
       if (subtitlesFetched || !tmdbId) return;
       subtitlesFetched = true;
