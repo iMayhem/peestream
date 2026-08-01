@@ -1490,7 +1490,7 @@
           
           <div class="doc-card">
             <div class="doc-card-title">TV Shows API</div>
-            <div class="doc-code-block" id="code-tv-tpl">https://peestream.in/embed/?tmdbId={tmdbId}&type=show&season={season}&episode={episode}</div>
+            <div class="doc-code-block" id="code-tv-tpl">https://peestream.in/embed/?tmdbId={tmdbId}&type=tv&season={season}&episode={episode}</div>
             <button class="doc-copy-btn" onclick="copyText('code-tv-tpl')">
               <i class="fa-regular fa-copy"></i> copy url template
             </button>
@@ -1705,7 +1705,7 @@
     
     // Load Dynamic Templates Domain
     document.getElementById('code-movie-tpl').innerText = `${window.location.origin}${window.location.pathname}?tmdbId={tmdbId}&type=movie`;
-    document.getElementById('code-tv-tpl').innerText = `${window.location.origin}${window.location.pathname}?tmdbId={tmdbId}&type=show&season={season}&episode={episode}`;
+    document.getElementById('code-tv-tpl').innerText = `${window.location.origin}${window.location.pathname}?tmdbId={tmdbId}&type=tv&season={season}&episode={episode}`;
 
     // High-Performance Parallel Subtitle Loader & Cache
     const subtitleCache = new Map();
