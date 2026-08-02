@@ -2444,18 +2444,6 @@
             } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
               thisHls.recoverMediaError();
             }
-
-            setTimeout(() => {
-              if (thisHls !== hlsInstance) return; // stale, skip
-              if (video.readyState < 2 && !video.paused) {
-                clLog('warn', 'Playback stalled, trying next HLS link candidate...');
-                failedStreamIds.add(activeServerId);
-                if (!tryNextServer()) {
-                  showStreamFailure();
-                  document.getElementById('error-desc').innerText = 'All stream links failed to play. Please try another server.';
-                }
-              }
-            }, 3000);
           });
           
           // Setup HLS Quality Menu dynamically
@@ -2541,22 +2529,6 @@
                 }
               });
 
-              // Stall detector: if video hasn't buffered within 6s of manifest, stream is broken — skip to next link.
-              // readyState < 3 works whether or not autoplay was blocked (HLS.js buffers even when paused).
-              const stallTimer = setTimeout(() => {
-                if (thisHls !== hlsInstance) return; // stale, skip
-                if (video.readyState < 3) {
-                  clLog('warn', 'Stream not buffering after manifest, trying next HLS link...');
-                  failedStreamIds.add(activeServerId);
-                  if (!tryNextServer()) {
-                    showStreamFailure();
-                    document.getElementById('error-desc').innerText = 'All stream links failed to play. Please try another server.';
-                  }
-                }
-              }, 6000);
-              // Clear stall timer once stream is actually buffered (canplay fires before playing)
-              video.addEventListener('canplay', () => clearTimeout(stallTimer), { once: true });
-              video.addEventListener('playing', () => clearTimeout(stallTimer), { once: true });
             } else {
               video.pause();
               bigPlayBtn.classList.add('show');
