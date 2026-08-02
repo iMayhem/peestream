@@ -1858,10 +1858,10 @@
       if (!loaderHintEl) return;
       stopLoaderHints();
       loaderHintIdx = 0;
-      loaderHintEl.textContent = loaderHint[0];
+      loaderHintEl.textContent = loaderHints[0];
       loaderHintTimer = setInterval(() => {
-        loaderHintIdx = (loaderHintIdx + 1) % loaderHint.length;
-        loaderHintEl.textContent = loaderHint[loaderHintIdx];
+        loaderHintIdx = (loaderHintIdx + 1) % loaderHints.length;
+        loaderHintEl.textContent = loaderHints[loaderHintIdx];
       }, 2500);
     };
     const stopLoaderHints = () => {
