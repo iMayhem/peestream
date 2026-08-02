@@ -2182,23 +2182,7 @@
       targetedScrapes.set(sourceId, es);
       let closed = false;
 
-      const scrapeTimeout = setTimeout(() => {
-        if (!closed && targetedScrapes.has(sourceId)) {
-          clLog('warn', `scrape timeout for server ${sourceId} after 15s`);
-          closed = true;
-          try { es.close(); } catch(err) {}
-          targetedScrapes.delete(sourceId);
-          setServerStatus(sourceId, 'failure', 'timeout');
-          renderOverlayServers();
-          updateServerMenuUI();
-          if (autoScrapes.has(sourceId)) {
-            autoAdvanceFrom(sourceId);
-          }
-        }
-      }, 15000);
-
       es.addEventListener('completed', (e) => {
-        clearTimeout(scrapeTimeout);
         const data = JSON.parse(e.data);
         const streamsArr = Array.isArray(data.stream) ? data.stream : (data.stream ? [data.stream] : []);
         if (streamsArr.length === 0) return;
@@ -2250,7 +2234,6 @@
       });
 
       es.addEventListener('done', (e) => {
-        clearTimeout(scrapeTimeout);
         closed = true;
         es.close();
         if (!targetedScrapes.has(sourceId)) return;
@@ -2281,7 +2264,6 @@
       });
 
       es.onerror = () => {
-        clearTimeout(scrapeTimeout);
         if (closed) return;
         es.close();
         targetedScrapes.delete(sourceId);
@@ -2414,13 +2396,7 @@
             maxMaxBufferLength: 90,     // cap max buffer length at 90s
             maxBufferSize: 60 * 1024 * 1024, // 60MB max buffer size
             maxStarvationDelay: 2,
-            progressive: true,
-            manifestLoadingTimeOut: 7000,
-            manifestLoadingMaxRetry: 1,
-            levelLoadingTimeOut: 7000,
-            levelLoadingMaxRetry: 1,
-            fragLoadingTimeOut: 8000,
-            fragLoadingMaxRetry: 1
+            progressive: true
           };
           if (stream.headers && Object.keys(stream.headers).length > 0) {
             hlsConfig.xhrSetup = function (xhr, targetUrl) {
@@ -2450,19 +2426,8 @@
             clLog('error', `HLS error: ${data.type} ${data.details} fatal=${data.fatal}`);
             if (!data) return;
 
-            const isStreamLoadError = 
-              data.details === 'manifestLoadError' ||
-              data.details === 'manifestParsingError' ||
-              data.details === 'manifestLoadTimeOut' ||
-              data.details === 'levelLoadError' ||
-              data.details === 'levelLoadTimeOut' ||
-              data.details === 'fragLoadError' ||
-              data.details === 'fragLoadTimeOut' ||
-              data.details === 'fragParsingError' ||
-              data.details === 'keyLoadError' ||
-              data.details === 'keyLoadTimeOut';
-
-            if (data.fatal || isStreamLoadError) {
+            const isManifestError = data.details === 'manifestLoadError' || data.details === 'manifestParsingError' || data.details === 'levelLoadError' || data.details === 'fragLoadError';
+            if (data.fatal || isManifestError) {
               clLog('warn', `HLS stream load failure (${data.details}), trying next HLS link candidate...`);
               failedStreamIds.add(activeServerId);
               try { thisHls.destroy(); } catch(err) {}
