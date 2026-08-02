@@ -2806,12 +2806,16 @@
       bigPlayBtn.addEventListener('click', togglePlay);
       playBtn.addEventListener('click', togglePlay);
 
-      // Video state changes
-      video.addEventListener('canplay', hideLoadingOverlay);
+      // Video state changes: hide ONLY when actual playback starts.
       video.addEventListener('playing', hideLoadingOverlay);
+      video.addEventListener('loadedmetadata', () => {
+        if (!loadingOverlay.classList.contains('hidden')) {
+          loaderStatus.innerText = 'Starting video...';
+        }
+      });
       video.addEventListener('waiting', () => {
         if (!loadingOverlay.classList.contains('hidden')) {
-          loaderStatus.innerText = 'Preparing video...';
+          loaderStatus.innerText = 'Starting video...';
         }
       });
 
@@ -2858,11 +2862,7 @@
         timeDuration.innerText = formatTime(video.duration);
       });
 
-      // Always hide loading overlay once video can play or starts playing
-      video.addEventListener('canplay', () => {
-        loadingOverlay.classList.add('hidden');
-        loadingOverlay.style.display = 'none';
-      });
+      // Hide loading overlay only once video ACTUALLY starts playing.
       video.addEventListener('playing', () => {
         loadingOverlay.classList.add('hidden');
         loadingOverlay.style.display = 'none';
