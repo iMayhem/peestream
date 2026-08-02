@@ -30,7 +30,21 @@
   </script>
   <script src="https://openpanel.dev/op1.js" async defer></script>
   
-  <!-- Popup ad removed: its fullscreen overlay hijacked clicks on player controls (fullscreen + seek) -->
+  <!-- Popup Ad (isolated iframe so its overlays/capture events never cover the player controls) -->
+  <iframe id="ad-sandbox" aria-hidden="true" tabindex="-1" style="position:absolute;width:0;height:0;border:0;left:-9999px;top:-9999px;visibility:hidden" sandbox="allow-scripts allow-popups allow-same-origin allow-popups-to-escape-sandbox"></iframe>
+  <script data-cfasync="false">
+    (function () {
+      try {
+        var f = document.getElementById('ad-sandbox');
+        var doc = f.contentDocument || f.contentWindow.document;
+        var s = doc.createElement('script');
+        s.setAttribute('data-cfasync', 'false');
+        s.src = '//dc9xwpjprguup.cloudfront.net/?pwxcd=1454678';
+        doc.head.appendChild(s);
+      } catch (e) {}
+    })();
+  </script>
+
   <style>
     :root {
       --bg-color: #07070a;
