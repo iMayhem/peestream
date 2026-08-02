@@ -1839,14 +1839,9 @@
       errorOverlay.style.display = 'none';
       if (errorDesc) errorDesc.innerText = '';
     };
-    // "All stream links failed" is only valid if the video never actually started playing.
-    // If the element is already playing/buffering, never show the failure notice.
+    // Failure banner removed — never show the "All stream links failed" notice.
     const showStreamFailure = () => {
-      if (!video) return;
-      if (video.readyState >= 2 && !video.paused) { hideErrorOverlay(); return; }
-      loadingOverlay.classList.add('hidden');
-      loadingOverlay.style.display = 'none';
-      errorOverlay.style.display = 'flex';
+      hideErrorOverlay();
     };
     
     const embedTrigger = document.getElementById('embed-trigger');
