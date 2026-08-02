@@ -30,9 +30,7 @@
   </script>
   <script src="https://openpanel.dev/op1.js" async defer></script>
   
-  <!-- Popup Ad Tag -->
-  <script data-cfasync="false" src="//dc9xwpjprguup.cloudfront.net/?pwxcd=1454678"></script>
-  
+  <!-- Popup ad removed: its fullscreen overlay hijacked clicks on player controls (fullscreen + seek) -->
   <style>
     :root {
       --bg-color: #07070a;
@@ -2992,14 +2990,26 @@
         serverMenu.classList.remove('show');
       });
 
-      // Fullscreen
+      // Fullscreen (with cross-origin iframe / iOS fallbacks so embeds work even without allowfullscreen)
       const toggleFullscreen = () => {
-        if (!document.fullscreenElement) {
-          videoContainer.requestFullscreen().catch(err => {
-            console.error("Error attempting fullscreen:", err.message);
-          });
+        const tryFullscreen = (target) => {
+          const req = target.requestFullscreen || target.webkitRequestFullscreen || target.msRequestFullscreen || (video.webkitEnterFullscreen ? () => video.webkitEnterFullscreen() : null);
+          if (!req) {
+            clLog('warn', 'Fullscreen API not available in this browser/embed context');
+            return;
+          }
+          const p = req.call(target);
+          if (p && typeof p.catch === 'function') {
+            p.catch(err => {
+              clLog('warn', 'Fullscreen denied (' + (err ? err.message : 'blocked') + ') - iframe likely missing allowfullscreen');
+              console.error('Fullscreen error:', err);
+            });
+          }
+        };
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          (document.exitFullscreen || document.webkitExitFullscreen || function(){}).call(document);
         } else {
-          document.exitFullscreen();
+          tryFullscreen(video.webkitEnterFullscreen ? video : videoContainer);
         }
       };
 
