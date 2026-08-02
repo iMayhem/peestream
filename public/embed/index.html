@@ -1657,6 +1657,7 @@
           <div class="spinner-pulse"></div>
         </div>
         <div id="loader-status" class="status-text" style="margin-top: 15px; font-weight: 500; font-size: 0.95rem;">Searching Poseidon...</div>
+        <div id="loader-hint" class="status-text" style="margin-top: 6px; font-weight: 400; font-size: 0.82rem; color: var(--text-dim);"></div>
         <div id="overlay-server-list" style="display: none;"></div>
       </div>
       
@@ -1832,8 +1833,43 @@
     const errorDesc = document.getElementById('error-desc');
     const loaderStatus = document.getElementById('loader-status');
     const hideLoadingOverlay = () => {
+      stopLoaderHints();
       loadingOverlay.classList.add('hidden');
       loadingOverlay.style.display = 'none';
+    };
+    // Endless reassuring hints shown while the loader is up and the server
+    // still takes time to pull the video from the origin.
+    const loaderHints = [
+      'just a sec...',
+      'grabbing a good source...',
+      'fetching from the server...',
+      'warming up the stream...',
+      'almost there...',
+      'buffering the video...',
+      'one moment please...',
+      'connecting to the CDN...',
+      'loading your video...',
+      'still here, hang tight...'
+    ];
+    let loaderHintIdx = 0;
+    let loaderHintTimer = null;
+    const loaderHintEl = document.getElementById('loader-hint');
+    const startLoaderHints = () => {
+      if (!loaderHintEl) return;
+      stopLoaderHints();
+      loaderHintIdx = 0;
+      loaderHintEl.textContent = loaderHint[0];
+      loaderHintTimer = setInterval(() => {
+        loaderHintIdx = (loaderHintIdx + 1) % loaderHint.length;
+        loaderHintEl.textContent = loaderHint[loaderHintIdx];
+      }, 2500);
+    };
+    const stopLoaderHints = () => {
+      if (loaderHintTimer) {
+        clearInterval(loaderHintTimer);
+        loaderHintTimer = null;
+      }
+      if (loaderHintEl) loaderHintEl.textContent = '';
     };
     const hideErrorOverlay = () => {
       errorOverlay.style.display = 'none';
@@ -1958,6 +1994,7 @@
     }
 
     function loadActivatedServers() {
+      startLoaderHints();
       fetch(`https://providers.peestream.in/api/providers`)
         .then(r => r.json())
         .then(data => {
@@ -2139,6 +2176,7 @@
       loadingOverlay.classList.remove('hidden');
       loadingOverlay.style.display = 'flex';
       loaderStatus.innerText = 'Searching for stream...';
+      startLoaderHints();
 
       const es = new EventSource(`https://providers.peestream.in/scrape/source?id=${sourceId}&tmdbId=${tmdbId}&type=${type}${season ? `&season=${season}` : ''}${episode ? `&episode=${episode}` : ''}&fallback=false`);
       targetedScrapes.set(sourceId, es);
@@ -2881,6 +2919,7 @@
 
       // Hide loading overlay only once video ACTUALLY starts playing.
       video.addEventListener('playing', () => {
+        stopLoaderHints();
         loadingOverlay.classList.add('hidden');
         loadingOverlay.style.display = 'none';
       });
