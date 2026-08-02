@@ -1983,12 +1983,33 @@
     let targetedScrapes = new Map(); // providerId -> EventSource (per-server click loads)
     let autoScrapes = new Set();     // providerIds loaded automatically (auto-failover chain)
 
+    window.embedLogs = window.embedLogs || [];
+
     function clLog(type, message) {
       try {
+        let sid = sessionStorage.getItem('peestream_sid');
+        if (!sid) {
+          sid = 'sid_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+          sessionStorage.setItem('peestream_sid', sid);
+        }
+        const timeStr = new Date().toLocaleTimeString();
+        const entry = { time: timeStr, type, message, tmdbId };
+        window.embedLogs.push(entry);
+        console.log(`[EMBED ${type.toUpperCase()}] ${timeStr} - ${message}`);
+
+        const debugConsole = document.getElementById('debug-console');
+        if (debugConsole) {
+          const logLine = document.createElement('div');
+          logLine.className = `debug-log-line log-${type}`;
+          logLine.innerText = `[${timeStr}] [${type.toUpperCase()}] ${message}`;
+          debugConsole.appendChild(logLine);
+          debugConsole.scrollTop = debugConsole.scrollHeight;
+        }
+
         fetch('https://providers.peestream.in/api/scrape/client-log', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type, message, tmdbId, sid: sessionStorage.getItem('peestream_sid') })
+          body: JSON.stringify({ type, message, tmdbId, sid })
         }).catch(() => {});
       } catch (e) {}
     }
