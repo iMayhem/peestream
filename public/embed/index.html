@@ -2508,8 +2508,12 @@
 
           thisHls.on(Hls.Events.ERROR, (event, data) => {
             if (thisHls !== hlsInstance) return; // stale handler from a destroyed instance, ignore
-            clLog('error', `HLS error: ${data.type} ${data.details} fatal=${data.fatal}`);
             if (!data) return;
+            // fragParsingError is a noisy recoverable diagnostic on Poseidon.
+            // Keep recovery/fallback logic, but do not flood realtime logs with it.
+            if (data.fatal || data.details !== 'fragParsingError') {
+              clLog('error', `HLS error: ${data.type} ${data.details} fatal=${data.fatal}`);
+            }
 
             const isManifestError = data.details === 'manifestLoadError' || data.details === 'manifestParsingError' || data.details === 'levelLoadError' || data.details === 'fragLoadError';
             if (data.fatal || isManifestError) {
