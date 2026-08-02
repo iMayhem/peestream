@@ -1735,7 +1735,8 @@
     // URL Params parsing
     const urlParams = new URLSearchParams(window.location.search);
     const tmdbId = urlParams.get('tmdbId');
-    const type = urlParams.get('type') || 'movie';
+    const rawType = urlParams.get('type') || 'movie';
+    const type = ['show', 'series'].includes(rawType.toLowerCase()) ? 'tv' : rawType;
     const season = urlParams.get('season');
     const episode = urlParams.get('episode');
     const title = urlParams.get('title') || 'Media Stream';
