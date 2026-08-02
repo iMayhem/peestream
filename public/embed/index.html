@@ -2014,6 +2014,7 @@
     let autoScrapes = new Set();     // providerIds loaded automatically (auto-failover chain)
 
     window.embedLogs = window.embedLogs || [];
+    const clientLogThrottle = new Map();
 
     function clLog(type, message) {
       try {
@@ -2023,6 +2024,11 @@
           sessionStorage.setItem('peestream_sid', sid);
         }
         const timeStr = new Date().toLocaleTimeString();
+        const throttleKey = `${type}|${message}`;
+        const now = Date.now();
+        const previous = clientLogThrottle.get(throttleKey) || 0;
+        if (type === 'error' && message.startsWith('HLS error:') && now - previous < 2500) return;
+        clientLogThrottle.set(throttleKey, now);
         const entry = { time: timeStr, type, message, tmdbId };
         window.embedLogs.push(entry);
         console.log(`[EMBED ${type.toUpperCase()}] ${timeStr} - ${message}`);
