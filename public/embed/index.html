@@ -2230,6 +2230,9 @@
           updateServerMenuUI();
         } else if (data.status === 'pending') {
           setServerStatus(sid, 'searching');
+          if (typeof data.percentage === 'number' && data.percentage > 0) {
+            loaderStatus.innerText = `Searching for stream... ${data.percentage}%`;
+          }
         }
       });
 
