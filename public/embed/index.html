@@ -2425,9 +2425,8 @@
             if (thisHls !== hlsInstance) return; // stale, skip
             const levels = thisHls.levels;
             clLog('success', `HLS manifest parsed (${levels ? levels.length : 0} qualities)`);
-            // Hide loading overlay — stream is ready (covers case when switching between HLS links)
-            loadingOverlay.classList.add('hidden');
-            loadingOverlay.style.display = 'none';
+            // Note: keep the loading overlay visible until ACTUAL playback (playing event).
+            // Hiding here leaves a blank gap while the first segments buffer from the CDN.
             
             // Set HLS to play highest quality first
             if (levels && levels.length > 0) {
