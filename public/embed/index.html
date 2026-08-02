@@ -1816,6 +1816,10 @@
     const loadingOverlay = document.getElementById('loading-overlay');
     const errorOverlay = document.getElementById('error-overlay');
     const loaderStatus = document.getElementById('loader-status');
+    const hideLoadingOverlay = () => {
+      loadingOverlay.classList.add('hidden');
+      loadingOverlay.style.display = 'none';
+    };
     
     const embedTrigger = document.getElementById('embed-trigger');
     const embedDrawer = document.getElementById('embed-drawer');
@@ -2141,8 +2145,9 @@
 
         setServerStatus(sourceId, 'success');
         activeServerId = firstStreamId;
-        loadingOverlay.classList.add('hidden');
-        loadingOverlay.style.display = 'none';
+        loaderStatus.innerText = 'Preparing video...';
+        loadingOverlay.classList.remove('hidden');
+        loadingOverlay.style.display = 'flex';
         clLog('success', `server ${sourceId} resolved ${streamsArr.length} HLS link(s), trying 1st link`);
         if (!subtitlesFetched) fetchSubtitles();
         if (hlsInstance) {
@@ -2508,7 +2513,7 @@
           });
           const shouldPlay = forcePlay !== null ? forcePlay : autoplayParam;
           if (shouldPlay) {
-            video.play().catch(() => bigPlayBtn.classList.add('show'));
+            video.play().catch(() => { hideLoadingOverlay(); bigPlayBtn.classList.add('show'); });
           } else {
             video.pause();
             bigPlayBtn.classList.add('show');
@@ -2535,7 +2540,7 @@
         });
         const shouldPlay = forcePlay !== null ? forcePlay : autoplayParam;
         if (shouldPlay) {
-          video.play().catch(() => bigPlayBtn.classList.add('show'));
+          video.play().catch(() => { hideLoadingOverlay(); bigPlayBtn.classList.add('show'); });
         } else {
           video.pause();
           bigPlayBtn.classList.add('show');
@@ -2599,7 +2604,7 @@
       });
       
       if (isPlaying) {
-        video.play().catch(() => bigPlayBtn.classList.add('show'));
+        video.play().catch(() => { hideLoadingOverlay(); bigPlayBtn.classList.add('show'); });
       } else {
         video.pause();
         bigPlayBtn.classList.add('show');
@@ -2802,6 +2807,14 @@
       playBtn.addEventListener('click', togglePlay);
 
       // Video state changes
+      video.addEventListener('canplay', hideLoadingOverlay);
+      video.addEventListener('playing', hideLoadingOverlay);
+      video.addEventListener('waiting', () => {
+        if (!loadingOverlay.classList.contains('hidden')) {
+          loaderStatus.innerText = 'Preparing video...';
+        }
+      });
+
       video.addEventListener('play', () => {
         bigPlayBtn.classList.remove('show');
         playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
