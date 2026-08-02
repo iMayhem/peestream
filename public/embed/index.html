@@ -1829,10 +1829,24 @@
     // ----------------------------------
     const loadingOverlay = document.getElementById('loading-overlay');
     const errorOverlay = document.getElementById('error-overlay');
+    const errorDesc = document.getElementById('error-desc');
     const loaderStatus = document.getElementById('loader-status');
     const hideLoadingOverlay = () => {
       loadingOverlay.classList.add('hidden');
       loadingOverlay.style.display = 'none';
+    };
+    const hideErrorOverlay = () => {
+      errorOverlay.style.display = 'none';
+      if (errorDesc) errorDesc.innerText = '';
+    };
+    // "All stream links failed" is only valid if the video never actually started playing.
+    // If the element is already playing/buffering, never show the failure notice.
+    const showStreamFailure = () => {
+      if (!video) return;
+      if (video.readyState >= 2 && !video.paused) { hideErrorOverlay(); return; }
+      loadingOverlay.classList.add('hidden');
+      loadingOverlay.style.display = 'none';
+      errorOverlay.style.display = 'flex';
     };
     
     const embedTrigger = document.getElementById('embed-trigger');
@@ -2386,8 +2400,7 @@
               try { thisHls.destroy(); } catch(err) {}
               if (hlsInstance === thisHls) hlsInstance = null;
               if (!tryNextServer()) {
-                loadingOverlay.classList.add('hidden');
-                errorOverlay.style.display = 'flex';
+                showStreamFailure();
                 document.getElementById('error-desc').innerText = 'All stream links failed to play. Please try another server or refresh.';
               }
               return;
@@ -2405,8 +2418,7 @@
                 clLog('warn', 'Playback stalled, trying next HLS link candidate...');
                 failedStreamIds.add(activeServerId);
                 if (!tryNextServer()) {
-                  loadingOverlay.classList.add('hidden');
-                  errorOverlay.style.display = 'flex';
+                  showStreamFailure();
                   document.getElementById('error-desc').innerText = 'All stream links failed to play. Please try another server.';
                 }
               }
@@ -2505,8 +2517,7 @@
                   clLog('warn', 'Stream not buffering after manifest, trying next HLS link...');
                   failedStreamIds.add(activeServerId);
                   if (!tryNextServer()) {
-                    loadingOverlay.classList.add('hidden');
-                    errorOverlay.style.display = 'flex';
+                    showStreamFailure();
                     document.getElementById('error-desc').innerText = 'All stream links failed to play. Please try another server.';
                   }
                 }
@@ -2537,8 +2548,7 @@
             setTimeout(() => {
               if (video.readyState < 2) {
                 if (!tryNextServer()) {
-                  loadingOverlay.classList.add('hidden');
-                  errorOverlay.style.display = 'flex';
+                  showStreamFailure();
                   document.getElementById('error-desc').innerText = 'All servers failed to play this stream. Please try again later.';
                 }
               }
@@ -2564,8 +2574,7 @@
           setTimeout(() => {
             if (video.readyState < 2) {
               if (!tryNextServer()) {
-                loadingOverlay.classList.add('hidden');
-                errorOverlay.style.display = 'flex';
+                showStreamFailure();
                 document.getElementById('error-desc').innerText = 'All servers failed to play this stream. Please try again later.';
               }
             }
@@ -2821,7 +2830,7 @@
       playBtn.addEventListener('click', togglePlay);
 
       // Video state changes: hide ONLY when actual playback starts.
-      video.addEventListener('playing', hideLoadingOverlay);
+      video.addEventListener('playing', () => { hideLoadingOverlay(); hideErrorOverlay(); });
       video.addEventListener('loadedmetadata', () => {
         if (!loadingOverlay.classList.contains('hidden')) {
           loaderStatus.innerText = 'Starting video...';
