@@ -1680,7 +1680,6 @@
           <div class="spinner-pulse"></div>
         </div>
         <div id="loader-status" class="status-text" style="margin-top: 15px; font-weight: 500; font-size: 0.95rem;">Searching Poseidon...</div>
-        <div id="loader-hint" class="status-text" style="margin-top: 6px; font-weight: 400; font-size: 0.82rem; color: var(--text-dim);"></div>
         <div id="overlay-server-list" style="display: none;"></div>
       </div>
       
@@ -1758,8 +1757,7 @@
     if (tmdbId) {
       landingView.style.display = 'none';
       playerView.style.display = 'block';
-      // loadActivatedServers depends on helpers declared later in this script
-      // (notably startLoaderHints). Defer it until initialization completes.
+      // loadActivatedServers depends on helpers declared later in this script.
       window.addEventListener('DOMContentLoaded', () => loadActivatedServers(), { once: true });
     } else {
       landingView.style.display = 'flex';
@@ -1861,48 +1859,9 @@
     const errorOverlay = document.getElementById('error-overlay');
     const errorDesc = document.getElementById('error-desc');
     const loaderStatus = document.getElementById('loader-status');
-    const hideLoadingOverlay = () => {
-      stopLoaderHints();
+const hideLoadingOverlay = () => {
       loadingOverlay.classList.add('hidden');
       loadingOverlay.style.display = 'none';
-    };
-    // Endless reassuring hints shown while the loader is up and the server
-    // still takes time to pull the video from the origin.
-    const loaderHints = [
-      'just a sec...',
-      'grabbing a good source...',
-      'fetching from the server...',
-      'warming up the stream...',
-      'almost there...',
-      'buffering the video...',
-      'one moment please...',
-      'connecting to the CDN...',
-      'loading your video...',
-      'still here, hang tight...'
-    ];
-    let loaderHintIdx = 0;
-    let loaderHintTimer = null;
-    const loaderHintEl = document.getElementById('loader-hint');
-    const startLoaderHints = () => {
-      if (!loaderHintEl) return;
-      stopLoaderHints();
-      loaderHintIdx = 0;
-      loaderHintEl.textContent = loaderHints[0];
-      loaderHintTimer = setInterval(() => {
-        loaderHintIdx = (loaderHintIdx + 1) % loaderHints.length;
-        loaderHintEl.textContent = loaderHints[loaderHintIdx];
-      }, 2500);
-    };
-    const stopLoaderHints = () => {
-      if (loaderHintTimer) {
-        clearInterval(loaderHintTimer);
-        loaderHintTimer = null;
-      }
-      if (loaderHintEl) loaderHintEl.textContent = '';
-    };
-    const hideErrorOverlay = () => {
-      errorOverlay.style.display = 'none';
-      if (errorDesc) errorDesc.innerText = '';
     };
     // Failure banner removed — never show the "All stream links failed" notice.
     const showStreamFailure = () => {
@@ -2055,7 +2014,6 @@
     }
 
     function loadActivatedServers() {
-      startLoaderHints();
       fetch(`https://providers.peestream.in/api/providers`)
         .then(r => r.json())
         .then(data => {
@@ -2237,7 +2195,6 @@
       loadingOverlay.classList.remove('hidden');
       loadingOverlay.style.display = 'flex';
       loaderStatus.innerText = 'Searching for stream...';
-      startLoaderHints();
 
       const es = new EventSource(`https://providers.peestream.in/scrape/source?id=${sourceId}&tmdbId=${tmdbId}&type=${type}${season ? `&season=${season}` : ''}${episode ? `&episode=${episode}` : ''}&fallback=false`);
       targetedScrapes.set(sourceId, es);
@@ -2885,7 +2842,7 @@
           }
         }
       }
-      return cues;
+      return cues.sort((a, b) => a.start - b.start);
     }
 
     function parseTimestampMatch(h, m, s, ms) {
@@ -2967,8 +2924,21 @@
 
         // Render current subtitles cue
         if (subtitleCues.length > 0) {
-          const adjustedTime = curr + subtitleDelay;
-          const activeCue = subtitleCues.find(cue => adjustedTime >= cue.start && adjustedTime <= cue.end);
+          const t = curr + subtitleDelay;
+          // Binary search: rightmost cue whose start <= t. This is the active
+          // line — correctly handles overlapping cues (latest start wins) and
+          // the cue boundary (end is exclusive, so the next line shows instantly).
+          let lo = 0, hi = subtitleCues.length - 1, idx = -1;
+          while (lo <= hi) {
+            const mid = (lo + hi) >> 1;
+            if (subtitleCues[mid].start <= t) {
+              idx = mid;
+              lo = mid + 1;
+            } else {
+              hi = mid - 1;
+            }
+          }
+          const activeCue = (idx !== -1 && t < subtitleCues[idx].end) ? subtitleCues[idx] : null;
           if (activeCue) {
             subtitleOverlay.style.display = 'block';
             subtitleOverlay.innerHTML = activeCue.text;
@@ -2989,7 +2959,6 @@
 
       // Hide loading overlay only once video ACTUALLY starts playing.
       video.addEventListener('playing', () => {
-        stopLoaderHints();
         loadingOverlay.classList.add('hidden');
         loadingOverlay.style.display = 'none';
       });
