@@ -2366,11 +2366,12 @@ const hideLoadingOverlay = () => {
         qualities = stream.qualities || {};
         const qKeys = Object.keys(qualities);
         
-        // Find best quality (numeric rank, handles 4K/2160p case-insensitively)
+        // Find best quality (numeric rank, handles 4K/2160p and suffixed keys like "1080p HUBCDN")
         const qRank = (q) => {
-          const s = String(q || '').toLowerCase().replace(/p$/, '');
-          if (s === '4k' || s === 'uhd' || s === '2160') return 2160;
-          const n = parseInt(s);
+          const s = String(q || '').toLowerCase();
+          if (s.includes('4k') || s.includes('2160') || s.includes('uhd')) return 2160;
+          const m = s.match(/(\d{3,4})/);
+          const n = m ? parseInt(m[1]) : NaN;
           return isNaN(n) ? -1 : n;
         };
         let bestQual = qKeys[0];
