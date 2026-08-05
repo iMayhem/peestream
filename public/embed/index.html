@@ -2366,14 +2366,18 @@ const hideLoadingOverlay = () => {
         qualities = stream.qualities || {};
         const qKeys = Object.keys(qualities);
         
-        // Find best quality
+        // Find best quality (numeric rank, handles 4K/2160p case-insensitively)
+        const qRank = (q) => {
+          const s = String(q || '').toLowerCase().replace(/p$/, '');
+          if (s === '4k' || s === 'uhd' || s === '2160') return 2160;
+          const n = parseInt(s);
+          return isNaN(n) ? -1 : n;
+        };
         let bestQual = qKeys[0];
-        const priority = ['4k', '2160', '1080', '1080p', '1080P', '720', '720p', '720P', '480', '480p', '360', '360p', 'sd'];
-        for (const q of priority) {
-          if (qKeys.includes(q)) {
-            bestQual = q;
-            break;
-          }
+        let bestRank = -1;
+        for (const k of qKeys) {
+          const r = qRank(k);
+          if (r > bestRank) { bestRank = r; bestQual = k; }
         }
         playerUrl = qualities[bestQual]?.url || '';
         
@@ -2420,8 +2424,8 @@ const hideLoadingOverlay = () => {
             maxStarvationDelay: 2,
             progressive: true,
             startFragPrefetch: true,
-            capLevelToPlayerSize: true,
-            startLevel: 0,
+            capLevelToPlayerSize: false,
+            startLevel: -1,
             manifestLoadingMaxRetry: 1,
             manifestLoadingRetryDelay: 400,
             levelLoadingMaxRetry: 1,
@@ -2508,11 +2512,18 @@ const hideLoadingOverlay = () => {
             // Note: keep the loading overlay visible until ACTUAL playback (playing event).
             // Hiding here leaves a blank gap while the first segments buffer from the CDN.
             
-            // Start on the smallest rendition for fast first-frame playback.
-            // HLS.js can switch upward once the stream is stable.
+            // Start on the highest rendition available (highest quality first).
+            // Master playlists are reordered by bandwidth desc server-side when
+            // proxied; for direct playlists pick the best level explicitly.
             if (levels && levels.length > 0) {
-              hlsInstance.startLevel = 0;
-              hlsInstance.nextLevel = 0;
+              let bestIdx = 0;
+              let bestScore = -1;
+              levels.forEach((level, index) => {
+                const score = (level.height || 0) * 1000 + (level.bitrate || 0) / 1000;
+                if (score > bestScore) { bestScore = score; bestIdx = index; }
+              });
+              hlsInstance.startLevel = bestIdx;
+              hlsInstance.nextLevel = bestIdx;
             }
 
             if (levels && levels.length > 1) {
