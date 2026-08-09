@@ -10,6 +10,7 @@ import { isExtensionActiveCached } from "@/backend/extension/messaging";
 import { prepareStream } from "@/backend/extension/streams";
 import {
   connectServerSideEvents,
+  fetchMetadata,
   getCachedMetadata,
   makeProviderUrl,
 } from "@/backend/helpers/providerApi";
@@ -285,6 +286,17 @@ export function useScrape() {
       startScrape();
       let clientProviderIds: string[] = [];
       let serverProviderIds: string[] = [];
+
+      if (providerApiUrl) {
+        try {
+          await fetchMetadata(providerApiUrl);
+        } catch (err) {
+          console.error(
+            "[useProviderScrape] Failed to refresh metadata:",
+            err,
+          );
+        }
+      }
 
       try {
         const providers = getProviders();
