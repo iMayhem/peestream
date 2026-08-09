@@ -4,7 +4,7 @@ import { jwtDecode } from "jwt-decode";
 import { mwFetch } from "@/backend/helpers/fetch";
 import { getTurnstileToken, isTurnstileInitialized } from "@/stores/turnstile";
 
-const CACHE_KEY = "__MW::providerMeta";
+const CACHE_KEY = "__MW::providerMeta_v2";
 const CACHE_TTL = 5 * 60 * 1000;
 
 interface CacheEntry {
@@ -69,14 +69,17 @@ function getTokenIfValid(): null | string {
 }
 
 export async function fetchMetadata(base: string) {
-  if (metaDataCache) return;
-  const persisted = loadPersistedCache();
-  if (persisted) {
-    metaDataCache = persisted;
-    return;
+  try {
+    const data = await mwFetch<MetaOutput[][]>(`${base}/metadata`);
+    setCachedMetadata(data.flat());
+  } catch (err) {
+    const persisted = loadPersistedCache();
+    if (persisted) {
+      metaDataCache = persisted;
+      return;
+    }
+    throw err;
   }
-  const data = await mwFetch<MetaOutput[][]>(`${base}/metadata`);
-  setCachedMetadata(data.flat());
 }
 
 function scrapeMediaToQueryMedia(media: ScrapeMedia) {
