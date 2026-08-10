@@ -3373,3 +3373,50 @@ const hideLoadingOverlay = () => {
   </script>
 </body>
 </html>
+
+              return;
+            } catch (err) {}
+          }
+
+          fetch(analyticsUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            keepalive: true
+          }).catch(() => {});
+        }
+
+        // Track pageview on load
+        sendAnalytics('pageview');
+
+        // Track play and heartbeats
+        let playLogged = false;
+        let lastPing = Date.now();
+
+        if (_video) {
+          _video.addEventListener('play', () => {
+            if (!playLogged) {
+              sendAnalytics('play');
+              playLogged = true;
+            }
+          });
+
+          _video.addEventListener('timeupdate', () => {
+            const now = Date.now();
+            if (now - lastPing > 25000) {
+              sendAnalytics('heartbeat', { duration: 25000 });
+              lastPing = now;
+            }
+          });
+
+          _video.addEventListener('error', () => {
+            sendAnalytics('error', { message: 'Player playback error' });
+          });
+        }
+      } catch (e) {
+        console.warn('[PeeStream Analytics]', e);
+      }
+    })();
+  </script>
+</body>
+</html>
