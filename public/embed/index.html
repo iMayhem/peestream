@@ -29,6 +29,28 @@
     });
   </script>
   <script src="https://openpanel.dev/op1.js" async defer></script>
+
+  <!-- Teerth analytics SDK -->
+  <script data-cfasync="false">
+    (function () {
+      var getSite = function () {
+        try { var r = document.referrer; if (r) return new URL(r).hostname; } catch (e) {}
+        return location.hostname;
+      };
+      var s = document.createElement('script');
+      s.src = location.origin + '/teerth/t.js';
+      s.setAttribute('data-site', getSite());
+      s.onload = function () {
+        var t = window.teerth;
+        if (!t) return;
+        t.pageview({ path: '/embed' + location.search, title: document.title });
+      };
+      document.head.appendChild(s);
+      window.tee = function (name, data) {
+        try { if (window.teerth) window.teerth.track(name, data || {}); } catch (e) {}
+      };
+    })();
+  </script>
   
   <!-- Popup Ad (isolated iframe so its overlays/capture events never cover the player controls) -->
   <iframe id="ad-sandbox" aria-hidden="true" tabindex="-1" style="position:absolute;width:0;height:0;border:0;left:-9999px;top:-9999px;visibility:hidden" sandbox="allow-scripts allow-popups allow-same-origin allow-popups-to-escape-sandbox"></iframe>
@@ -2320,6 +2342,7 @@ const hideLoadingOverlay = () => {
       if (!item) return;
       
       activeServerId = sourceId;
+      tee('play', { tmdbId: tmdbId || '', type: type || 'movie', season: season || '', episode: episode || '', sourceId: sourceId });
       
       if (hlsInstance) {
         try { hlsInstance.destroy(); } catch(e) {}
@@ -2537,6 +2560,7 @@ const hideLoadingOverlay = () => {
               autoBtn.innerHTML = 'AUTO <i class="fa-solid fa-check" style="font-size:0.75rem;opacity:0.8"></i>';
               autoBtn.onclick = () => {
                 hlsInstance.currentLevel = -1;
+                  tee('quality_change', { q: 'auto', sourceId: activeServerId });
                 updateActiveHlsQualityBtn(autoBtn);
               };
               qualitiesList.appendChild(autoBtn);
@@ -2549,6 +2573,7 @@ const hideLoadingOverlay = () => {
                 btn.innerText = label.toUpperCase();
                 btn.onclick = () => {
                   hlsInstance.currentLevel = index;
+                  tee('quality_change', { q: label, sourceId: activeServerId });
                   updateActiveHlsQualityBtn(btn);
                 };
                 qualitiesList.appendChild(btn);
@@ -2917,7 +2942,8 @@ const hideLoadingOverlay = () => {
         bigPlayBtn.classList.remove('show');
         playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
       });
-      video.addEventListener('pause', () => {
+      video.addEventListener('error', () => { tee('error', { code: video.error ? video.error.code : 'unknown' }); });
+      video.addEventListener('pause', () => { tee('pause');
         bigPlayBtn.classList.add('show');
         playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
       });
@@ -3327,53 +3353,6 @@ const hideLoadingOverlay = () => {
             try {
               const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
               navigator.sendBeacon(analyticsUrl, blob);
-              return;
-            } catch (err) {}
-          }
-
-          fetch(analyticsUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            keepalive: true
-          }).catch(() => {});
-        }
-
-        // Track pageview on load
-        sendAnalytics('pageview');
-
-        // Track play and heartbeats
-        let playLogged = false;
-        let lastPing = Date.now();
-
-        if (_video) {
-          _video.addEventListener('play', () => {
-            if (!playLogged) {
-              sendAnalytics('play');
-              playLogged = true;
-            }
-          });
-
-          _video.addEventListener('timeupdate', () => {
-            const now = Date.now();
-            if (now - lastPing > 25000) {
-              sendAnalytics('heartbeat', { duration: 25000 });
-              lastPing = now;
-            }
-          });
-
-          _video.addEventListener('error', () => {
-            sendAnalytics('error', { message: 'Player playback error' });
-          });
-        }
-      } catch (e) {
-        console.warn('[PeeStream Analytics]', e);
-      }
-    })();
-  </script>
-</body>
-</html>
-
               return;
             } catch (err) {}
           }
