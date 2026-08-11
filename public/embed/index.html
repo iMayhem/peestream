@@ -2858,7 +2858,7 @@ const hideLoadingOverlay = () => {
         if (Hls.isSupported()) {
           const hlsConfig = {
             enableWorker: true,
-            // Keep startup light; grow the buffer after playback begins.
+            // Aggressive initial loading: fetch first segment immediately
             maxBufferLength: 18,
             maxMaxBufferLength: 45,
             maxBufferSize: 32 * 1024 * 1024,
@@ -2867,12 +2867,19 @@ const hideLoadingOverlay = () => {
             startFragPrefetch: true,
             capLevelToPlayerSize: false,
             startLevel: -1,
+            // Reduce initial load delays
             manifestLoadingMaxRetry: 1,
             manifestLoadingRetryDelay: 400,
             levelLoadingMaxRetry: 1,
             levelLoadingRetryDelay: 400,
             fragLoadingMaxRetry: 1,
-            fragLoadingRetryDelay: 400
+            fragLoadingRetryDelay: 400,
+            // Aggressive first segment loading
+            initialLiveManifestSize: 1,
+            liveSyncDurationCount: 1,
+            // Start playing as soon as first segment is buffered
+            lowLatencyMode: false,
+            backBufferLength: 60
           };
           if (stream.headers && Object.keys(stream.headers).length > 0) {
             hlsConfig.xhrSetup = function (xhr, targetUrl) {
@@ -2966,6 +2973,11 @@ const hideLoadingOverlay = () => {
               hlsInstance.startLevel = bestIdx;
               hlsInstance.nextLevel = bestIdx;
             }
+
+            // Explicitly start loading segments immediately after manifest parse.
+            // This eliminates the 00:00 stuck state by prefetching the first segment
+            // before video.play() is called, drastically reducing time-to-first-frame.
+            thisHls.startLoad(startTime > 0 ? startTime : 0);
 
             if (levels && levels.length > 1) {
               qualityMenuContainer.style.display = 'block';
