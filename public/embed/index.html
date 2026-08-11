@@ -20,13 +20,20 @@
   <script data-cfasync="false" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
   <script data-cfasync="false">
     window.__castReady = [];
+    window.__castAvailable = false;
     window['__onGCastApiAvailable'] = function (isAvailable) {
       if (!isAvailable) return;
+      window.__castAvailable = true;
       window.__castReady.forEach(function (cb) {
         try { cb(); } catch (e) { console.warn('Cast init:', e); }
       });
     };
-    window.__whenCastReady = function (cb) { window.__castReady.push(cb); };
+    window.__whenCastReady = function (cb) {
+      window.__castReady.push(cb);
+      if (window.__castAvailable) {
+        try { cb(); } catch (e) { console.warn('Cast init:', e); }
+      }
+    };
   </script>
   
   <!-- OpenPanel Analytics -->
@@ -3620,9 +3627,15 @@ body::before {
       });
 
 
-      // Google Cast (proper SDK integration — button only appears when available)
+      // Google Cast (button reveals when Cast SDK or Remote Playback API is available)
       const castBtn = document.getElementById('ctrl-cast');
       if (castBtn && window.__whenCastReady) {
+        const canRemotePlayback = !!(video.remote && typeof video.remote.prompt === 'function');
+        const revealCastBtn = () => {
+          if (!window.__castAvailable && !canRemotePlayback) return;
+          castBtn.hidden = false;
+        };
+
         window.__whenCastReady(() => {
           try {
             const context = cast.framework.CastContext.getInstance();
@@ -3676,11 +3689,18 @@ body::before {
             });
 
             syncCastState();
-            castBtn.hidden = false;
           } catch (e) {
             console.warn('Cast unavailable:', e);
           }
         });
+
+        revealCastBtn();
+        if (canRemotePlayback) {
+          castBtn.addEventListener('click', () => {
+            if (window.__castAvailable) return;
+            video.remote.prompt().catch(() => {});
+          });
+        }
       }
 
       // Keyboard Listeners
