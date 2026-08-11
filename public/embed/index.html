@@ -678,6 +678,27 @@
       background: rgba(255, 255, 255, 0.05);
     }
 
+    /* Force cast button to be white - override Google Cast SDK auto-styling */
+    #ctrl-cast {
+      display: flex !important;
+      visibility: visible !important;
+      color: #fff !important;
+      opacity: 0.8 !important;
+      pointer-events: auto !important;
+      position: relative !important;
+      z-index: 10 !important;
+    }
+
+    #ctrl-cast:hover {
+      opacity: 1 !important;
+      color: var(--accent-color) !important;
+    }
+
+    #ctrl-cast.casting {
+      color: #8b5cf6 !important;
+      opacity: 1 !important;
+    }
+
     /* Vertical Volume Controller */
     .volume-container {
       position: relative;
@@ -2211,14 +2232,20 @@ body::before {
     window['__onGCastApiAvailable'] = function(isAvailable) {
       if (isAvailable) {
         try {
-          cast.framework.CastContext.getInstance().setOptions({
-            receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
-            autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-          });
-          console.log('Google Cast SDK initialized');
+          if (window.cast && window.cast.framework) {
+            cast.framework.CastContext.getInstance().setOptions({
+              receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+              autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+            });
+            console.log('Google Cast SDK initialized');
+          } else {
+            console.warn('Cast SDK loaded but framework not available');
+          }
         } catch (e) {
           console.warn('Failed to initialize Cast SDK:', e);
         }
+      } else {
+        console.warn('Google Cast API not available');
       }
     };
 
@@ -2317,10 +2344,17 @@ body::before {
     const errorOverlay = document.getElementById('error-overlay');
     const errorDesc = document.getElementById('error-desc');
     const loaderStatus = document.getElementById('loader-status');
-const hideLoadingOverlay = () => {
+    
+    const hideLoadingOverlay = () => {
       loadingOverlay.classList.add('hidden');
       loadingOverlay.style.display = 'none';
     };
+    
+    const hideErrorOverlay = () => {
+      errorOverlay.classList.add('hidden');
+      errorOverlay.style.display = 'none';
+    };
+    
     // Failure banner removed — never show the "All stream links failed" notice.
     const showStreamFailure = () => {
       hideLoadingOverlay();
@@ -2358,6 +2392,17 @@ const hideLoadingOverlay = () => {
     const qualityMenuContainer = document.getElementById('quality-menu-container');
     const castBtn = document.getElementById('ctrl-cast');
     const fullscreenBtn = document.getElementById('ctrl-fullscreen');
+    
+    // Force cast button visibility
+    if (castBtn) {
+      castBtn.style.display = 'flex';
+      castBtn.style.color = '#fff';
+      castBtn.style.opacity = '0.8';
+      castBtn.style.visibility = 'visible';
+      console.log('Cast button initialized:', castBtn, 'Visible:', window.getComputedStyle(castBtn).display);
+    } else {
+      console.error('Cast button not found in DOM!');
+    }
     
     const progressArea = document.getElementById('progress-area');
     const currentProgress = document.getElementById('current-progress');
@@ -3609,28 +3654,56 @@ const hideLoadingOverlay = () => {
       // Google Cast
       castBtn.addEventListener('click', () => {
         try {
+          // Check if Cast SDK is fully loaded and initialized
+          if (!window.cast || !window.cast.framework) {
+            console.warn('Cast SDK not loaded yet');
+            alert('Chromecast is loading. Please try again in a moment.');
+            return;
+          }
+
           if (window.chrome && window.chrome.cast && window.chrome.cast.isAvailable) {
             // Google Cast SDK available
-            const session = cast.framework.CastContext.getInstance().getCurrentSession();
+            let session;
+            try {
+              session = cast.framework.CastContext.getInstance().getCurrentSession();
+            } catch (e) {
+              console.warn('Cast context not ready:', e);
+              alert('Chromecast is initializing. Please try again in a moment.');
+              return;
+            }
+
             if (session && session.getSessionState() === cast.framework.SessionState.SESSION_STARTED) {
               // Already casting - stop it
               cast.framework.CastContext.getInstance().endCurrentSession(true);
+              castBtn.classList.remove('casting'); // Remove casting class when stopped
             } else {
               // Start casting
-              const mediaInfo = new chrome.cast.media.MediaInfo(video.currentSrc, 'video/mp4');
+              if (!video.currentSrc) {
+                alert('No video loaded yet. Please wait for the video to start.');
+                return;
+              }
+              
+              // Detect content type from source URL
+              const contentType = video.currentSrc.includes('.m3u8') 
+                ? 'application/x-mpegurl' 
+                : 'video/mp4';
+              
+              const mediaInfo = new chrome.cast.media.MediaInfo(video.currentSrc, contentType);
               mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
-              mediaInfo.metadata.title = document.title || 'PeeStream Player';
+              mediaInfo.metadata.title = params.get('title') || document.title || 'PeeStream Player';
               mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
               
               const request = new chrome.cast.media.LoadRequest(mediaInfo);
-              request.currentTime = video.currentTime;
+              request.currentTime = video.currentTime || 0;
               request.autoplay = !video.paused;
+              
+              console.log('Casting media:', contentType, video.currentSrc.substring(0, 100));
               
               cast.framework.CastContext.getInstance().requestSession().then(() => {
                 const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
                 castSession.loadMedia(request).then(() => {
                   console.log('Cast session started');
-                  castBtn.style.color = '#8b5cf6'; // Purple when casting
+                  castBtn.classList.add('casting'); // Add casting class for purple color
                 }).catch(err => console.error('Failed to load media:', err));
               }).catch(err => {
                 if (err !== 'cancel') console.error('Failed to request cast session:', err);
