@@ -675,27 +675,6 @@
       background: rgba(255, 255, 255, 0.05);
     }
 
-    /* Force cast button to be white - override Google Cast SDK auto-styling */
-    #ctrl-cast {
-      display: flex !important;
-      visibility: visible !important;
-      color: #fff !important;
-      opacity: 0.8 !important;
-      pointer-events: auto !important;
-      position: relative !important;
-      z-index: 10 !important;
-    }
-
-    #ctrl-cast:hover {
-      opacity: 1 !important;
-      color: var(--accent-color) !important;
-    }
-
-    #ctrl-cast.casting {
-      color: #8b5cf6 !important;
-      opacity: 1 !important;
-    }
-
     /* Vertical Volume Controller */
     .volume-container {
       position: relative;
@@ -2123,9 +2102,6 @@ body::before {
                 </div>
               </div>
               
-              <button id="ctrl-cast" class="control-btn ctrl-cast-btn" title="Cast to Chromecast">
-                <i class="fa-solid fa-cast"></i>
-              </button>
               <button id="ctrl-fullscreen" class="control-btn" title="Fullscreen (F)"><i class="fa-solid fa-expand"></i></button>
             </div>
             
@@ -2368,39 +2344,7 @@ body::before {
     const qualityMenu = document.getElementById('quality-menu');
     const qualitiesList = document.getElementById('qualities-list');
     const qualityMenuContainer = document.getElementById('quality-menu-container');
-    const castBtn = document.getElementById('ctrl-cast');
     const fullscreenBtn = document.getElementById('ctrl-fullscreen');
-    
-    // Force cast button visibility
-    if (castBtn) {
-      castBtn.style.display = 'flex';
-      castBtn.style.color = '#fff';
-      castBtn.style.opacity = '1';
-      castBtn.style.visibility = 'visible';
-      
-      // Debug: Log all computed styles
-      const styles = window.getComputedStyle(castBtn);
-      console.log('Cast button initialized:', castBtn, 'Visible:', styles.display);
-      console.log('Cast button position:', castBtn.getBoundingClientRect());
-      console.log('Cast button computed styles:', {
-        display: styles.display,
-        visibility: styles.visibility,
-        opacity: styles.opacity,
-        color: styles.color,
-        width: styles.width,
-        height: styles.height,
-        position: styles.position,
-        zIndex: styles.zIndex,
-        transform: styles.transform
-      });
-      
-      // Check if it's actually in viewport
-      const rect = castBtn.getBoundingClientRect();
-      console.log('Is in viewport?', rect.top >= 0 && rect.left >= 0 && rect.bottom <= window.innerHeight && rect.right <= window.innerWidth);
-      console.log('Rect details:', rect);
-    } else {
-      console.error('Cast button not found in DOM!');
-    }
     
     const progressArea = document.getElementById('progress-area');
     const currentProgress = document.getElementById('current-progress');
@@ -3649,81 +3593,6 @@ body::before {
         }
       });
 
-      // Google Cast
-      const handleCastClick = () => {
-        try {
-          // Check if Cast SDK is fully loaded and initialized
-          if (!window.cast || !window.cast.framework) {
-            console.warn('Cast SDK not loaded yet');
-            alert('Chromecast is loading. Please try again in a moment.');
-            return;
-          }
-
-          if (window.chrome && window.chrome.cast && window.chrome.cast.isAvailable) {
-            // Google Cast SDK available
-            let session;
-            try {
-              session = cast.framework.CastContext.getInstance().getCurrentSession();
-            } catch (e) {
-              console.warn('Cast context not ready:', e);
-              alert('Chromecast is initializing. Please try again in a moment.');
-              return;
-            }
-
-            if (session && session.getSessionState() === cast.framework.SessionState.SESSION_STARTED) {
-              // Already casting - stop it
-              cast.framework.CastContext.getInstance().endCurrentSession(true);
-              castBtn.classList.remove('casting'); // Remove casting class when stopped
-            } else {
-              // Start casting
-              if (!video.currentSrc) {
-                alert('No video loaded yet. Please wait for the video to start.');
-                return;
-              }
-              
-              // Detect content type from source URL
-              const contentType = video.currentSrc.includes('.m3u8') 
-                ? 'application/x-mpegurl' 
-                : 'video/mp4';
-              
-              const mediaInfo = new chrome.cast.media.MediaInfo(video.currentSrc, contentType);
-              mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
-              mediaInfo.metadata.title = urlParams.get('title') || document.title || 'PeeStream Player';
-              mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
-              
-              const request = new chrome.cast.media.LoadRequest(mediaInfo);
-              request.currentTime = video.currentTime || 0;
-              request.autoplay = !video.paused;
-              
-              console.log('Casting media:', contentType, video.currentSrc.substring(0, 100));
-              
-              cast.framework.CastContext.getInstance().requestSession().then(() => {
-                const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
-                castSession.loadMedia(request).then(() => {
-                  console.log('Cast session started');
-                  castBtn.classList.add('casting'); // Add casting class for purple color
-                }).catch(err => console.error('Failed to load media:', err));
-              }).catch(err => {
-                if (err !== 'cancel') console.error('Failed to request cast session:', err);
-              });
-            }
-          } else {
-            // Fallback: Show cast-compatible devices if available via WebRTC Remote Playback API
-            if (video.remote && video.remote.state === 'disconnected') {
-              video.remote.prompt().catch(err => console.error('Remote playback failed:', err));
-            } else if (video.remote && video.remote.state === 'connected') {
-              video.remote.cancelWatchAvailability();
-            } else {
-              alert('Cast is not available. Please ensure you have a Chromecast device on your network.');
-            }
-          }
-        } catch (e) {
-          console.error("Failed to trigger Cast:", e);
-        }
-      };
-      
-      // Attach handler to cast button
-      castBtn.addEventListener('click', handleCastClick);
 
       // Keyboard Listeners
       window.addEventListener('keydown', (e) => {
