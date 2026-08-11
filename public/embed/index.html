@@ -16,6 +16,19 @@
   <!-- HlsJS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.0/dist/hls.min.js"></script>
   
+  <!-- Google Cast SDK (button stays hidden until the SDK is genuinely available) -->
+  <script data-cfasync="false" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+  <script data-cfasync="false">
+    window.__castReady = [];
+    window['__onGCastApiAvailable'] = function (isAvailable) {
+      if (!isAvailable) return;
+      window.__castReady.forEach(function (cb) {
+        try { cb(); } catch (e) { console.warn('Cast init:', e); }
+      });
+    };
+    window.__whenCastReady = function (cb) { window.__castReady.push(cb); };
+  </script>
+  
   <!-- OpenPanel Analytics -->
   <script>
     window.op = window.op || function(...args) {
@@ -673,6 +686,16 @@
       opacity: 1;
       color: var(--accent-color);
       background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Cast button: hidden until the Cast SDK is actually available */
+    .control-btn[hidden] {
+      display: none !important;
+    }
+
+    #ctrl-cast.casting {
+      color: var(--accent-color);
+      opacity: 1;
     }
 
     /* Vertical Volume Controller */
@@ -2102,6 +2125,9 @@ body::before {
                 </div>
               </div>
               
+              <button id="ctrl-cast" class="control-btn" title="Cast to TV" hidden>
+                <i class="fa-solid fa-cast"></i>
+              </button>
               <button id="ctrl-fullscreen" class="control-btn" title="Fullscreen (F)"><i class="fa-solid fa-expand"></i></button>
             </div>
             
@@ -3593,6 +3619,69 @@ body::before {
         }
       });
 
+
+      // Google Cast (proper SDK integration — button only appears when available)
+      const castBtn = document.getElementById('ctrl-cast');
+      if (castBtn && window.__whenCastReady) {
+        window.__whenCastReady(() => {
+          try {
+            const context = cast.framework.CastContext.getInstance();
+            context.setOptions({
+              receiverApplicationId: 'CC1AD845',
+              autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+            });
+
+            const buildLoadRequest = () => {
+              const contentType = video.currentSrc.indexOf('.m3u8') !== -1
+                ? 'application/x-mpegurl'
+                : 'video/mp4';
+              const mediaInfo = new chrome.cast.media.MediaInfo(video.currentSrc, contentType);
+              mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+              mediaInfo.metadata.title = urlParams.get('title') || document.title || 'PeeStream Player';
+              mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
+              const request = new chrome.cast.media.LoadRequest(mediaInfo);
+              request.currentTime = video.currentTime || 0;
+              request.autoplay = !video.paused;
+              return request;
+            };
+
+            const syncCastState = () => {
+              const session = context.getCurrentSession();
+              const isCasting = !!session && session.getSessionState() === cast.framework.SessionState.SESSION_STARTED;
+              castBtn.classList.toggle('casting', isCasting);
+              castBtn.title = isCasting ? 'Stop casting' : 'Cast to TV';
+            };
+
+            context.addEventListener(
+              cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
+              (e) => {
+                if (e.sessionState === cast.framework.SessionState.SESSION_STARTED && !video.paused) {
+                  video.pause();
+                }
+                syncCastState();
+              }
+            );
+
+            castBtn.addEventListener('click', () => {
+              const session = context.getCurrentSession();
+              if (session && session.getSessionState() === cast.framework.SessionState.SESSION_STARTED) {
+                context.endCurrentSession(true);
+                return;
+              }
+              if (!video.currentSrc) return;
+              context.requestSession().then(() => {
+                const s = context.getCurrentSession();
+                if (s && s.loadMedia) s.loadMedia(buildLoadRequest());
+              }).catch(() => {});
+            });
+
+            syncCastState();
+            castBtn.hidden = false;
+          } catch (e) {
+            console.warn('Cast unavailable:', e);
+          }
+        });
+      }
 
       // Keyboard Listeners
       window.addEventListener('keydown', (e) => {
