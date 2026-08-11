@@ -16,9 +16,6 @@
   <!-- HlsJS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.0/dist/hls.min.js"></script>
   
-  <!-- Google Cast SDK -->
-  <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
-  
   <!-- OpenPanel Analytics -->
   <script>
     window.op = window.op || function(...args) {
@@ -653,7 +650,7 @@
     .controls-left, .controls-right {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 8px;
     }
 
     .control-btn {
@@ -2229,27 +2226,6 @@ body::before {
       landingView.style.display = 'flex';
       playerView.style.display = 'none';
     }
-
-    // Initialize Google Cast SDK
-    window['__onGCastApiAvailable'] = function(isAvailable) {
-      if (isAvailable) {
-        try {
-          if (window.cast && window.cast.framework) {
-            cast.framework.CastContext.getInstance().setOptions({
-              receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
-              autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-            });
-            console.log('Google Cast SDK initialized');
-          } else {
-            console.warn('Cast SDK loaded but framework not available');
-          }
-        } catch (e) {
-          console.warn('Failed to initialize Cast SDK:', e);
-        }
-      } else {
-        console.warn('Google Cast API not available');
-      }
-    };
 
     // ----------------------------------
     // LANDING VIEW JAVASCRIPT LOGIC
