@@ -2126,7 +2126,9 @@ body::before {
                 </div>
               </div>
               
-              <button id="ctrl-cast" class="control-btn" title="Cast"><i class="fa-solid fa-cast"></i></button>
+              <button id="ctrl-cast" class="control-btn ctrl-cast-btn" title="Cast to Chromecast">
+                <i class="fa-solid fa-cast"></i>
+              </button>
               <button id="ctrl-fullscreen" class="control-btn" title="Fullscreen (F)"><i class="fa-solid fa-expand"></i></button>
             </div>
             
@@ -2397,9 +2399,29 @@ body::before {
     if (castBtn) {
       castBtn.style.display = 'flex';
       castBtn.style.color = '#fff';
-      castBtn.style.opacity = '0.8';
+      castBtn.style.opacity = '1';
       castBtn.style.visibility = 'visible';
-      console.log('Cast button initialized:', castBtn, 'Visible:', window.getComputedStyle(castBtn).display);
+      
+      // Debug: Log all computed styles
+      const styles = window.getComputedStyle(castBtn);
+      console.log('Cast button initialized:', castBtn, 'Visible:', styles.display);
+      console.log('Cast button position:', castBtn.getBoundingClientRect());
+      console.log('Cast button computed styles:', {
+        display: styles.display,
+        visibility: styles.visibility,
+        opacity: styles.opacity,
+        color: styles.color,
+        width: styles.width,
+        height: styles.height,
+        position: styles.position,
+        zIndex: styles.zIndex,
+        transform: styles.transform
+      });
+      
+      // Check if it's actually in viewport
+      const rect = castBtn.getBoundingClientRect();
+      console.log('Is in viewport?', rect.top >= 0 && rect.left >= 0 && rect.bottom <= window.innerHeight && rect.right <= window.innerWidth);
+      console.log('Rect details:', rect);
     } else {
       console.error('Cast button not found in DOM!');
     }
@@ -3652,7 +3674,7 @@ body::before {
       });
 
       // Google Cast
-      castBtn.addEventListener('click', () => {
+      const handleCastClick = () => {
         try {
           // Check if Cast SDK is fully loaded and initialized
           if (!window.cast || !window.cast.framework) {
@@ -3690,7 +3712,7 @@ body::before {
               
               const mediaInfo = new chrome.cast.media.MediaInfo(video.currentSrc, contentType);
               mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
-              mediaInfo.metadata.title = params.get('title') || document.title || 'PeeStream Player';
+              mediaInfo.metadata.title = urlParams.get('title') || document.title || 'PeeStream Player';
               mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
               
               const request = new chrome.cast.media.LoadRequest(mediaInfo);
@@ -3722,7 +3744,10 @@ body::before {
         } catch (e) {
           console.error("Failed to trigger Cast:", e);
         }
-      });
+      };
+      
+      // Attach handler to cast button
+      castBtn.addEventListener('click', handleCastClick);
 
       // Keyboard Listeners
       window.addEventListener('keydown', (e) => {
