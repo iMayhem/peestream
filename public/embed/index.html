@@ -16,6 +16,9 @@
   <!-- HlsJS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.0/dist/hls.min.js"></script>
   
+  <!-- Google Cast SDK -->
+  <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+  
   <!-- OpenPanel Analytics -->
   <script>
     window.op = window.op || function(...args) {
@@ -2102,7 +2105,7 @@ body::before {
                 </div>
               </div>
               
-              <button id="ctrl-pip" class="control-btn" title="Picture in Picture"><i class="fa-solid fa-window-restore"></i></button>
+              <button id="ctrl-cast" class="control-btn" title="Cast"><i class="fa-solid fa-cast"></i></button>
               <button id="ctrl-fullscreen" class="control-btn" title="Fullscreen (F)"><i class="fa-solid fa-expand"></i></button>
             </div>
             
@@ -2203,6 +2206,21 @@ body::before {
       landingView.style.display = 'flex';
       playerView.style.display = 'none';
     }
+
+    // Initialize Google Cast SDK
+    window['__onGCastApiAvailable'] = function(isAvailable) {
+      if (isAvailable) {
+        try {
+          cast.framework.CastContext.getInstance().setOptions({
+            receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+            autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+          });
+          console.log('Google Cast SDK initialized');
+        } catch (e) {
+          console.warn('Failed to initialize Cast SDK:', e);
+        }
+      }
+    };
 
     // ----------------------------------
     // LANDING VIEW JAVASCRIPT LOGIC
@@ -2338,7 +2356,7 @@ const hideLoadingOverlay = () => {
     const qualityMenu = document.getElementById('quality-menu');
     const qualitiesList = document.getElementById('qualities-list');
     const qualityMenuContainer = document.getElementById('quality-menu-container');
-    const pipBtn = document.getElementById('ctrl-pip');
+    const castBtn = document.getElementById('ctrl-cast');
     const fullscreenBtn = document.getElementById('ctrl-fullscreen');
     
     const progressArea = document.getElementById('progress-area');
@@ -2359,7 +2377,7 @@ const hideLoadingOverlay = () => {
       const mute = optMute.checked ? '&muted=true' : '';
       
       const embedUrl = `${currentUrl.origin}${currentUrl.pathname}?tmdbId=${tmdbId}&type=${type}${season ? `&season=${season}` : ''}${episode ? `&episode=${episode}` : ''}&title=${encodeURIComponent(title)}${autoplay}${mute}`;
-      iframeCodeInput.value = `<iframe src="${embedUrl}" width="100%" height="100%" frameborder="0" scrolling="no" referrerpolicy="origin" allowfullscreen allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"></iframe>`;
+      iframeCodeInput.value = `<iframe src="${embedUrl}" width="100%" height="100%" frameborder="0" scrolling="no" referrerpolicy="origin" allowfullscreen allow="autoplay; fullscreen; clipboard-write; encrypted-media"></iframe>`;
     }
     
     // Embed drawer open/close
@@ -3588,16 +3606,48 @@ const hideLoadingOverlay = () => {
         }
       });
 
-      // Picture-in-Picture
-      pipBtn.addEventListener('click', async () => {
+      // Google Cast
+      castBtn.addEventListener('click', () => {
         try {
-          if (document.pictureInPictureElement) {
-            await document.exitPictureInPicture();
-          } else if (document.pictureInPictureEnabled) {
-            await video.requestPictureInPicture();
+          if (window.chrome && window.chrome.cast && window.chrome.cast.isAvailable) {
+            // Google Cast SDK available
+            const session = cast.framework.CastContext.getInstance().getCurrentSession();
+            if (session && session.getSessionState() === cast.framework.SessionState.SESSION_STARTED) {
+              // Already casting - stop it
+              cast.framework.CastContext.getInstance().endCurrentSession(true);
+            } else {
+              // Start casting
+              const mediaInfo = new chrome.cast.media.MediaInfo(video.currentSrc, 'video/mp4');
+              mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+              mediaInfo.metadata.title = document.title || 'PeeStream Player';
+              mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
+              
+              const request = new chrome.cast.media.LoadRequest(mediaInfo);
+              request.currentTime = video.currentTime;
+              request.autoplay = !video.paused;
+              
+              cast.framework.CastContext.getInstance().requestSession().then(() => {
+                const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
+                castSession.loadMedia(request).then(() => {
+                  console.log('Cast session started');
+                  castBtn.style.color = '#8b5cf6'; // Purple when casting
+                }).catch(err => console.error('Failed to load media:', err));
+              }).catch(err => {
+                if (err !== 'cancel') console.error('Failed to request cast session:', err);
+              });
+            }
+          } else {
+            // Fallback: Show cast-compatible devices if available via WebRTC Remote Playback API
+            if (video.remote && video.remote.state === 'disconnected') {
+              video.remote.prompt().catch(err => console.error('Remote playback failed:', err));
+            } else if (video.remote && video.remote.state === 'connected') {
+              video.remote.cancelWatchAvailability();
+            } else {
+              alert('Cast is not available. Please ensure you have a Chromecast device on your network.');
+            }
           }
         } catch (e) {
-          console.error("Failed to trigger PiP:", e);
+          console.error("Failed to trigger Cast:", e);
         }
       });
 
