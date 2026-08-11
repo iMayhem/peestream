@@ -3174,14 +3174,7 @@ const hideLoadingOverlay = () => {
               subtitlesList.appendChild(btn);
             });
 
-            // Auto-select English or first subtitle & PREFETCH IMMEDIATELY in parallel
-            let targetIndex = activeSubtitles.findIndex(s => s.language === 'en' || s.language === 'eng');
-            if (targetIndex === -1) targetIndex = 0;
-
-            if (targetIndex !== -1 && subtitlesList.children[targetIndex + 1]) {
-              const targetBtn = subtitlesList.children[targetIndex + 1];
-              selectSubtitle(targetIndex, targetBtn);
-            }
+            // Subtitles stay OFF by default; the user picks one from the menu.
           }
         }
       } catch (e) {
