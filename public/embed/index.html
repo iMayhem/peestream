@@ -695,11 +695,6 @@
       background: rgba(255, 255, 255, 0.05);
     }
 
-    /* Cast button: hidden until the Cast SDK is actually available */
-    .control-btn[hidden] {
-      display: none !important;
-    }
-
     #ctrl-cast.casting {
       color: var(--accent-color);
       opacity: 1;
@@ -2132,7 +2127,7 @@ body::before {
                 </div>
               </div>
               
-              <button id="ctrl-cast" class="control-btn" title="Cast to TV" hidden>
+              <button id="ctrl-cast" class="control-btn" title="Cast to TV">
                 <i class="fa-solid fa-cast"></i>
               </button>
               <button id="ctrl-fullscreen" class="control-btn" title="Fullscreen (F)"><i class="fa-solid fa-expand"></i></button>
@@ -3627,14 +3622,33 @@ body::before {
       });
 
 
-      // Google Cast (button reveals when Cast SDK or Remote Playback API is available)
+      // Google Cast (always visible; routes to Cast SDK, Remote Playback, or a clean toast)
       const castBtn = document.getElementById('ctrl-cast');
-      if (castBtn && window.__whenCastReady) {
+      if (castBtn) {
         const canRemotePlayback = !!(video.remote && typeof video.remote.prompt === 'function');
-        const revealCastBtn = () => {
-          if (!window.__castAvailable && !canRemotePlayback) return;
-          castBtn.hidden = false;
+        let castToastTimer;
+        const showCastToast = (msg) => {
+          let t = document.getElementById('cast-toast');
+          if (!t) {
+            t = document.createElement('div');
+            t.id = 'cast-toast';
+            t.style.cssText = 'position:absolute;left:50%;bottom:56px;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;padding:9px 14px;border-radius:8px;font-size:0.85rem;z-index:999;pointer-events:none;opacity:0;transition:opacity 0.25s;white-space:nowrap';
+            videoContainer.appendChild(t);
+          }
+          t.textContent = msg;
+          t.style.opacity = '1';
+          clearTimeout(castToastTimer);
+          castToastTimer = setTimeout(() => { t.style.opacity = '0'; }, 2200);
         };
+
+        castBtn.addEventListener('click', () => {
+          if (window.__castAvailable) return;
+          if (canRemotePlayback) {
+            video.remote.prompt().catch(() => {});
+          } else {
+            showCastToast('Casting is not supported in this browser');
+          }
+        });
 
         window.__whenCastReady(() => {
           try {
@@ -3681,7 +3695,10 @@ body::before {
                 context.endCurrentSession(true);
                 return;
               }
-              if (!video.currentSrc) return;
+              if (!video.currentSrc) {
+                showCastToast('No video loaded yet');
+                return;
+              }
               context.requestSession().then(() => {
                 const s = context.getCurrentSession();
                 if (s && s.loadMedia) s.loadMedia(buildLoadRequest());
@@ -3693,14 +3710,6 @@ body::before {
             console.warn('Cast unavailable:', e);
           }
         });
-
-        revealCastBtn();
-        if (canRemotePlayback) {
-          castBtn.addEventListener('click', () => {
-            if (window.__castAvailable) return;
-            video.remote.prompt().catch(() => {});
-          });
-        }
       }
 
       // Keyboard Listeners
