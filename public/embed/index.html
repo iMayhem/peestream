@@ -2484,10 +2484,13 @@ body::before {
     }
 
     function loadActivatedServers() {
-      fetch(`https://providers.peestream.in/api/providers`)
-        .then(r => r.json())
-        .then(data => {
-          applyActivatedServers(data, { autoStart: true });
+        fetch(`https://hahaevilcraft.site/api/embed-servers`)
+          .then(r => r.json())
+          .then(data => {
+          const serverMap = Array.isArray(data)
+            ? Object.fromEntries(data.map(server => [server.id, server]))
+            : data;
+          applyActivatedServers(serverMap, { autoStart: true });
           if (!activatedServersPoll) activatedServersPoll = setInterval(() => {
             fetch('https://providers.peestream.in/api/providers').then(r => r.json()).then(data => applyActivatedServers(data)).catch(() => {});
           }, 10000);
