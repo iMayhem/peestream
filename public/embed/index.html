@@ -2626,9 +2626,14 @@ body::before {
         loadingOverlay.style.display = 'flex';
         autoScrapes.add(next.id);
         handleServerClick(next.id, { auto: true });
-      } else {
+      } else if (targetedScrapes.size === 0) {
         clLog('error', 'all activated servers returned no streams');
         loaderStatus.innerText = 'No streams found on any server.';
+        loadingOverlay.classList.remove('hidden');
+        loadingOverlay.style.display = 'flex';
+      } else {
+        clLog('warn', 'no new server available yet, waiting for in-progress scrapes');
+        loaderStatus.innerText = 'Still searching for streams...';
         loadingOverlay.classList.remove('hidden');
         loadingOverlay.style.display = 'flex';
       }
@@ -2740,8 +2745,12 @@ body::before {
               loadingOverlay.style.display = 'none';
             }, 2500);
             clLog('warn', `server ${sourceId} has no streams, continuing playback`);
+          } else if (targetedScrapes.size === 0) {
+            loaderStatus.innerText = 'No streams found on any server.';
+            loadingOverlay.classList.remove('hidden');
+            loadingOverlay.style.display = 'flex';
           } else {
-            loaderStatus.innerText = 'No stream found. Trying next...';
+            loaderStatus.innerText = 'Still searching for streams...';
             loadingOverlay.classList.remove('hidden');
             loadingOverlay.style.display = 'flex';
           }
@@ -2762,8 +2771,12 @@ body::before {
             autoAdvanceFrom(sourceId);
             return;
           }
-          if (!activeServerId) {
+          if (!activeServerId && targetedScrapes.size === 0) {
             loaderStatus.innerText = 'Connection lost. Please refresh.';
+            loadingOverlay.classList.remove('hidden');
+            loadingOverlay.style.display = 'flex';
+          } else if (!activeServerId) {
+            loaderStatus.innerText = 'Still searching for streams...';
             loadingOverlay.classList.remove('hidden');
             loadingOverlay.style.display = 'flex';
           } else {
