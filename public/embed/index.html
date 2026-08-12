@@ -2481,6 +2481,16 @@ body::before {
               handleServerClick(top.id, { auto: true });
             }
           }
+          // Late-arriving servers: if nothing is playing and no scrape is in flight,
+          // auto-try the best remaining server instead of sitting on a dead message.
+          if (!autoStart && !activeServerId && resolvedStreams.length === 0 && targetedScrapes.size === 0) {
+            const candidate = enabledServers.find(s => !failedStreamIds.has(s.id));
+            if (candidate) {
+              clLog('info', `no active stream, auto-trying newly available server ${candidate.name} (${candidate.id})`);
+              autoScrapes.add(candidate.id);
+              handleServerClick(candidate.id, { auto: true });
+            }
+          }
     }
 
     function loadActivatedServers() {
