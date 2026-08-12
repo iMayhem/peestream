@@ -2458,23 +2458,39 @@ body::before {
       } catch (e) {}
     }
 
+    let activatedServersPoll = null;
+
+    function applyActivatedServers(data, { autoStart = false } = {}) {
+          const previous = new Map(enabledServers.map(s => [s.id, s]));
+          enabledServers = Object.entries(data)
+            .filter(([, m]) => m.enabled)
+            .sort((a, b) => (a[1].priority || 999) - (b[1].priority || 999))
+            .map(([id, m]) => ({ ...previous.get(id), id, name: m.name || id, status: previous.get(id)?.status || 'idle', error: previous.get(id)?.error || '' }));
+          renderOverlayServers();
+          updateServerMenuUI();
+          if (enabledServers.length === 0) loaderStatus.innerText = 'No activated servers';
+          if (activeServerId && !enabledServers.some(s => s.id === activeServerId)) {
+            activeServerId = null;
+            if (resolvedStreams.length) switchServer(resolvedStreams[0].id);
+          }
+          if (autoStart) {
+            const top = enabledServers[0];
+            if (top) {
+              clLog('info', `auto-loading top server ${top.name} (${top.id})`);
+              autoScrapes.add(top.id);
+              handleServerClick(top.id, { auto: true });
+            }
+          }
+    }
+
     function loadActivatedServers() {
       fetch(`https://providers.peestream.in/api/providers`)
         .then(r => r.json())
         .then(data => {
-          enabledServers = Object.entries(data)
-            .filter(([, m]) => m.enabled)
-            .sort((a, b) => (a[1].priority || 999) - (b[1].priority || 999))
-            .map(([id, m]) => ({ id, name: m.name || id, status: 'idle', error: '' }));
-          renderOverlayServers();
-          updateServerMenuUI();
-          if (enabledServers.length === 0) loaderStatus.innerText = 'No activated servers';
-          const top = enabledServers[0];
-          if (top) {
-            clLog('info', `auto-loading top server ${top.name} (${top.id})`);
-            autoScrapes.add(top.id);
-            handleServerClick(top.id, { auto: true });
-          }
+          applyActivatedServers(data, { autoStart: true });
+          if (!activatedServersPoll) activatedServersPoll = setInterval(() => {
+            fetch('https://providers.peestream.in/api/providers').then(r => r.json()).then(data => applyActivatedServers(data)).catch(() => {});
+          }, 10000);
         })
         .catch(() => {
           loaderStatus.innerText = 'Failed to load server list. Please refresh.';
