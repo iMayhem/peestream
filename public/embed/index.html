@@ -412,6 +412,37 @@
       border-color: rgba(0, 230, 118, 0.15);
     }
 
+    .server-rename-btn {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      color: var(--text-dim);
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .server-rename-btn:hover {
+      background: var(--accent-color);
+      color: #ffffff;
+      border-color: var(--accent-color);
+    }
+
+    .server-name-row {
+      display: flex;
+      align-items: center;
+    }
+
+    .server-item.off {
+      opacity: 0.45;
+    }
+
     .docs-grid {
       display: grid;
       grid-template-columns: 1fr;
@@ -562,7 +593,7 @@
         <h2 class="section-title">Servers on the label</h2>
         <p class="section-desc">We load balance and fetch media from multiple reliable stream sources automatically.</p>
 
-        <div class="server-list-card">
+        <div id="server-list" class="server-list-card">
           <div class="server-item">
             <div class="server-index">01</div>
             <div class="server-info">
@@ -669,6 +700,61 @@
     // ----------------------------------
     let currentTab = 'movie';
 
+    function loadServers() {
+      const container = document.getElementById('server-list');
+      if (!container) return;
+      fetch(`${window.location.origin}/api/providers`)
+        .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+        .then((providers) => {
+          const list = Object.entries(providers)
+            .sort((a, b) => (a[1].priority ?? 999) - (b[1].priority ?? 999));
+          container.innerHTML = list
+            .map(
+              ([id, p], i) => `
+              <div class="server-item ${p.enabled ? '' : 'off'}">
+                <div class="server-index">${String(i + 1).padStart(2, '0')}</div>
+                <div class="server-info">
+                  <div class="server-name-row">
+                    <div class="server-name">${escapeHtml(p.name || id)}</div>
+                    <button class="server-rename-btn" title="Rename scraper" onclick="renameServer('${escapeHtml(id)}')">
+                      <i class="fa-solid fa-pen"></i>
+                    </button>
+                  </div>
+                  <div class="server-blurb">${escapeHtml(id)}</div>
+                </div>
+                <div class="server-badge ${p.enabled ? 'high' : ''}">${p.enabled ? 'enabled' : 'disabled'}</div>
+              </div>`
+            )
+            .join('');
+        })
+        .catch(() => {
+          // keep the static fallback list
+        });
+    }
+
+    function renameServer(id) {
+      const current = prompt(`Rename scraper "${id}" (leave empty to reset to default):`);
+      if (current === null) return;
+      const name = current.trim();
+      fetch(`${window.location.origin}/api/providers/${encodeURIComponent(id)}/name`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      })
+        .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+        .then(() => {
+          loadServers();
+          alert(name ? `Scraper renamed to "${name}". The peestream player will show it within a few minutes.` : `Scraper name reset to default.`);
+        })
+        .catch(() => alert('Failed to rename scraper.'));
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+      }[c]));
+    }
+
     function switchTab(tab) {
       currentTab = tab;
       const tabMovie = document.getElementById('tab-movie');
@@ -751,6 +837,8 @@
         console.error("Failed to copy:", err);
       });
     }
+
+    loadServers();
   </script>
 </body>
 </html>
