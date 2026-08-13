@@ -4,18 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>peestream - Ultimate Embed Player</title>
-  
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
-  
+
   <!-- Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- HlsJS CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.0/dist/hls.min.js"></script>
-  
+
   <!-- OpenPanel Analytics -->
   <script>
     window.op = window.op || function(...args) {
@@ -29,7 +26,7 @@
     });
   </script>
   <script src="https://openpanel.dev/op1.js" async defer></script>
-  
+
   <!-- Popup Ad (isolated iframe so its overlays/capture events never cover the player controls) -->
   <iframe id="ad-sandbox" aria-hidden="true" tabindex="-1" style="position:absolute;width:0;height:0;border:0;left:-9999px;top:-9999px;visibility:hidden" sandbox="allow-scripts allow-popups allow-same-origin allow-popups-to-escape-sandbox"></iframe>
   <script data-cfasync="false">
@@ -63,18 +60,17 @@
       margin: 0;
       padding: 0;
     }
-    
+
     body, html {
       width: 100%;
       height: 100%;
-      background-color: var(--bg-color);
+      background-color: #000000;
       font-family: 'DM Sans', sans-serif;
       color: var(--text-color);
       scroll-behavior: smooth;
       overflow: hidden;
     }
-    
-    /* Custom Scrollbar */
+
     ::-webkit-scrollbar {
       width: 6px;
     }
@@ -107,9 +103,9 @@
       flex-direction: column;
       align-items: center;
       padding-bottom: 80px;
+      background-color: var(--bg-color);
     }
 
-    /* Navigation Header */
     .nav-header {
       width: 100%;
       max-width: 1200px;
@@ -149,7 +145,6 @@
       color: #ffffff;
     }
 
-    /* Hero Section */
     .hero-container {
       width: 100%;
       max-width: 1200px;
@@ -181,7 +176,6 @@
       line-height: 1.6;
     }
 
-    /* Generator Box */
     .generator-box {
       width: 100%;
       max-width: 580px;
@@ -299,14 +293,14 @@
       overflow: hidden;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
     }
-    
+
     .preview-iframe {
       width: 100%;
       height: 100%;
       border: none;
       display: none;
     }
-    
+
     .preview-placeholder {
       display: flex;
       flex-direction: column;
@@ -317,7 +311,7 @@
       text-align: center;
       padding: 20px;
     }
-    
+
     .preview-placeholder i {
       font-size: 2.8rem;
       color: var(--accent-color);
@@ -329,7 +323,7 @@
       border: 1px solid var(--border-color) !important;
       box-shadow: none !important;
     }
-    
+
     .preview-btn:hover {
       background: rgba(255, 255, 255, 0.08) !important;
       border-color: rgba(255, 255, 255, 0.15) !important;
@@ -338,7 +332,6 @@
       box-shadow: none !important;
     }
 
-    /* Section layout */
     .section-container {
       width: 100%;
       max-width: 1000px;
@@ -360,7 +353,6 @@
       margin-bottom: 25px;
     }
 
-    /* Servers Section */
     .server-list-card {
       width: 100%;
       background: var(--card-bg);
@@ -420,7 +412,6 @@
       border-color: rgba(0, 230, 118, 0.15);
     }
 
-    /* Documentation Section */
     .docs-grid {
       display: grid;
       grid-template-columns: 1fr;
@@ -487,7 +478,7 @@
     }
 
     /* ----------------------------------
-       PLAYER VIEW STYLES (WITH TMDB ID)
+       PLAYER VIEW (smov frontend player)
        ---------------------------------- */
     .player-view {
       position: relative;
@@ -497,933 +488,26 @@
       display: none; /* Toggled by JS */
     }
 
-    /* Custom Video Player styling */
-    .video-container {
+    .smov-frame {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
-      position: relative;
+      border: 0;
       background: #000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-      user-select: none;
     }
-
-    .video-container video {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      cursor: pointer;
-    }
-
-    /* Player top bar — smov: title left, badge right, black gradient scrim */
-    .player-topbar {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      z-index: 6;
-      padding: 1.5rem 2rem 4rem 2rem;
-      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.75) 0%, transparent 100%);
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      transition: opacity 0.2s ease, transform 0.2s ease;
-      pointer-events: none;
-    }
-
-    .video-container.hide-controls ~ .player-topbar,
-    .video-container.hide-controls .player-topbar {
-      opacity: 0;
-      transform: translateY(-12px);
-      pointer-events: none;
-    }
-
-    .player-title-wrap {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
-    }
-
-    .player-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #fff;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 60vw;
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
-    }
-
-    .player-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      color: #a359ec;
-      background: rgba(163, 89, 236, 0.14);
-      border: 1px solid rgba(163, 89, 236, 0.3);
-      padding: 3px 10px;
-      border-radius: 9999px;
-      white-space: nowrap;
-    }
-
-    .player-badge .badge-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #a359ec;
-    }
-
-    .player-topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      pointer-events: auto;
-    }
-
-    /* Big play button (smov style: dark translucent circle, white icon) */
-    .big-play-btn {
-      position: absolute;
-      width: 84px;
-      height: 84px;
-      background: rgba(0, 0, 0, 0.55);
-      backdrop-filter: blur(6px);
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: #fff;
-      font-size: 2.1rem;
-      cursor: pointer;
-      z-index: 4;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      opacity: 0;
-      pointer-events: none;
-      transform: translate(-50%, -50%) scale(0.8);
-      left: 50%;
-      top: 50%;
-      padding-left: 6px;
-    }
-    .big-play-btn.show {
-      opacity: 1;
-      pointer-events: auto;
-      transform: translate(-50%, -50%) scale(1);
-    }
-    .big-play-btn:hover {
-      background: rgba(255, 255, 255, 0.18);
-      transform: translate(-50%, -50%) scale(1.06);
-    }
-
-    /* Controls overlay — smov: black gradient scrim, slide-up */
-    .video-controls {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.45) 55%, transparent 100%);
-      padding: 28px 2rem 16px 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      z-index: 5;
-      transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      opacity: 1;
-    }
-
-    .video-container.hide-controls .video-controls {
-      opacity: 0;
-      transform: translateY(12px);
-      pointer-events: none;
-    }
-
-    .video-container.hide-controls .video-controls:has(.control-menu.show) {
-      opacity: 1;
-      transform: none;
-      pointer-events: auto;
-    }
-
-    .video-container.hide-controls {
-      cursor: none;
-    }
-
-    /* Progress seeker styling — smov: thin bar, purple fill, white dot thumb */
-    .progress-area {
-      width: 100%;
-      height: 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-    }
-
-    .progress-bar {
-      width: 100%;
-      height: 4px;
-      background: rgba(127, 141, 155, 0.25);
-      border-radius: 9999px;
-      position: relative;
-      transition: height 0.1s ease;
-    }
-
-    .progress-area:hover .progress-bar {
-      height: 6px;
-    }
-
-    .buffered-bar {
-      position: absolute;
-      height: 100%;
-      background: rgba(127, 141, 155, 0.5);
-      border-radius: 9999px;
-      left: 0;
-      width: 0%;
-    }
-
-    .current-progress {
-      position: absolute;
-      height: 100%;
-      background: #a359ec;
-      border-radius: 9999px;
-      left: 0;
-      width: 0%;
-    }
-
-    .progress-hover-dot {
-      position: absolute;
-      width: 16px;
-      height: 16px;
-      background: #fff;
-      border-radius: 50%;
-      top: 50%;
-      left: 0%;
-      transform: translate(-50%, -50%) scale(0);
-      transition: transform 0.1s ease;
-      box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
-      pointer-events: none;
-    }
-
-    .progress-area:hover .progress-hover-dot {
-      transform: translate(-50%, -50%) scale(1);
-    }
-
-    /* Controls layout — smov: rounded-full icon buttons, translucent hover circle */
-    .controls-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .controls-left, .controls-right {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-    }
-
-    .control-btn {
-      background: none;
-      border: none;
-      color: #fff;
-      font-size: 1.25rem;
-      cursor: pointer;
-      transition: all 0.1s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      border-radius: 9999px;
-      padding: 8px;
-    }
-
-    .control-btn:hover {
-      background: rgba(68, 84, 100, 0.5);
-    }
-
-    .control-btn:active {
-      transform: scale(1.1);
-    }
-
-    /* Vertical Volume Controller — smov: dark panel, purple slider */
-    .volume-container {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .volume-popup {
-      position: absolute;
-      bottom: 48px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 40px;
-      height: 120px;
-      background: #0c1216;
-      border: 1px solid #172532;
-      border-radius: 12px;
-      padding: 12px 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      z-index: 120;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
-    }
-
-    .volume-container:hover .volume-popup,
-    .volume-container:focus-within .volume-popup,
-    .volume-popup.show {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .volume-slider-vertical {
-      -webkit-appearance: slider-vertical;
-      writing-mode: bt-lr;
-      width: 6px;
-      height: 90px;
-      accent-color: #a359ec;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-
-    /* Time display — smov */
-    .time-display {
-      font-size: 0.9rem;
-      font-weight: 500;
-      color: #fff;
-      letter-spacing: 0.3px;
-      padding: 0 8px;
-      white-space: nowrap;
-    }
-
-    /* Dropdown Menus — smov context-menu panel */
-    .control-menu-container {
-      position: relative;
-    }
-
-    .control-menu {
-      position: absolute;
-      bottom: 48px;
-      right: -10px;
-      background: #0c1216;
-      border: 1px solid #172532;
-      border-radius: 14px;
-      padding: 8px 0;
-      width: 240px;
-      max-height: 300px;
-      overflow-y: auto;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-      display: none;
-      flex-direction: column;
-      z-index: 100;
-    }
-
-    .control-menu.show {
-      display: flex;
-    }
-
-    .control-menu::-webkit-scrollbar {
-      width: 4px;
-    }
-    .control-menu::-webkit-scrollbar-thumb {
-      background: rgba(127, 141, 155, 0.35);
-      border-radius: 4px;
-    }
-
-    .menu-header {
-      padding: 6px 16px;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #617a8a;
-      font-weight: 700;
-      border-bottom: 1px solid #172532;
-      margin-bottom: 5px;
-    }
-
-    .menu-option {
-      background: none;
-      border: none;
-      color: #a8a8b5;
-      font-family: 'DM Sans', sans-serif;
-      text-align: left;
-      padding: 9px 16px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      width: 100%;
-      transition: background 0.1s ease, color 0.1s ease;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .menu-option:hover {
-      background: #172532;
-      color: #fff;
-    }
-
-    .menu-option.active {
-      color: #a359ec;
-      font-weight: 700;
-    }
-
-    /* Server menu with realtime status */
-    #server-menu {
-      width: 240px;
-    }
-
-    .server-option {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 1px;
-    }
-
-    .server-option-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .server-status {
-      font-size: 0.75rem;
-      white-space: nowrap;
-    }
-
-    .server-status.live {
-      color: #22c55e;
-    }
-
-    .server-status.dead {
-      color: #ef4444;
-    }
-
-    .server-status.searching {
-      color: var(--accent-color);
-      animation: serverPulse 1s ease-in-out infinite;
-    }
-
-    .server-status.idle {
-      color: rgba(255, 255, 255, 0.35);
-    }
-
-    .server-sub {
-      font-size: 0.68rem;
-      color: rgba(255, 255, 255, 0.45);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    @keyframes serverPulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.35; }
-    }
-
-    /* Server picker buttons on the loading overlay */
-    .overlay-server-btn {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 9px;
-      color: #fff;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.82rem;
-      font-weight: 600;
-      letter-spacing: 0.4px;
-      padding: 9px 14px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      text-align: left;
-      width: 100%;
-    }
-
-    .overlay-server-btn:hover {
-      background: rgba(163, 89, 236, 0.18);
-      border-color: var(--accent-color, #a359ec);
-    }
-
-    .overlay-server-btn.searching {
-      border-color: var(--accent-color, #a359ec);
-      opacity: 0.9;
-    }
-
-    /* Subtitles rendering overlay — smov: bare text with soft shadow */
-    .subtitle-overlay {
-      position: absolute;
-      bottom: 95px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: transparent;
-      color: #fff;
-      padding: 0 16px;
-      border-radius: 0;
-      font-size: 1.25rem;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 4px rgba(0, 0, 0, 0.9);
-      text-align: center;
-      max-width: 85%;
-      pointer-events: none;
-      z-index: 6;
-      transition: bottom 0.25s ease;
-      line-height: 1.45;
-      font-weight: 500;
-      border: none;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-
-    .hide-controls ~ .subtitle-overlay {
-      bottom: 35px;
-    }
-
-    /* Loading Overlay */
-    .overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: #000000;
-      z-index: 10;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      transition: opacity 0.3s ease;
-    }
-    
-    .overlay.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-    
-    .loader-card {
-      width: 90%;
-      max-width: 450px;
-      padding: 35px 30px;
-      border-radius: 16px;
-      background: #0f0f1b;
-      border: 1px solid #172532;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transform: scale(1);
-      transition: transform 0.3s ease;
-    }
-    
-    .media-info {
-      margin-bottom: 22px;
-    }
-    
-    .media-title {
-      font-size: 1.6rem;
-      font-weight: 800;
-      margin-bottom: 6px;
-      color: #ffffff;
-      letter-spacing: -0.5px;
-    }
-    
-    .media-details {
-      font-size: 0.85rem;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    
-    .spinner-box {
-      position: relative;
-      width: 56px;
-      height: 56px;
-      margin-bottom: 24px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    
-    .spinner-pulse {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      border: 4px solid #fff;
-      border-bottom-color: transparent;
-      background: transparent;
-      animation: spin 0.8s linear infinite;
-    }
-    
-    .spinner-text {
-      display: none;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    .status-text {
-      font-size: 0.95rem;
-      font-weight: 500;
-      margin-bottom: 18px;
-      color: #fff;
-      letter-spacing: 0.2px;
-      opacity: 0.9;
-    }
-    
-    .progress-bar-container {
-      width: 100%;
-      height: 6px;
-      background-color: rgba(255, 255, 255, 0.04);
-      border-radius: 10px;
-      overflow: hidden;
-      margin-bottom: 25px;
-      border: 1px solid rgba(255, 255, 255, 0.02);
-    }
-    
-    .progress-bar-fill {
-      width: 0%;
-      height: 100%;
-      background: linear-gradient(90deg, #8e2de2, #4a00e0, var(--accent-hover));
-      border-radius: 10px;
-      box-shadow: 0 0 12px rgba(163, 89, 236, 0.8);
-      transition: width 0.4s cubic-bezier(0.1, 0.8, 0.3, 1);
-    }
-    
-    .sources-list {
-      width: 100%;
-      max-height: 180px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      padding-right: 5px;
-      margin-top: 5px;
-    }
-    
-    .sources-list::-webkit-scrollbar {
-      width: 4px;
-    }
-    
-    .sources-list::-webkit-scrollbar-thumb {
-      background-color: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-    }
-    
-    .source-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 16px;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.04);
-      border-radius: 14px;
-      font-size: 0.85rem;
-      transition: all 0.25s ease;
-    }
-    
-    .source-item:hover {
-      background: rgba(255, 255, 255, 0.04);
-      border-color: rgba(163, 89, 236, 0.15);
-    }
-    
-    .source-name {
-      font-weight: 600;
-      color: #dfdfea;
-      text-transform: capitalize;
-    }
-    
-    .source-status {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      padding: 4px 10px;
-      border-radius: 8px;
-      border: 1px solid transparent;
-    }
-    
-    .source-status.pending {
-      background: rgba(163, 89, 236, 0.08);
-      color: var(--accent-color);
-      border-color: rgba(163, 89, 236, 0.15);
-    }
-    
-    .source-status.success {
-      background: rgba(0, 230, 118, 0.08);
-      color: #00e676;
-      border-color: rgba(0, 230, 118, 0.15);
-      box-shadow: 0 0 10px rgba(0, 230, 118, 0.1);
-    }
-    
-    .source-status.failure {
-      background: rgba(255, 82, 82, 0.08);
-      color: #ff5252;
-      border-color: rgba(255, 82, 82, 0.15);
-    }
-    
-    .source-status.notfound {
-      background: rgba(255, 255, 255, 0.03);
-      color: var(--text-dim);
-      border-color: rgba(255, 255, 255, 0.05);
-    }
-    
-    /* Embed Code Drawer Button */
-    .embed-trigger-btn {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: rgba(15, 15, 27, 0.7);
-      border: 1px solid var(--border-color);
-      backdrop-filter: blur(8px);
-      color: #ffffff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      z-index: 5;
-      transition: all 0.2s ease;
-    }
-    
-    .embed-trigger-btn:hover {
-      background: rgba(163, 89, 236, 0.15);
-      border-color: var(--accent-color);
-      color: var(--accent-color);
-      transform: scale(1.05);
-    }
-    
-    /* Embed Code Drawer */
-    .embed-drawer {
-      position: absolute;
-      bottom: -320px;
-      left: 0;
-      width: 100%;
-      height: 300px;
-      background: rgba(7, 7, 10, 0.98);
-      border-top: 1px solid var(--border-color);
-      backdrop-filter: blur(20px);
-      z-index: 8;
-      transition: bottom 0.3s cubic-bezier(0.1, 0.8, 0.3, 1);
-      padding: 25px;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6);
-    }
-    
-    .embed-drawer.open {
-      bottom: 0;
-    }
-    
-    .drawer-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-    
-    .drawer-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #ffffff;
-    }
-    
-    .drawer-close-btn {
-      background: none;
-      border: none;
-      color: var(--text-dim);
-      font-size: 1.2rem;
-      cursor: pointer;
-      transition: color 0.2s ease;
-    }
-    
-    .drawer-close-btn:hover {
-      color: var(--accent-color);
-    }
-    
-    .drawer-content {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-    
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    
-    .input-label {
-      font-size: 0.75rem;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-weight: 600;
-    }
-    
-    .code-box-wrapper {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-    
-    .code-input {
-      width: 100%;
-      padding: 12px 14px;
-      padding-right: 90px;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      color: var(--accent-color);
-      font-family: monospace;
-      font-size: 0.8rem;
-      outline: none;
-      transition: border-color 0.2s ease;
-    }
-    
-    .code-input:focus {
-      border-color: rgba(163, 89, 236, 0.3);
-    }
-    
-    .copy-btn {
-      position: absolute;
-      right: 6px;
-      padding: 7px 14px;
-      background: var(--accent-color);
-      border: none;
-      border-radius: 6px;
-      color: #ffffff;
-      font-size: 0.75rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    
-    .copy-btn:hover {
-      background: var(--accent-hover);
-    }
-    
-    .options-row {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-    
-    .checkbox-label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.85rem;
-      color: var(--text-color);
-      cursor: pointer;
-    }
-    
-    .checkbox-label input {
-      accent-color: var(--accent-color);
-      width: 15px;
-      height: 15px;
-    }
-    
-    /* Error View */
-    .error-card {
-      display: none;
-      width: 90%;
-      max-width: 400px;
-      padding: 30px;
-      border-radius: 20px;
-      background: var(--card-bg);
-      border: 1px solid rgba(255, 82, 82, 0.2);
-      backdrop-filter: blur(10px);
-      text-align: center;
-      flex-direction: column;
-      align-items: center;
-      gap: 15px;
-    }
-    
-    .error-icon {
-      font-size: 2.8rem;
-      color: #ff5252;
-    }
-    
-    .error-title {
-      font-size: 1.2rem;
-      font-weight: 600;
-    }
-    
-    .error-desc {
-      font-size: 0.85rem;
-      color: var(--text-dim);
-      line-height: 1.4;
-    }
-    
-    .retry-btn {
-      padding: 10px 24px;
-      background: #ffffff;
-      color: #000000;
-      border: none;
-      border-radius: 8px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background 0.2s ease;
-      margin-top: 10px;
-    }
-    
-    .retry-btn:hover {
-      background: #dedede;
-    }
-
-    #debug-console {
-      position: fixed;
-      z-index: 50;
-      left: 10px;
-      right: 10px;
-      bottom: 10px;
-      max-height: 180px;
-      overflow-y: auto;
-      padding: 8px 10px;
-      border: 1px solid rgba(255,255,255,.18);
-      border-radius: 8px;
-      background: rgba(8, 10, 16, .92);
-      color: #d8dee9;
-      font: 11px/1.45 monospace;
-      text-align: left;
-      pointer-events: none;
-      white-space: pre-wrap;
-    }
-    .debug-log-line { margin: 2px 0; }
-    .debug-log-line.log-error { color: #ff7676; }
-    .debug-log-line.log-warn { color: #ffd166; }
-    .debug-log-line.log-success { color: #72e6a8; }
   </style>
 </head>
 <body>
 
   <div id="app">
-    
+
     <!-- ----------------------------------
          1. LANDING VIEW (No tmdbId provided)
          ---------------------------------- -->
     <div id="landing-view" class="landing-view" style="display: none;">
-      
-      <!-- Nav Header -->
+
       <header class="nav-header">
         <a href="/embed/" class="brand-logo">
           pee<span>stream</span>
@@ -1433,8 +517,7 @@
           <a href="#docs" class="nav-link-item">Documentation</a>
         </nav>
       </header>
-      
-      <!-- Hero Section -->
+
       <section class="hero-container">
         <h1 class="hero-title">
           the ultimate embed<br>pee<span class="logo-stream">stream</span> player
@@ -1442,21 +525,20 @@
         <p class="hero-subtitle">
           Ultra-fast, ad-free movie and TV show embedding. Powering your site's media player with high-compatibility stream providers.
         </p>
-        
-        <!-- Generator Box -->
+
         <div class="generator-box">
           <div class="tab-switcher">
             <button id="tab-movie" class="tab-btn active" onclick="switchTab('movie')">Movie</button>
             <button id="tab-show" class="tab-btn" onclick="switchTab('show')">TV Show</button>
           </div>
-          
+
           <div class="input-row">
             <input type="text" id="input-tmdb" class="gen-input flex-main" placeholder="TMDB ID (e.g. 157336)">
-            
+
             <input type="text" id="input-season" class="gen-input width-small" placeholder="S" style="display: none;">
             <input type="text" id="input-episode" class="gen-input width-small" placeholder="E" style="display: none;">
           </div>
-          
+
           <div style="display: flex; gap: 12px; width: 100%;">
             <button class="play-btn" style="flex: 1;" onclick="generateAndPlay()">
               <i class="fa-solid fa-expand"></i> Standalone
@@ -1467,7 +549,6 @@
           </div>
         </div>
 
-        <!-- Live Preview Container -->
         <div id="live-preview-section" class="preview-container">
           <div id="preview-placeholder" class="preview-placeholder">
             <i class="fa-solid fa-tv"></i>
@@ -1476,12 +557,11 @@
           <iframe id="preview-iframe" class="preview-iframe" allowfullscreen allow="autoplay; encrypted-media"></iframe>
         </div>
       </section>
-      
-      <!-- Servers Section -->
+
       <section id="servers" class="section-container">
         <h2 class="section-title">Servers on the label</h2>
         <p class="section-desc">We load balance and fetch media from multiple reliable stream sources automatically.</p>
-        
+
         <div class="server-list-card">
           <div class="server-item">
             <div class="server-index">01</div>
@@ -1491,7 +571,7 @@
             </div>
             <div class="server-badge high">high speed</div>
           </div>
-          
+
           <div class="server-item">
             <div class="server-index">02</div>
             <div class="server-info">
@@ -1500,7 +580,7 @@
             </div>
             <div class="server-badge high">high speed</div>
           </div>
-          
+
           <div class="server-item">
             <div class="server-index">03</div>
             <div class="server-info">
@@ -1511,12 +591,11 @@
           </div>
         </div>
       </section>
-      
-      <!-- Documentation Section -->
+
       <section id="docs" class="section-container">
         <h2 class="section-title">Documentation</h2>
         <p class="section-desc">Implement peestream easily using our standard iframe URL templates.</p>
-        
+
         <div class="docs-grid">
           <div class="doc-card">
             <div class="doc-card-title">Movies API</div>
@@ -1525,7 +604,7 @@
               <i class="fa-regular fa-copy"></i> copy url template
             </button>
           </div>
-          
+
           <div class="doc-card">
             <div class="doc-card-title">TV Shows API</div>
             <div class="doc-code-block" id="code-tv-tpl">https://peestream.in/embed/?tmdbId={tmdbId}&type=tv&season={season}&episode={episode}</div>
@@ -1535,253 +614,61 @@
           </div>
         </div>
       </section>
-      
+
     </div>
 
     <!-- ----------------------------------
-         2. PLAYER VIEW (tmdbId is provided)
+         2. PLAYER VIEW (tmdbId provided)
+         Loads the real peestream smov player
          ---------------------------------- -->
     <div id="player-view" class="player-view">
-      
-      <!-- Custom Video Container -->
-      <div id="video-container" class="video-container hide-controls">
-        <video id="main-video" playsinline></video>
-        
-        <!-- Big Play Button Overlay -->
-        <div id="big-play-btn" class="big-play-btn">
-          <i class="fa-solid fa-play"></i>
-        </div>
-        
-        <!-- Custom Controls Overlay -->
-        <div id="video-controls" class="video-controls">
-          
-          <!-- Top Progress Area -->
-          <div id="progress-area" class="progress-area">
-            <div class="progress-bar">
-              <div id="buffered-bar" class="buffered-bar"></div>
-              <div id="current-progress" class="current-progress"></div>
-              <div id="progress-hover-dot" class="progress-hover-dot"></div>
-            </div>
-          </div>
-          
-          <!-- Buttons and Time Display -->
-          <div class="controls-row">
-            
-            <div class="controls-left">
-              <button id="ctrl-play" class="control-btn" title="Play (Space)"><i class="fa-solid fa-play"></i></button>
-              <button id="ctrl-skip-back" class="control-btn" title="Back 10 seconds"><i class="fa-solid fa-backward-step"></i></button>
-              <button id="ctrl-skip-fwd" class="control-btn" title="Forward 10 seconds"><i class="fa-solid fa-forward-step"></i></button>
-              <div class="volume-container">
-                <button id="ctrl-volume" class="control-btn" title="Mute"><i class="fa-solid fa-volume-high"></i></button>
-                <div id="volume-popup" class="volume-popup">
-                  <input type="range" id="volume-slider" class="volume-slider-vertical" min="0" max="1" step="0.05" value="0.8" orient="vertical">
-                </div>
-              </div>
-              <div class="time-display">
-                <span id="time-current">0:00</span> / <span id="time-duration">0:00</span>
-              </div>
-            </div>
-            
-            <div class="controls-right">
-              <!-- Server Menu -->
-              <div id="server-menu-container" class="control-menu-container" style="display: none;">
-                <button id="ctrl-server" class="control-btn" title="Servers"><i class="fa-solid fa-server"></i></button>
-                <div id="server-menu" class="control-menu">
-                  <div class="menu-header">Servers</div>
-                  <div id="player-servers-list" class="menu-options"></div>
-                </div>
-              </div>
-
-              <!-- Subtitle Sync Menu -->
-              <div class="control-menu-container">
-                <button id="ctrl-sub-sync" class="control-btn" title="Subtitle Sync & Alignment"><i class="fa-solid fa-clock"></i></button>
-                <div id="sub-sync-menu" class="control-menu" style="width: 230px; padding: 12px;">
-                  <div class="menu-header" style="margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">Subtitle Sync & Style</div>
-                  
-                  <!-- Delay Sync Section -->
-                  <div style="margin-bottom: 12px;">
-                    <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 6px; display: flex; justify-content: space-between;">
-                      <span>DELAY SYNC</span>
-                      <span id="delay-val" style="color: var(--accent-color); font-weight: 700;">0.0s</span>
-                    </div>
-                    <div style="display: flex; gap: 4px; margin-bottom: 8px;">
-                      <button type="button" class="menu-option" style="padding: 4px; justify-content: center; font-size: 0.75rem; border-radius: 4px; background: rgba(255,255,255,0.06);" onclick="adjustSubDelay(-1.0)">-1s</button>
-                      <button type="button" class="menu-option" style="padding: 4px; justify-content: center; font-size: 0.75rem; border-radius: 4px; background: rgba(255,255,255,0.06);" onclick="adjustSubDelay(-0.5)">-0.5s</button>
-                      <button type="button" class="menu-option" style="padding: 4px; justify-content: center; font-size: 0.75rem; border-radius: 4px; background: rgba(255,255,255,0.06);" onclick="resetSubDelay()">Reset</button>
-                      <button type="button" class="menu-option" style="padding: 4px; justify-content: center; font-size: 0.75rem; border-radius: 4px; background: rgba(255,255,255,0.06);" onclick="adjustSubDelay(0.5)">+0.5s</button>
-                      <button type="button" class="menu-option" style="padding: 4px; justify-content: center; font-size: 0.75rem; border-radius: 4px; background: rgba(255,255,255,0.06);" onclick="adjustSubDelay(1.0)">+1s</button>
-                    </div>
-                    <input type="range" id="delay-slider" min="-30" max="30" step="0.1" value="0" style="width: 100%; accent-color: var(--accent-color); cursor: pointer;" oninput="onSubDelayInput(this.value)">
-                  </div>
-
-                  <!-- Vertical Position Section -->
-                  <div style="margin-bottom: 12px;">
-                    <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px; display: flex; justify-content: space-between;">
-                      <span>VERTICAL POSITION</span>
-                      <span id="pos-val" style="color: var(--text-color); font-weight: 600;">0px</span>
-                    </div>
-                    <input type="range" id="pos-slider" min="0" max="150" step="5" value="0" style="width: 100%; accent-color: var(--accent-color); cursor: pointer;" oninput="onSubPosInput(this.value)">
-                  </div>
-
-                  <!-- Text Size Section -->
-                  <div style="margin-bottom: 12px;">
-                    <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px; display: flex; justify-content: space-between;">
-                      <span>TEXT SIZE</span>
-                      <span id="size-val" style="color: var(--text-color); font-weight: 600;">20px</span>
-                    </div>
-                    <input type="range" id="size-slider" min="12" max="40" step="1" value="20" style="width: 100%; accent-color: var(--accent-color); cursor: pointer;" oninput="onSubSizeInput(this.value)">
-                  </div>
-
-                  <!-- Background Opacity Section -->
-                  <div>
-                    <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px; display: flex; justify-content: space-between;">
-                      <span>BACKGROUND OPACITY</span>
-                      <span id="opacity-val" style="color: var(--text-color); font-weight: 600;">75%</span>
-                    </div>
-                    <input type="range" id="opacity-slider" min="0" max="100" step="5" value="75" style="width: 100%; accent-color: var(--accent-color); cursor: pointer;" oninput="onSubOpacityInput(this.value)">
-                  </div>
-
-                </div>
-              </div>
-
-              <!-- Subtitles Menu -->
-              <div class="control-menu-container">
-                <button id="ctrl-subtitles" class="control-btn" title="Subtitles"><i class="fa-solid fa-closed-captioning"></i></button>
-                <div id="subtitles-menu" class="control-menu">
-                  <div class="menu-header">Subtitles</div>
-                  <div id="subtitles-list" class="menu-options">
-                    <button class="menu-option active" onclick="selectSubtitle('off', this)">Off</button>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Quality Menu -->
-              <div id="quality-menu-container" class="control-menu-container" style="display: none;">
-                <button id="ctrl-quality" class="control-btn" title="Quality"><i class="fa-solid fa-sliders"></i></button>
-                <div id="quality-menu" class="control-menu">
-                  <div class="menu-header">Quality</div>
-                  <div id="qualities-list" class="menu-options"></div>
-                </div>
-              </div>
-              
-              <button id="ctrl-pip" class="control-btn" title="Picture in Picture"><i class="fa-solid fa-window-restore"></i></button>
-              <button id="ctrl-fullscreen" class="control-btn" title="Fullscreen (F)"><i class="fa-solid fa-expand"></i></button>
-            </div>
-            
-          </div>
-          
-        </div>
-        
-        <!-- Custom Subtitle Overlay -->
-        <div id="subtitle-overlay" class="subtitle-overlay" style="display: none;"></div>
-      </div>
-
-      <!-- Player Top Bar (smov style) -->
-      <div id="player-topbar" class="player-topbar">
-        <div class="player-title-wrap">
-          <span id="player-title" class="player-title">Media Stream</span>
-        </div>
-        <div class="player-topbar-right">
-          <span id="player-badge" class="player-badge" style="display: none;"><span class="badge-dot"></span><span id="player-badge-text">Poseidon</span></span>
-          <button id="embed-trigger" class="embed-trigger-btn" title="Embed code" style="display: none;"><i class="fa-solid fa-code"></i></button>
-        </div>
-      </div>
-      
-      <!-- Scraping Loading Overlay -->
-      <div id="loading-overlay" class="overlay">
-        <div class="spinner-box">
-          <div class="spinner-pulse"></div>
-        </div>
-        <div id="loader-status" class="status-text" style="margin-top: 15px; font-weight: 500; font-size: 0.95rem;">Searching Poseidon...</div>
-        <div id="overlay-server-list" style="display: none;"></div>
-      </div>
-      
-      <!-- Error Overlay -->
-      <div id="error-overlay" class="overlay" style="display: none;">
-        <div class="error-card" style="display: flex;">
-          <i class="fa-solid fa-triangle-exclamation error-icon"></i>
-          <div class="error-title">Failed to load video</div>
-          <div id="error-desc" class="error-desc">No video streams could be found for this content. Please try again later.</div>
-          <button onclick="window.location.reload()" class="retry-btn">Retry</button>
-        </div>
-      </div>
-
-      <div id="debug-console" style="display: none;"></div>
-      
-      <!-- Embed Code Drawer -->
-      <div id="embed-drawer" class="embed-drawer">
-        <div class="drawer-header">
-          <div class="drawer-title">Embed Options</div>
-          <button id="drawer-close" class="drawer-close-btn"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        
-        <div class="drawer-content">
-          <div class="input-group">
-            <div class="input-label">HTML Iframe Embed Code</div>
-            <div class="code-box-wrapper">
-              <input type="text" id="iframe-code-input" class="code-input" readonly value="">
-              <button id="copy-code-btn" class="copy-btn">
-                <i class="fa-regular fa-copy"></i> Copy
-              </button>
-            </div>
-          </div>
-          
-          <div class="options-row">
-            <label class="checkbox-label">
-              <input type="checkbox" id="opt-autoplay" checked>
-              <span>Autoplay video</span>
-            </label>
-            <label class="checkbox-label">
-              <input type="checkbox" id="opt-mute">
-              <span>Mute on start</span>
-            </label>
-          </div>
-        </div>
-      </div>
-      
+      <iframe id="smov-frame" class="smov-frame" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen referrerpolicy="origin" sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"></iframe>
     </div>
 
   </div>
 
   <script>
-    // URL Params parsing
-    const urlParams = new URLSearchParams(window.location.search);
-    const tmdbId = urlParams.get('tmdbId');
-    const rawType = urlParams.get('type') || 'movie';
-    const type = ['show', 'series'].includes(rawType.toLowerCase()) ? 'tv' : rawType;
-    const season = urlParams.get('season');
-    const episode = urlParams.get('episode');
-    const title = urlParams.get('title') || 'Media Stream';
-    const debugEnabled = ['1', 'true', 'yes'].includes((urlParams.get('debug') || '').toLowerCase());
-    
-    // Page Elements
-    const landingView = document.getElementById('landing-view');
-    const playerView = document.getElementById('player-view');
-    
-    // Load Dynamic Templates Domain
-    document.getElementById('code-movie-tpl').innerText = `${window.location.origin}${window.location.pathname}?tmdbId={tmdbId}&type=movie`;
-    document.getElementById('code-tv-tpl').innerText = `${window.location.origin}${window.location.pathname}?tmdbId={tmdbId}&type=tv&season={season}&episode={episode}`;
+    (function () {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tmdbId = urlParams.get('tmdbId');
+      const type = (urlParams.get('type') || 'movie').toLowerCase();
+      const season = urlParams.get('season');
+      const episode = urlParams.get('episode');
 
-    // High-Performance Parallel Subtitle Loader & Cache
-    const subtitleCache = new Map();
-    let subtitlesFetched = false;
+      const landingView = document.getElementById('landing-view');
+      const playerView = document.getElementById('player-view');
+      const smovFrame = document.getElementById('smov-frame');
 
-    // Routing Logic
-    if (tmdbId) {
-      landingView.style.display = 'none';
-      playerView.style.display = 'block';
-      // loadActivatedServers depends on helpers declared later in this script.
-      window.addEventListener('DOMContentLoaded', () => loadActivatedServers(), { once: true });
-    } else {
-      landingView.style.display = 'flex';
-      playerView.style.display = 'none';
-    }
+      document.getElementById('code-movie-tpl').innerText = `${window.location.origin}${window.location.pathname}?tmdbId={tmdbId}&type=movie`;
+      document.getElementById('code-tv-tpl').innerText = `${window.location.origin}${window.location.pathname}?tmdbId={tmdbId}&type=tv&season={season}&episode={episode}`;
+
+      // Routing
+      if (tmdbId) {
+        landingView.style.display = 'none';
+        playerView.style.display = 'block';
+
+        // smov media URL: movie -> tmdb-movie-{id}, tv/show -> tmdb-show-{id}/{season}/{episode}
+        const isTv = type === 'tv' || type === 'show' || type === 'series';
+        let mediaPath;
+        if (isTv && season && episode) {
+          mediaPath = `tmdb-show-${encodeURIComponent(tmdbId)}/${encodeURIComponent(season)}/${encodeURIComponent(episode)}`;
+        } else {
+          mediaPath = isTv
+            ? `tmdb-show-${encodeURIComponent(tmdbId)}/${encodeURIComponent(season || 1)}/${encodeURIComponent(episode || 1)}`
+            : `tmdb-movie-${encodeURIComponent(tmdbId)}`;
+        }
+        smovFrame.src = `https://peestream.in/media/${mediaPath}`;
+      } else {
+        landingView.style.display = 'flex';
+        playerView.style.display = 'none';
+      }
+    })();
 
     // ----------------------------------
     // LANDING VIEW JAVASCRIPT LOGIC
     // ----------------------------------
     let currentTab = 'movie';
-    
+
     function switchTab(tab) {
       currentTab = tab;
       const tabMovie = document.getElementById('tab-movie');
@@ -1789,7 +676,7 @@
       const inputSeason = document.getElementById('input-season');
       const inputEpisode = document.getElementById('input-episode');
       const inputTmdb = document.getElementById('input-tmdb');
-      
+
       if (tab === 'movie') {
         tabMovie.classList.add('active');
         tabShow.classList.remove('active');
@@ -1804,17 +691,17 @@
         inputTmdb.placeholder = "TMDB ID (e.g. 94997)";
       }
     }
-    
+
     function generateAndPlay() {
       const tmdbVal = document.getElementById('input-tmdb').value.trim();
       const seasonVal = document.getElementById('input-season').value.trim();
       const episodeVal = document.getElementById('input-episode').value.trim();
-      
+
       if (!tmdbVal) {
         alert("Please enter a valid TMDB ID.");
         return;
       }
-      
+
       let playUrl = `${window.location.pathname}?tmdbId=${tmdbVal}&type=${currentTab === 'movie' ? 'movie' : 'show'}`;
       if (currentTab === 'show') {
         if (!seasonVal || !episodeVal) {
@@ -1830,13 +717,13 @@
       const tmdbVal = document.getElementById('input-tmdb').value.trim();
       const seasonVal = document.getElementById('input-season').value.trim();
       const episodeVal = document.getElementById('input-episode').value.trim();
-      
+
       if (!tmdbVal) {
         alert("Please enter a valid TMDB ID.");
         return;
       }
-      
-      let playUrl = `${window.location.pathname}?tmdbId=${tmdbVal}&type=${currentTab === 'movie' ? 'movie' : 'show'}`;
+
+      let playUrl = `${window.location.origin}${window.location.pathname}?tmdbId=${tmdbVal}&type=${currentTab === 'movie' ? 'movie' : 'show'}`;
       if (currentTab === 'show') {
         if (!seasonVal || !episodeVal) {
           alert("Please enter both Season and Episode.");
@@ -1844,18 +731,18 @@
         }
         playUrl += `&season=${seasonVal}&episode=${episodeVal}`;
       }
-      
-      const embedUrl = `${window.location.origin}${playUrl}&title=Preview%20Player`;
+
+      const embedUrl = `${playUrl}&title=Preview%20Player`;
       const iframe = document.getElementById('preview-iframe');
       const placeholder = document.getElementById('preview-placeholder');
-      
+
       placeholder.style.display = 'none';
       iframe.style.display = 'block';
       iframe.src = embedUrl;
-      
+
       document.getElementById('live-preview-section').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-    
+
     function copyText(elemId) {
       const txt = document.getElementById(elemId).innerText;
       navigator.clipboard.writeText(txt).then(() => {
@@ -1864,1557 +751,6 @@
         console.error("Failed to copy:", err);
       });
     }
-
-    // ----------------------------------
-    // PLAYER VIEW JAVASCRIPT LOGIC
-    // ----------------------------------
-    const loadingOverlay = document.getElementById('loading-overlay');
-    const errorOverlay = document.getElementById('error-overlay');
-    const errorDesc = document.getElementById('error-desc');
-    const loaderStatus = document.getElementById('loader-status');
-const hideLoadingOverlay = () => {
-      loadingOverlay.classList.add('hidden');
-      loadingOverlay.style.display = 'none';
-    };
-    // Failure banner removed — never show the "All stream links failed" notice.
-    const showStreamFailure = () => {
-      hideLoadingOverlay();
-      hideErrorOverlay();
-      if (loaderStatus) loaderStatus.innerText = 'Poseidon could not start this stream. Please refresh.';
-    };
-    
-    const embedTrigger = document.getElementById('embed-trigger');
-    const embedDrawer = document.getElementById('embed-drawer');
-    const drawerClose = document.getElementById('drawer-close');
-    const iframeCodeInput = document.getElementById('iframe-code-input');
-    const copyCodeBtn = document.getElementById('copy-code-btn');
-    const optAutoplay = document.getElementById('opt-autoplay');
-    const optMute = document.getElementById('opt-mute');
-    
-    // Custom Player Elements
-    const video = document.getElementById('main-video');
-    const videoContainer = document.getElementById('video-container');
-    const bigPlayBtn = document.getElementById('big-play-btn');
-    const playBtn = document.getElementById('ctrl-play');
-    const volumeBtn = document.getElementById('ctrl-volume');
-    const volumeSlider = document.getElementById('volume-slider');
-    const timeCurrent = document.getElementById('time-current');
-    const timeDuration = document.getElementById('time-duration');
-    const subtitlesBtn = document.getElementById('ctrl-subtitles');
-    const subtitlesMenu = document.getElementById('subtitles-menu');
-    const subtitlesList = document.getElementById('subtitles-list');
-    const serverBtn = document.getElementById('ctrl-server');
-    const serverMenu = document.getElementById('server-menu');
-    const playerServersList = document.getElementById('player-servers-list');
-    const serverMenuContainer = document.getElementById('server-menu-container');
-    const qualityBtn = document.getElementById('ctrl-quality');
-    const qualityMenu = document.getElementById('quality-menu');
-    const qualitiesList = document.getElementById('qualities-list');
-    const qualityMenuContainer = document.getElementById('quality-menu-container');
-    const pipBtn = document.getElementById('ctrl-pip');
-    const fullscreenBtn = document.getElementById('ctrl-fullscreen');
-    const skipBackBtn = document.getElementById('ctrl-skip-back');
-    const skipFwdBtn = document.getElementById('ctrl-skip-fwd');
-    
-    const progressArea = document.getElementById('progress-area');
-    const currentProgress = document.getElementById('current-progress');
-    const bufferedBar = document.getElementById('buffered-bar');
-    const progressHoverDot = document.getElementById('progress-hover-dot');
-    const subtitleOverlay = document.getElementById('subtitle-overlay');
-
-    // smov-style top bar: title + active provider badge
-    const playerBadge = document.getElementById('player-badge');
-    const playerBadgeText = document.getElementById('player-badge-text');
-    const playerTitleEl = document.getElementById('player-title');
-    if (playerTitleEl && title && title !== 'Media Stream') {
-      playerTitleEl.textContent = title;
-    }
-    function setActiveProviderBadge(name) {
-      if (!playerBadge || !playerBadgeText) return;
-      if (name) {
-        playerBadgeText.textContent = name;
-        playerBadge.style.display = 'inline-flex';
-      } else {
-        playerBadge.style.display = 'none';
-      }
-    }
-
-    if (skipBackBtn) {
-      skipBackBtn.addEventListener('click', () => {
-        video.currentTime = Math.max(0, (video.currentTime || 0) - 10);
-      });
-    }
-    if (skipFwdBtn) {
-      skipFwdBtn.addEventListener('click', () => {
-        video.currentTime = Math.min((video.duration || video.currentTime || 0) + 0, (video.currentTime || 0) + 10);
-      });
-    }
-    
-
-    
-    // Setup initial iframe code
-    function updateEmbedCode() {
-      const currentUrl = new URL(window.location.href);
-      currentUrl.searchParams.delete('autoplay');
-      currentUrl.searchParams.delete('muted');
-      
-      const autoplay = optAutoplay.checked ? '' : '&autoplay=false';
-      const mute = optMute.checked ? '&muted=true' : '';
-      
-      const embedUrl = `${currentUrl.origin}${currentUrl.pathname}?tmdbId=${tmdbId}&type=${type}${season ? `&season=${season}` : ''}${episode ? `&episode=${episode}` : ''}&title=${encodeURIComponent(title)}${autoplay}${mute}`;
-      iframeCodeInput.value = `<iframe src="${embedUrl}" width="100%" height="100%" frameborder="0" scrolling="no" referrerpolicy="origin" allowfullscreen allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"></iframe>`;
-    }
-    
-    // Embed drawer open/close
-    if (embedTrigger) {
-      embedTrigger.addEventListener('click', () => {
-        updateEmbedCode();
-        embedDrawer.classList.add('open');
-      });
-      
-      drawerClose.addEventListener('click', () => {
-        embedDrawer.classList.remove('open');
-      });
-      
-      optAutoplay.addEventListener('change', updateEmbedCode);
-      optMute.addEventListener('change', updateEmbedCode);
-      
-      // Copy code button
-      copyCodeBtn.addEventListener('click', () => {
-        iframeCodeInput.select();
-        document.execCommand('copy');
-        
-        copyCodeBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
-        copyCodeBtn.style.background = '#00e676';
-        
-        setTimeout(() => {
-          copyCodeBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
-          copyCodeBtn.style.background = 'var(--accent-color)';
-        }, 2000);
-      });
-    }
-
-    function getFriendlyServerName(providerId) {
-      const entry = enabledServers.find(s => s.id === providerId);
-      if (entry && entry.name && entry.name !== providerId) return entry.name;
-      const mapping = {
-        'vaplayer': 'Poseidon',
-        'moovie-catalog': 'Poseidon',
-        'streamvault': 'Poseidon',
-        'vidrift': 'Poseidon',
-        'odin': 'Odin',
-        'ares': 'Ares',
-        'vegamovies': 'Kratos',
-        'thor': 'Thor',
-        '4khdhub': '4KHDHub',
-        '4khdhubnew': '4KHDHub'
-      };
-      return mapping[providerId] || providerId.charAt(0).toUpperCase() + providerId.slice(1);
-    }
-
-    let enabledServers = [];         // [{ id, name, status: idle|searching|pending|success|notfound|failure, error }]
-    let targetedScrapes = new Map(); // providerId -> EventSource (per-server click loads)
-    let autoScrapes = new Set();     // providerIds loaded automatically (auto-failover chain)
-
-    window.embedLogs = window.embedLogs || [];
-    const clientLogThrottle = new Map();
-
-    function clLog(type, message) {
-      try {
-        let sid = sessionStorage.getItem('peestream_sid');
-        if (!sid) {
-          sid = 'sid_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
-          sessionStorage.setItem('peestream_sid', sid);
-        }
-        const timeStr = new Date().toLocaleTimeString();
-        const throttleKey = `${type}|${message}`;
-        const now = Date.now();
-        const previous = clientLogThrottle.get(throttleKey) || 0;
-        if (type === 'error' && message.startsWith('HLS error:') && now - previous < 2500) return;
-        clientLogThrottle.set(throttleKey, now);
-        const entry = { time: timeStr, type, message, tmdbId };
-        window.embedLogs.push(entry);
-        console.log(`[EMBED ${type.toUpperCase()}] ${timeStr} - ${message}`);
-
-        const debugConsole = document.getElementById('debug-console');
-        if (debugConsole) {
-          debugConsole.style.display = debugEnabled ? 'block' : 'none';
-          if (debugEnabled) {
-            const logLine = document.createElement('div');
-            logLine.className = `debug-log-line log-${type}`;
-            logLine.innerText = `[${timeStr}] [${type.toUpperCase()}] ${message}`;
-            debugConsole.appendChild(logLine);
-            debugConsole.scrollTop = debugConsole.scrollHeight;
-          }
-        }
-
-        fetch('https://providers.peestream.in/api/scrape/client-log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type, message, tmdbId, sid })
-        }).catch(() => {});
-      } catch (e) {}
-    }
-
-    function loadActivatedServers() {
-      fetch(`https://providers.peestream.in/api/providers`)
-        .then(r => r.json())
-        .then(data => {
-          enabledServers = Object.entries(data)
-            .filter(([, m]) => m.enabled)
-            .sort((a, b) => (a[1].priority || 999) - (b[1].priority || 999))
-            .map(([id, m]) => ({ id, name: m.name || id, status: 'idle', error: '' }));
-          renderOverlayServers();
-          updateServerMenuUI();
-          if (enabledServers.length === 0) loaderStatus.innerText = 'No activated servers';
-          const top = enabledServers[0];
-          if (top) {
-            clLog('info', `auto-loading top server ${top.name} (${top.id})`);
-            autoScrapes.add(top.id);
-            handleServerClick(top.id, { auto: true });
-          }
-        })
-        .catch(() => {
-          loaderStatus.innerText = 'Failed to load server list. Please refresh.';
-        });
-    }
-
-    function renderOverlayServers() {
-      updateServerMenuUI();
-    }
-
-    // ----------------------------------
-    // CUSTOM PLAYER LOGIC
-    // ----------------------------------
-    let activeSubtitles = [];
-    let currentSubtitleIndex = -1;
-    let subtitleCues = [];
-    let hlsInstance = null;
-    let playerEventsInitialized = false;
-    let resolvedStreams = [];
-    let activeServerId = null;
-
-    let subtitleDelay = 0;
-    let subtitleVerticalPos = 0;
-    let subtitleSize = 20;
-    let subtitleBgOpacity = 0.75;
-
-    function adjustSubDelay(delta) {
-      subtitleDelay = parseFloat((subtitleDelay + delta).toFixed(1));
-      document.getElementById('delay-slider').value = subtitleDelay;
-      document.getElementById('delay-val').innerText = `${subtitleDelay > 0 ? '+' : ''}${subtitleDelay.toFixed(1)}s`;
-    }
-
-    function resetSubDelay() {
-      subtitleDelay = 0;
-      document.getElementById('delay-slider').value = 0;
-      document.getElementById('delay-val').innerText = '0.0s';
-    }
-
-    function onSubDelayInput(val) {
-      subtitleDelay = parseFloat(parseFloat(val).toFixed(1));
-      document.getElementById('delay-val').innerText = `${subtitleDelay > 0 ? '+' : ''}${subtitleDelay.toFixed(1)}s`;
-    }
-
-    function applySubtitleStyles() {
-      const subOverlay = document.getElementById('subtitle-overlay');
-      const vContainer = document.getElementById('video-container');
-      if (!subOverlay) return;
-      const baseBottom = (vContainer && vContainer.classList.contains('hide-controls')) ? 35 : 95;
-      subOverlay.style.bottom = `${baseBottom + subtitleVerticalPos}px`;
-      subOverlay.style.fontSize = `${subtitleSize}px`;
-      subOverlay.style.background = `rgba(0, 0, 0, ${subtitleBgOpacity})`;
-      subOverlay.style.borderColor = `rgba(255, 255, 255, ${subtitleBgOpacity > 0 ? 0.05 : 0})`;
-    }
-
-    function onSubPosInput(val) {
-      subtitleVerticalPos = parseInt(val, 10);
-      document.getElementById('pos-val').innerText = `${subtitleVerticalPos}px`;
-      applySubtitleStyles();
-    }
-
-    function onSubSizeInput(val) {
-      subtitleSize = parseInt(val, 10);
-      document.getElementById('size-val').innerText = `${subtitleSize}px`;
-      applySubtitleStyles();
-    }
-
-    function onSubOpacityInput(val) {
-      subtitleBgOpacity = parseInt(val, 10) / 100;
-      document.getElementById('opacity-val').innerText = `${val}%`;
-      applySubtitleStyles();
-    }
-
-    function setServerStatus(id, status, error = '') {
-      const entry = enabledServers.find(s => s.id === id);
-      if (entry) { entry.status = status; entry.error = error || ''; }
-    }
-
-    function serverStatusMeta(status) {
-      switch (status) {
-        case 'searching':
-        case 'pending':
-          return { cls: 'searching', label: 'searching…' };
-        case 'success':
-          return { cls: 'live', label: 'LIVE' };
-        case 'notfound':
-          return { cls: 'dead', label: 'offline' };
-        case 'failure':
-          return { cls: 'dead', label: 'error' };
-        default:
-          return { cls: 'idle', label: 'idle' };
-      }
-    }
-
-    function updateServerMenuUI() {
-      playerServersList.innerHTML = '';
-      let list = enabledServers;
-      if (list.length === 0) {
-        list = resolvedStreams.map(s => ({ id: s.id, status: 'success', error: '' }));
-      }
-      list.forEach(entry => {
-        const btn = document.createElement('button');
-        const isActive = entry.id === activeServerId;
-        btn.className = `menu-option server-option ${isActive ? 'active' : ''}`;
-        const meta = serverStatusMeta(entry.status);
-        const resolved = resolvedStreams.some(s => s.id === entry.id);
-        const name = entry.name || getFriendlyServerName(entry.id);
-        btn.innerHTML = `
-          <span class="server-option-row">
-            <span>${name.toUpperCase()}</span>
-            <span class="server-status ${meta.cls}">${meta.label}${isActive ? ' ✓' : ''}</span>
-          </span>`;
-        btn.title = entry.error || `Load ${name} server`;
-        btn.onclick = () => handleServerClick(entry.id);
-        playerServersList.appendChild(btn);
-      });
-      const total = enabledServers.length > 0 ? enabledServers.length : resolvedStreams.length;
-      serverMenuContainer.style.display = total > 1 ? 'block' : 'none';
-    }
-
-    function autoAdvanceFrom(sourceId) {
-      autoScrapes.delete(sourceId);
-      failedStreamIds.add(sourceId);
-      renderOverlayServers();
-      updateServerMenuUI();
-      const next = enabledServers.find(s => s.id !== sourceId && !failedStreamIds.has(s.id) && !targetedScrapes.has(s.id));
-      if (next) {
-        clLog('warn', `server ${sourceId} unavailable, auto-trying next server ${next.id}`);
-        loaderStatus.innerText = 'Trying another stream...';
-        loadingOverlay.classList.remove('hidden');
-        loadingOverlay.style.display = 'flex';
-        autoScrapes.add(next.id);
-        handleServerClick(next.id, { auto: true });
-      } else {
-        clLog('error', 'all activated servers returned no streams');
-        loaderStatus.innerText = 'No streams found on any server.';
-        loadingOverlay.classList.remove('hidden');
-        loadingOverlay.style.display = 'flex';
-      }
-    }
-
-    function handleServerClick(sourceId, { auto = false } = {}) {
-      if (sourceId === activeServerId) return;
-      if (!auto) {
-        for (const aid of autoScrapes) {
-          const ses = targetedScrapes.get(aid);
-          if (ses) {
-            ses.close();
-            targetedScrapes.delete(aid);
-          }
-        }
-        autoScrapes.clear();
-      }
-      const resolved = resolvedStreams.find(s => s.id === sourceId);
-      if (resolved) {
-        switchServer(sourceId);
-        return;
-      }
-      if (targetedScrapes.has(sourceId)) return; // already loading this server
-      clLog('info', `${auto ? 'auto' : 'user clicked'} server ${sourceId}`);
-      setServerStatus(sourceId, 'searching');
-      renderOverlayServers();
-      updateServerMenuUI();
-      loadingOverlay.classList.remove('hidden');
-      loadingOverlay.style.display = 'flex';
-      loaderStatus.innerText = 'Searching for stream...';
-
-      const es = new EventSource(`https://providers.peestream.in/scrape/source?id=${sourceId}&tmdbId=${tmdbId}&type=${type}${season ? `&season=${season}` : ''}${episode ? `&episode=${episode}` : ''}&fallback=false`);
-      targetedScrapes.set(sourceId, es);
-      let closed = false;
-
-      es.addEventListener('completed', (e) => {
-        const data = JSON.parse(e.data);
-        const streamsArr = Array.isArray(data.stream) ? data.stream : (data.stream ? [data.stream] : []);
-        if (streamsArr.length === 0) return;
-
-        const primaryName = getFriendlyServerName(sourceId);
-        streamsArr.forEach((st, idx) => {
-          const streamId = streamsArr.length > 1 ? `${sourceId}_${idx + 1}` : sourceId;
-          const streamName = streamsArr.length > 1 ? `${primaryName} Link ${idx + 1}` : primaryName;
-          
-          const existingIdx = resolvedStreams.findIndex(s => s.id === streamId);
-          if (existingIdx !== -1) {
-            resolvedStreams[existingIdx].stream = st;
-          } else {
-            resolvedStreams.push({ id: streamId, name: streamName, stream: st });
-          }
-          failedStreamIds.delete(streamId);
-        });
-
-        const firstStreamId = streamsArr.length > 1 ? `${sourceId}_1` : sourceId;
-        const firstStreamObj = streamsArr[0];
-
-        setServerStatus(sourceId, 'success');
-        activeServerId = firstStreamId;
-        setActiveProviderBadge(primaryName);
-        loaderStatus.innerText = 'Preparing video...';
-        loadingOverlay.classList.remove('hidden');
-        loadingOverlay.style.display = 'flex';
-        clLog('success', `server ${sourceId} resolved ${streamsArr.length} HLS link(s), trying 1st link`);
-        if (!subtitlesFetched) fetchSubtitles();
-        if (hlsInstance) {
-          try { hlsInstance.destroy(); } catch(err) {}
-          hlsInstance = null;
-        }
-        initPlayer(firstStreamObj);
-        renderOverlayServers();
-        updateServerMenuUI();
-      });
-
-      es.addEventListener('update', (e) => {
-        const data = JSON.parse(e.data);
-        const sid = data.id || data.sourceId;
-        if (!sid) return;
-        if (data.status === 'notfound' || data.status === 'failure') {
-          setServerStatus(sid, data.status, data.error);
-          renderOverlayServers();
-          updateServerMenuUI();
-        } else if (data.status === 'pending') {
-          setServerStatus(sid, 'searching');
-          if (typeof data.percentage === 'number' && data.percentage > 0) {
-            loaderStatus.innerText = `Searching for stream... ${data.percentage}%`;
-          }
-        }
-      });
-
-      es.addEventListener('done', (e) => {
-        closed = true;
-        es.close();
-        if (!targetedScrapes.has(sourceId)) return;
-        targetedScrapes.delete(sourceId);
-        const entry = enabledServers.find(s => s.id === sourceId);
-        if (entry && entry.status !== 'success') {
-          if (autoScrapes.has(sourceId)) {
-            autoAdvanceFrom(sourceId);
-            return;
-          }
-          renderOverlayServers();
-          updateServerMenuUI();
-          if (activeServerId) {
-            loaderStatus.innerText = 'No stream found. Trying next...';
-            loadingOverlay.classList.remove('hidden');
-            loadingOverlay.style.display = 'flex';
-            setTimeout(() => {
-              loadingOverlay.classList.add('hidden');
-              loadingOverlay.style.display = 'none';
-            }, 2500);
-            clLog('warn', `server ${sourceId} has no streams, continuing playback`);
-          } else {
-            loaderStatus.innerText = 'No stream found. Trying next...';
-            loadingOverlay.classList.remove('hidden');
-            loadingOverlay.style.display = 'flex';
-          }
-        }
-      });
-
-      es.onerror = () => {
-        if (closed) return;
-        es.close();
-        targetedScrapes.delete(sourceId);
-        const entry = enabledServers.find(s => s.id === sourceId);
-        if (entry) {
-          entry.status = 'failure';
-          entry.error = 'connection lost';
-          renderOverlayServers();
-          updateServerMenuUI();
-          if (autoScrapes.has(sourceId)) {
-            autoAdvanceFrom(sourceId);
-            return;
-          }
-          if (!activeServerId) {
-            loaderStatus.innerText = 'Connection lost. Please refresh.';
-            loadingOverlay.classList.remove('hidden');
-            loadingOverlay.style.display = 'flex';
-          } else {
-            loaderStatus.innerText = 'Connection lost, retrying...';
-            loadingOverlay.classList.remove('hidden');
-            loadingOverlay.style.display = 'flex';
-            setTimeout(() => {
-              loadingOverlay.classList.add('hidden');
-              loadingOverlay.style.display = 'none';
-            }, 2500);
-          }
-        }
-      };
-    }
-
-    function switchServer(sourceId, { forcePlay = null } = {}) {
-      const item = resolvedStreams.find(s => s.id === sourceId);
-      if (!item) return;
-      
-      activeServerId = sourceId;
-      setActiveProviderBadge(item.name || getFriendlyServerName(sourceId));
-      
-      if (hlsInstance) {
-        try { hlsInstance.destroy(); } catch(e) {}
-        hlsInstance = null;
-      }
-      
-      const currentTime = video.currentTime;
-      // If forcePlay not specified, keep current play state; but on failover always pass true
-      const shouldPlay = forcePlay !== null ? forcePlay : !video.paused;
-      
-      subtitleOverlay.style.display = 'none';
-      
-      initPlayer(item.stream, currentTime, shouldPlay);
-      updateServerMenuUI();
-    }
-
-    let failedStreamIds = new Set();
-
-    function tryNextServer() {
-      const idx = resolvedStreams.findIndex(s => s.id === activeServerId);
-      for (let i = idx + 1; i < resolvedStreams.length; i++) {
-        const candidate = resolvedStreams[i];
-        if (failedStreamIds.has(candidate.id)) continue;
-        failedStreamIds.add(candidate.id);
-        clLog('info', `switching from ${activeServerId} to ${candidate.id}`);
-        loaderStatus.innerText = 'Switching to another stream...';
-        loadingOverlay.classList.remove('hidden');
-        loadingOverlay.style.display = 'flex';
-        switchServer(candidate.id, { forcePlay: true }); // always autoplay on failover
-        return true;
-      }
-      return false;
-    }
-
-    async function initPlayer(stream, startTime = 0, forcePlay = null) {
-      let playerUrl = '';
-      let isHlsStream = false;
-      let qualities = {};
-
-      if (stream.type === 'hls') {
-        playerUrl = stream.playlist;
-        isHlsStream = true;
-      } else if (stream.type === 'file') {
-        qualities = stream.qualities || {};
-        const qKeys = Object.keys(qualities);
-        
-        // Find best quality (numeric rank, handles 4K/2160p and suffixed keys like "1080p HUBCDN")
-        const qRank = (q) => {
-          const s = String(q || '').toLowerCase();
-          if (s.includes('4k') || s.includes('2160') || s.includes('uhd')) return 2160;
-          const m = s.match(/(\d{3,4})/);
-          const n = m ? parseInt(m[1]) : NaN;
-          return isNaN(n) ? -1 : n;
-        };
-        let bestQual = qKeys[0];
-        let bestRank = -1;
-        for (const k of qKeys) {
-          const r = qRank(k);
-          if (r > bestRank) { bestRank = r; bestQual = k; }
-        }
-        playerUrl = qualities[bestQual]?.url || '';
-        
-        // Setup Quality Menu
-        if (qKeys.length > 1) {
-          qualityMenuContainer.style.display = 'block';
-          qualitiesList.innerHTML = '';
-          qKeys.forEach(q => {
-            const btn = document.createElement('button');
-            btn.className = `menu-option ${q === bestQual ? 'active' : ''}`;
-            btn.innerText = q.toUpperCase();
-            btn.onclick = () => selectQuality(q, qualities[q].url, btn);
-            qualitiesList.appendChild(btn);
-          });
-        } else {
-          qualityMenuContainer.style.display = 'none';
-        }
-      }
-
-      // Rewrite relative paths
-      if (playerUrl && playerUrl.startsWith('/')) {
-        playerUrl = `https://providers.peestream.in${playerUrl}`;
-      }
-
-      // Autoplay / Mute config
-      const autoplayParam = urlParams.get('autoplay') !== 'false';
-      const mutedParam = urlParams.get('muted') === 'true';
-
-      if (mutedParam) {
-        video.muted = true;
-        volumeSlider.value = 0;
-        volumeBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
-      }
-
-      // Initialize HlsJS if it is an HLS stream
-      if (isHlsStream) {
-        if (Hls.isSupported()) {
-          const hlsConfig = {
-            enableWorker: true,
-            // Keep startup light; grow the buffer after playback begins.
-            maxBufferLength: 18,
-            maxMaxBufferLength: 45,
-            maxBufferSize: 32 * 1024 * 1024,
-            maxStarvationDelay: 2,
-            progressive: true,
-            startFragPrefetch: true,
-            capLevelToPlayerSize: false,
-            startLevel: -1,
-            manifestLoadingMaxRetry: 1,
-            manifestLoadingRetryDelay: 400,
-            levelLoadingMaxRetry: 1,
-            levelLoadingRetryDelay: 400,
-            fragLoadingMaxRetry: 1,
-            fragLoadingRetryDelay: 400
-          };
-          if (stream.headers && Object.keys(stream.headers).length > 0) {
-            hlsConfig.xhrSetup = function (xhr, targetUrl) {
-              const forbiddenHeaders = [
-                'accept-charset', 'accept-encoding', 'access-control-request-headers',
-                'access-control-request-method', 'connection', 'content-length',
-                'cookie', 'cookie2', 'date', 'dnt', 'expect', 'host', 'keep-alive',
-                'origin', 'referer', 'te', 'trailer', 'transfer-encoding', 'upgrade',
-                'user-agent', 'via'
-              ];
-              for (const [key, value] of Object.entries(stream.headers)) {
-                const kLower = key.toLowerCase();
-                if (!forbiddenHeaders.includes(kLower) && !kLower.startsWith('proxy-') && !kLower.startsWith('sec-')) {
-                  xhr.setRequestHeader(key, value);
-                }
-              }
-            };
-          }
-          
-          const thisHls = new Hls(hlsConfig);
-          hlsInstance = thisHls;
-          let fragParseErrors = 0;
-          let fragErrorWindowStarted = Date.now();
-          let playbackWatchdog = null;
-
-          const failThisHls = (reason) => {
-            clLog('warn', `HLS stream load failure (${reason}), trying next HLS link candidate...`);
-            failedStreamIds.add(activeServerId);
-            try { thisHls.destroy(); } catch(err) {}
-            if (hlsInstance === thisHls) hlsInstance = null;
-            if (!tryNextServer()) showStreamFailure();
-          };
-
-          thisHls.loadSource(playerUrl);
-          thisHls.attachMedia(video);
-
-          thisHls.on(Hls.Events.ERROR, (event, data) => {
-            if (thisHls !== hlsInstance) return; // stale handler from a destroyed instance, ignore
-            if (!data) return;
-            // fragParsingError is a noisy recoverable diagnostic on Poseidon.
-            // Keep recovery/fallback logic, but do not flood realtime logs with it.
-            if (data.fatal || data.details !== 'fragParsingError') {
-              clLog('error', `HLS error: ${data.type} ${data.details} fatal=${data.fatal}`);
-            }
-
-            const isManifestError = data.details === 'manifestLoadError' || data.details === 'manifestParsingError' || data.details === 'levelLoadError' || data.details === 'fragLoadError';
-            if (data.fatal || isManifestError) {
-              failThisHls(data.details);
-              return;
-            }
-
-            // Some Poseidon manifests repeatedly return malformed fragments as
-            // recoverable media errors. Do not leave the loader spinning forever.
-            if (data.details === 'fragParsingError') {
-              if (Date.now() - fragErrorWindowStarted > 10000) {
-                fragParseErrors = 0;
-                fragErrorWindowStarted = Date.now();
-              }
-              fragParseErrors += 1;
-              if (fragParseErrors >= 3) {
-                failThisHls('repeated fragParsingError');
-                return;
-              }
-            }
-
-            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-              thisHls.startLoad();
-            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-              thisHls.recoverMediaError();
-            }
-          });
-          
-          // Setup HLS Quality Menu dynamically
-          thisHls.on(Hls.Events.MANIFEST_PARSED, () => {
-            if (thisHls !== hlsInstance) return; // stale, skip
-            const levels = thisHls.levels;
-            clLog('success', `HLS manifest parsed (${levels ? levels.length : 0} qualities)`);
-            // Note: keep the loading overlay visible until ACTUAL playback (playing event).
-            // Hiding here leaves a blank gap while the first segments buffer from the CDN.
-            
-            // Start on the highest rendition available (highest quality first).
-            // Master playlists are reordered by bandwidth desc server-side when
-            // proxied; for direct playlists pick the best level explicitly.
-            if (levels && levels.length > 0) {
-              let bestIdx = 0;
-              let bestScore = -1;
-              levels.forEach((level, index) => {
-                const score = (level.height || 0) * 1000 + (level.bitrate || 0) / 1000;
-                if (score > bestScore) { bestScore = score; bestIdx = index; }
-              });
-              hlsInstance.startLevel = bestIdx;
-              hlsInstance.nextLevel = bestIdx;
-            }
-
-            if (levels && levels.length > 1) {
-              qualityMenuContainer.style.display = 'block';
-              qualitiesList.innerHTML = '';
-              
-              // Auto option
-              const autoBtn = document.createElement('button');
-              autoBtn.className = 'menu-option active';
-              autoBtn.innerHTML = 'AUTO <i class="fa-solid fa-check" style="font-size:0.75rem;opacity:0.8"></i>';
-              autoBtn.onclick = () => {
-                hlsInstance.currentLevel = -1;
-                updateActiveHlsQualityBtn(autoBtn);
-              };
-              qualitiesList.appendChild(autoBtn);
-              
-              // Specific level options
-              levels.forEach((level, index) => {
-                const btn = document.createElement('button');
-                btn.className = 'menu-option';
-                const label = level.name || (level.height ? `${level.height}p` : `Level ${index}`);
-                btn.innerText = label.toUpperCase();
-                btn.onclick = () => {
-                  hlsInstance.currentLevel = index;
-                  updateActiveHlsQualityBtn(btn);
-                };
-                qualitiesList.appendChild(btn);
-              });
-            } else {
-              qualityMenuContainer.style.display = 'none';
-            }
-
-            if (startTime > 0) {
-              video.currentTime = startTime;
-            }
-            
-            const shouldPlay = forcePlay !== null ? forcePlay : autoplayParam;
-            if (shouldPlay) {
-              video.play().catch((err) => {
-                if (err && err.name === 'NotAllowedError') {
-                  // Browser blocked autoplay — silently try muted (always allowed by browsers)
-                  const wasMuted = video.muted;
-                  video.muted = true;
-                  video.play().then(() => {
-                    // Muted play worked — unmute immediately if user hadn't muted it
-                    if (!wasMuted) {
-                      video.muted = false;
-                    }
-                  }).catch(() => {
-                    // Even muted failed — fall back to play button
-                    video.muted = wasMuted;
-                    bigPlayBtn.classList.add('show');
-                  });
-                } else {
-                  // Actual stream error — try next link
-                  clLog('warn', `video.play() failed (${err && err.name}), trying next stream link`);
-                  failedStreamIds.add(activeServerId);
-                  if (!tryNextServer()) {
-                    bigPlayBtn.classList.add('show');
-                  }
-                }
-              });
-
-            } else {
-              video.pause();
-              bigPlayBtn.classList.add('show');
-            }
-          });
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          video.src = playerUrl;
-          video.addEventListener('loadedmetadata', function onLoaded() {
-            if (startTime > 0) video.currentTime = startTime;
-            video.removeEventListener('loadedmetadata', onLoaded);
-          });
-          const shouldPlay = forcePlay !== null ? forcePlay : autoplayParam;
-          if (shouldPlay) {
-            video.play().catch(() => { hideLoadingOverlay(); bigPlayBtn.classList.add('show'); });
-            playbackWatchdog = setTimeout(() => {
-              if (thisHls !== hlsInstance || !video.paused || video.readyState >= 3) return;
-              failThisHls('playback timeout');
-            }, 15000);
-          } else {
-            video.pause();
-            bigPlayBtn.classList.add('show');
-          }
-
-          video.addEventListener('playing', () => {
-            if (playbackWatchdog) clearTimeout(playbackWatchdog);
-          }, { once: true });
-
-          const onNativeError = () => {
-            setTimeout(() => {
-              if (video.readyState < 2) {
-                if (!tryNextServer()) {
-                  showStreamFailure();
-                  document.getElementById('error-desc').innerText = 'All servers failed to play this stream. Please try again later.';
-                }
-              }
-            }, 6000);
-          };
-          video.addEventListener('error', onNativeError, { once: true });
-        }
-      } else {
-        video.src = playerUrl;
-        video.addEventListener('loadedmetadata', function onLoaded() {
-          if (startTime > 0) video.currentTime = startTime;
-          video.removeEventListener('loadedmetadata', onLoaded);
-        });
-        const shouldPlay = forcePlay !== null ? forcePlay : autoplayParam;
-        if (shouldPlay) {
-          video.play().catch(() => { hideLoadingOverlay(); bigPlayBtn.classList.add('show'); });
-        } else {
-          video.pause();
-          bigPlayBtn.classList.add('show');
-        }
-
-        video.addEventListener('error', function onFileError() {
-          setTimeout(() => {
-            if (video.readyState < 2) {
-              if (!tryNextServer()) {
-                showStreamFailure();
-                document.getElementById('error-desc').innerText = 'All servers failed to play this stream. Please try again later.';
-              }
-            }
-          }, 6000);
-        }, { once: true });
-      }
-
-      // Setup Subtitles (only once)
-      if (!playerEventsInitialized) {
-        fetchSubtitles();
-        setupPlayerEvents();
-        playerEventsInitialized = true;
-      }
-    }
-
-    function updateActiveHlsQualityBtn(activeBtn) {
-      document.querySelectorAll('#qualities-list .menu-option').forEach(btn => {
-        btn.classList.remove('active');
-        const checkIcon = btn.querySelector('i');
-        if (checkIcon) checkIcon.remove();
-      });
-      activeBtn.classList.add('active');
-      activeBtn.innerHTML += ' <i class="fa-solid fa-check" style="font-size:0.75rem;opacity:0.8"></i>';
-      qualityMenu.classList.remove('show');
-    }
-
-    // Playback Quality selector for file streams
-    function selectQuality(quality, url, btnElement) {
-      const currentTime = video.currentTime;
-      const isPlaying = !video.paused;
-      
-      let finalUrl = url;
-      if (finalUrl.startsWith('/')) {
-        finalUrl = `https://providers.peestream.in${finalUrl}`;
-      }
-
-      document.querySelectorAll('#qualities-list .menu-option').forEach(btn => {
-        btn.classList.remove('active');
-        const checkIcon = btn.querySelector('i');
-        if (checkIcon) checkIcon.remove();
-      });
-      
-      btnElement.classList.add('active');
-      btnElement.innerHTML += ' <i class="fa-solid fa-check" style="font-size:0.75rem;opacity:0.8"></i>';
-
-      video.src = finalUrl;
-      video.addEventListener('loadedmetadata', function onLoaded() {
-        if (currentTime > 0) video.currentTime = currentTime;
-        video.removeEventListener('loadedmetadata', onLoaded);
-      });
-      
-      if (isPlaying) {
-        video.play().catch(() => { hideLoadingOverlay(); bigPlayBtn.classList.add('show'); });
-      } else {
-        video.pause();
-        bigPlayBtn.classList.add('show');
-      }
-      
-      qualityMenu.classList.remove('show');
-    }
-
-    // High-Performance Parallel Subtitle Loader & Cache
-    async function fetchSubtitles() {
-      if (subtitlesFetched || !tmdbId) return;
-      subtitlesFetched = true;
-
-      try {
-        const subUrl = `https://providers.peestream.in/api/subtitles?tmdbId=${tmdbId}&type=${type}${season ? `&season=${season}` : ''}${episode ? `&episode=${episode}` : ''}`;
-        const resp = await fetch(subUrl);
-        if (resp.ok) {
-          const subData = await resp.json();
-          if (subData && Array.isArray(subData.captions) && subData.captions.length > 0) {
-            activeSubtitles = subData.captions;
-            
-            // Clear existing non-Off options
-            while (subtitlesList.children.length > 1) {
-              subtitlesList.removeChild(subtitlesList.lastChild);
-            }
-
-            // Populate menu
-            activeSubtitles.forEach((sub, index) => {
-              const btn = document.createElement('button');
-              btn.className = 'menu-option';
-              btn.innerText = getLanguageName(sub.language);
-              btn.onclick = () => selectSubtitle(index, btn);
-              subtitlesList.appendChild(btn);
-            });
-
-            // Auto-select English or first subtitle & PREFETCH IMMEDIATELY in parallel
-            let targetIndex = activeSubtitles.findIndex(s => s.language === 'en' || s.language === 'eng');
-            if (targetIndex === -1) targetIndex = 0;
-
-            if (targetIndex !== -1 && subtitlesList.children[targetIndex + 1]) {
-              const targetBtn = subtitlesList.children[targetIndex + 1];
-              selectSubtitle(targetIndex, targetBtn);
-            }
-          }
-        }
-      } catch (e) {
-        console.error("Error loading subtitles:", e);
-      }
-    }
-
-    async function loadSubtitleContent(subtitle) {
-      if (!subtitle || !subtitle.url) return [];
-      if (subtitleCache.has(subtitle.url)) {
-        return subtitleCache.get(subtitle.url);
-      }
-
-      const directUrl = subtitle.url;
-      const proxyUrl = `https://providers.peestream.in/proxy?u=${btoa(subtitle.url).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')}`;
-
-      // Fast race / fallback between direct & proxy fetch
-      async function tryFetch(url, timeoutMs = 4000) {
-        const controller = new AbortController();
-        const tid = setTimeout(() => controller.abort(), timeoutMs);
-        try {
-          const res = await fetch(url, { signal: controller.signal });
-          clearTimeout(tid);
-          if (res.ok) {
-            const text = await res.text();
-            if (text && text.trim().length > 0) return text;
-          }
-        } catch (e) {
-          clearTimeout(tid);
-        }
-        return null;
-      }
-
-      let text = null;
-      if (!subtitle.needsProxy) {
-        text = await tryFetch(directUrl, 3500);
-      }
-      if (!text) {
-        text = await tryFetch(proxyUrl, 6000);
-      }
-      if (!text && subtitle.needsProxy) {
-        text = await tryFetch(directUrl, 3500);
-      }
-
-      if (text) {
-        const parsed = parseSRT(text);
-        subtitleCache.set(subtitle.url, parsed);
-        return parsed;
-      }
-      return [];
-    }
-
-    async function selectSubtitle(index, btnElement) {
-      if (btnElement) {
-        document.querySelectorAll('#subtitles-list .menu-option').forEach(btn => btn.classList.remove('active'));
-        btnElement.classList.add('active');
-      }
-      subtitlesMenu.classList.remove('show');
-
-      if (index === 'off') {
-        currentSubtitleIndex = -1;
-        subtitleCues = [];
-        subtitleOverlay.style.display = 'none';
-        return;
-      }
-
-      currentSubtitleIndex = index;
-      const subtitle = activeSubtitles[index];
-      if (!subtitle) return;
-
-      const cues = await loadSubtitleContent(subtitle);
-      if (currentSubtitleIndex === index) {
-        subtitleCues = cues;
-      }
-    }
-
-    // Robust SRT & WebVTT Subtitle Parsing
-    function parseSRT(data) {
-      const cues = [];
-      if (!data || typeof data !== 'string') return cues;
-
-      const cleanData = data.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-      const blocks = cleanData.split(/\n\s*\n/);
-
-      const timeRegex = /(?:(\d{1,2}):)?(\d{2}):(\d{2})[,.](\d{2,3})\s*-->\s*(?:(\d{1,2}):)?(\d{2}):(\d{2})[,.](\d{2,3})/;
-
-      for (const block of blocks) {
-        const lines = block.trim().split('\n');
-        let timeIndex = -1;
-        let match = null;
-
-        for (let i = 0; i < lines.length; i++) {
-          const m = lines[i].match(timeRegex);
-          if (m) {
-            match = m;
-            timeIndex = i;
-            break;
-          }
-        }
-
-        if (match && timeIndex !== -1) {
-          const start = parseTimestampMatch(match[1], match[2], match[3], match[4]);
-          const end = parseTimestampMatch(match[5], match[6], match[7], match[8]);
-          
-          const textLines = lines.slice(timeIndex + 1).filter(l => l.trim().length > 0 && !l.startsWith('WEBVTT') && !l.startsWith('NOTE'));
-          const text = textLines.join('<br>').replace(/<font[^>]*>/gi, '').replace(/<\/font>/gi, '');
-          
-          if (text) {
-            cues.push({ start, end, text });
-          }
-        }
-      }
-      return cues.sort((a, b) => a.start - b.start);
-    }
-
-    function parseTimestampMatch(h, m, s, ms) {
-      const hours = parseInt(h || '0', 10);
-      const mins = parseInt(m, 10);
-      const secs = parseInt(s, 10);
-      let millis = parseInt(ms, 10);
-      if (ms && ms.length === 2) millis *= 10;
-      return hours * 3600 + mins * 60 + secs + (millis / 1000);
-    }
-
-    // Format seconds to H:MM:SS / M:SS
-    function formatTime(sec) {
-      if (isNaN(sec) || sec === Infinity) return "0:00";
-      const h = Math.floor(sec / 3600);
-      const m = Math.floor((sec % 3600) / 60);
-      const s = Math.floor(sec % 60);
-      
-      const sStr = s < 10 ? `0${s}` : s;
-      if (h > 0) {
-        const mStr = m < 10 ? `0${m}` : m;
-        return `${h}:${mStr}:${sStr}`;
-      }
-      return `${m}:${sStr}`;
-    }
-
-    // Core Player UI Logic
-    function setupPlayerEvents() {
-      // Toggle play / pause
-      const togglePlay = () => {
-        if (video.paused) {
-          video.play();
-          bigPlayBtn.classList.remove('show');
-          playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-        } else {
-          video.pause();
-          bigPlayBtn.classList.add('show');
-          playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-        }
-      };
-
-      video.addEventListener('click', togglePlay);
-      bigPlayBtn.addEventListener('click', togglePlay);
-      playBtn.addEventListener('click', togglePlay);
-
-      // Video state changes: hide ONLY when actual playback starts.
-      video.addEventListener('playing', () => { hideLoadingOverlay(); hideErrorOverlay(); });
-      video.addEventListener('loadedmetadata', () => {
-        if (!loadingOverlay.classList.contains('hidden')) {
-          loaderStatus.innerText = 'Starting video...';
-        }
-      });
-      video.addEventListener('waiting', () => {
-        if (!loadingOverlay.classList.contains('hidden')) {
-          loaderStatus.innerText = 'Starting video...';
-        }
-      });
-
-      video.addEventListener('play', () => {
-        bigPlayBtn.classList.remove('show');
-        playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-      });
-      video.addEventListener('pause', () => {
-        bigPlayBtn.classList.add('show');
-        playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-      });
-
-      // Update time tracker & subtitles
-      video.addEventListener('timeupdate', () => {
-        const curr = video.currentTime;
-        const dur = video.duration;
-        timeCurrent.innerText = formatTime(curr);
-        
-        if (dur) {
-          const percentage = (curr / dur) * 100;
-          currentProgress.style.width = `${percentage}%`;
-          progressHoverDot.style.left = `${percentage}%`;
-        }
-
-        // Render current subtitles cue
-        if (subtitleCues.length > 0) {
-          const t = curr + subtitleDelay;
-          // Binary search: rightmost cue whose start <= t. This is the active
-          // line — correctly handles overlapping cues (latest start wins) and
-          // the cue boundary (end is exclusive, so the next line shows instantly).
-          let lo = 0, hi = subtitleCues.length - 1, idx = -1;
-          while (lo <= hi) {
-            const mid = (lo + hi) >> 1;
-            if (subtitleCues[mid].start <= t) {
-              idx = mid;
-              lo = mid + 1;
-            } else {
-              hi = mid - 1;
-            }
-          }
-          const activeCue = (idx !== -1 && t < subtitleCues[idx].end) ? subtitleCues[idx] : null;
-          if (activeCue) {
-            subtitleOverlay.style.display = 'block';
-            subtitleOverlay.innerHTML = activeCue.text;
-            const baseBottom = videoContainer.classList.contains('hide-controls') ? 35 : 95;
-            subtitleOverlay.style.bottom = `${baseBottom + subtitleVerticalPos}px`;
-            subtitleOverlay.style.fontSize = `${subtitleSize}px`;
-            subtitleOverlay.style.background = `rgba(0, 0, 0, ${subtitleBgOpacity})`;
-          } else {
-            subtitleOverlay.style.display = 'none';
-          }
-        }
-      });
-
-      // Video LoadedMetadata
-      video.addEventListener('loadedmetadata', () => {
-        timeDuration.innerText = formatTime(video.duration);
-      });
-
-      // Hide loading overlay only once video ACTUALLY starts playing.
-      video.addEventListener('playing', () => {
-        loadingOverlay.classList.add('hidden');
-        loadingOverlay.style.display = 'none';
-      });
-
-      // Buffer/Buffered ranges
-      video.addEventListener('progress', () => {
-        if (video.buffered.length > 0 && video.duration) {
-          const bufferedEnd = video.buffered.end(video.buffered.length - 1);
-          const percentage = (bufferedEnd / video.duration) * 100;
-          bufferedBar.style.width = `${percentage}%`;
-        }
-      });
-
-      // Volume controllers
-      const updateVolumeIcon = () => {
-        if (video.muted || video.volume === 0) {
-          volumeBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
-        } else if (video.volume < 0.4) {
-          volumeBtn.innerHTML = '<i class="fa-solid fa-volume-low"></i>';
-        } else {
-          volumeBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
-        }
-      };
-
-      volumeSlider.addEventListener('input', (e) => {
-        video.volume = e.target.value;
-        video.muted = (video.volume === 0);
-        updateVolumeIcon();
-      });
-
-      const volumePopup = document.getElementById('volume-popup');
-      
-      volumeBtn.addEventListener('click', (e) => {
-        // On mobile touch devices, toggle popup
-        if ('ontouchstart' in window || window.innerWidth <= 768) {
-          e.stopPropagation();
-          if (volumePopup) volumePopup.classList.toggle('show');
-        } else {
-          // On desktop, click toggles mute/unmute
-          if (video.muted) {
-            video.muted = false;
-            volumeSlider.value = video.volume || 0.8;
-          } else {
-            video.muted = true;
-            volumeSlider.value = 0;
-          }
-          updateVolumeIcon();
-        }
-      });
-
-      if (volumePopup) {
-        volumePopup.addEventListener('click', (e) => e.stopPropagation());
-        volumePopup.addEventListener('touchstart', (e) => e.stopPropagation());
-      }
-
-      // Seek bar scrubbing & dragging logic (instant UI playhead update, seek on release)
-      let isDragging = false;
-      
-      const seekFromEvent = (e, commit = false) => {
-        const rect = progressArea.getBoundingClientRect();
-        let pos = (e.clientX - rect.left) / rect.width;
-        pos = Math.max(0, Math.min(1, pos));
-        
-        const percentage = pos * 100;
-        currentProgress.style.width = `${percentage}%`;
-        progressHoverDot.style.left = `${percentage}%`;
-        
-        if (video.duration) {
-          timeCurrent.innerText = formatTime(pos * video.duration);
-          if (commit) {
-            video.currentTime = pos * video.duration;
-          }
-        }
-      };
-
-      progressArea.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        seekFromEvent(e, false);
-      });
-
-      window.addEventListener('mouseup', (e) => {
-        if (isDragging) {
-          isDragging = false;
-          seekFromEvent(e, true);
-        }
-      });
-
-      window.addEventListener('mousemove', (e) => {
-        if (isDragging) {
-          seekFromEvent(e, false);
-        }
-      });
-
-      // Subtitles & Sync & Quality & Server menus toggle
-      const subSyncBtn = document.getElementById('ctrl-sub-sync');
-      const subSyncMenu = document.getElementById('sub-sync-menu');
-
-      if (subSyncBtn && subSyncMenu) {
-        subSyncBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          subtitlesMenu.classList.remove('show');
-          qualityMenu.classList.remove('show');
-          serverMenu.classList.remove('show');
-          subSyncMenu.classList.toggle('show');
-        });
-      }
-
-      subtitlesBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (subSyncMenu) subSyncMenu.classList.remove('show');
-        qualityMenu.classList.remove('show');
-        serverMenu.classList.remove('show');
-        subtitlesMenu.classList.toggle('show');
-      });
-
-      qualityBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (subSyncMenu) subSyncMenu.classList.remove('show');
-        subtitlesMenu.classList.remove('show');
-        serverMenu.classList.remove('show');
-        qualityMenu.classList.toggle('show');
-      });
-
-      serverBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (subSyncMenu) subSyncMenu.classList.remove('show');
-        subtitlesMenu.classList.remove('show');
-        qualityMenu.classList.remove('show');
-        serverMenu.classList.toggle('show');
-      });
-
-      // Close menus on click outside
-      window.addEventListener('click', () => {
-        if (subSyncMenu) subSyncMenu.classList.remove('show');
-        subtitlesMenu.classList.remove('show');
-        qualityMenu.classList.remove('show');
-        serverMenu.classList.remove('show');
-      });
-
-      // Fullscreen (with cross-origin iframe / iOS fallbacks so embeds work even without allowfullscreen)
-      const toggleFullscreen = () => {
-        const tryFullscreen = (target) => {
-          const req = target.requestFullscreen || target.webkitRequestFullscreen || target.msRequestFullscreen || (video.webkitEnterFullscreen ? () => video.webkitEnterFullscreen() : null);
-          if (!req) {
-            clLog('warn', 'Fullscreen API not available in this browser/embed context');
-            return;
-          }
-          const p = req.call(target);
-          if (p && typeof p.catch === 'function') {
-            p.catch(err => {
-              clLog('warn', 'Fullscreen denied (' + (err ? err.message : 'blocked') + ') - iframe likely missing allowfullscreen');
-              console.error('Fullscreen error:', err);
-            });
-          }
-        };
-        if (document.fullscreenElement || document.webkitFullscreenElement) {
-          (document.exitFullscreen || document.webkitExitFullscreen || function(){}).call(document);
-        } else {
-          tryFullscreen(video.webkitEnterFullscreen ? video : videoContainer);
-        }
-      };
-
-      fullscreenBtn.addEventListener('click', toggleFullscreen);
-
-      document.addEventListener('fullscreenchange', () => {
-        if (document.fullscreenElement) {
-          fullscreenBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
-        } else {
-          fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
-        }
-      });
-
-      // Picture-in-Picture
-      pipBtn.addEventListener('click', async () => {
-        try {
-          if (document.pictureInPictureElement) {
-            await document.exitPictureInPicture();
-          } else if (document.pictureInPictureEnabled) {
-            await video.requestPictureInPicture();
-          }
-        } catch (e) {
-          console.error("Failed to trigger PiP:", e);
-        }
-      });
-
-      // Keyboard Listeners
-      window.addEventListener('keydown', (e) => {
-        if (document.activeElement.tagName === 'INPUT') return;
-        if (e.code === 'Space') {
-          e.preventDefault();
-          togglePlay();
-        } else if (e.code === 'KeyF') {
-          e.preventDefault();
-          toggleFullscreen();
-        } else if (e.code === 'ArrowRight') {
-          e.preventDefault();
-          video.currentTime = Math.min(video.duration, video.currentTime + 10);
-        } else if (e.code === 'ArrowLeft') {
-          e.preventDefault();
-          video.currentTime = Math.max(0, video.currentTime - 10);
-        }
-      });
-
-      // Auto-hide controls bar on mouse inactivity
-      let mouseTimer;
-      const anyMenuOpen = () => [serverMenu, subSyncMenu, subtitlesMenu, qualityMenu].some(m => m && m.classList.contains('show'));
-      const showControls = () => {
-        videoContainer.classList.remove('hide-controls');
-        clearTimeout(mouseTimer);
-        if (!video.paused) {
-          mouseTimer = setTimeout(() => {
-            if (!anyMenuOpen()) videoContainer.classList.add('hide-controls');
-          }, 3000);
-        }
-      };
-
-      videoContainer.addEventListener('mousemove', showControls);
-      videoContainer.addEventListener('click', showControls);
-      video.addEventListener('play', showControls);
-      video.addEventListener('pause', () => {
-        videoContainer.classList.remove('hide-controls');
-        clearTimeout(mouseTimer);
-      });
-    }
-
-    // Helper for language pretty names
-    function getLanguageName(code) {
-      const names = {
-        'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German', 'it': 'Italian',
-        'pt': 'Portuguese', 'ru': 'Russian', 'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean',
-        'ar': 'Arabic', 'hi': 'Hindi', 'nl': 'Dutch', 'pl': 'Polish', 'tr': 'Turkish',
-        'vi': 'Vietnamese', 'th': 'Thai', 'sv': 'Swedish', 'no': 'Norwegian', 'da': 'Danish',
-        'fi': 'Finnish', 'el': 'Greek', 'he': 'Hebrew', 'id': 'Indonesian', 'ms': 'Malay',
-        'ro': 'Romanian', 'hu': 'Hungarian', 'cs': 'Czech', 'sk': 'Slovak', 'uk': 'Ukrainian',
-        'sr': 'Serbian', 'hr': 'Croatian', 'bg': 'Bulgarian', 'sl': 'Slovenian', 'fa': 'Persian'
-      };
-      return names[code.toLowerCase()] || code.toUpperCase();
-    }
-
-    // ─── postMessage API ─────────────────────────────────────────────────────
-    // Lets parent pages control the player and receive state events.
-    // Usage from parent frame:
-    //   iframe.contentWindow.postMessage({ api: 'peestream', method: 'play' }, '*');
-    //   iframe.contentWindow.postMessage({ api: 'peestream', method: 'pause' }, '*');
-    //   iframe.contentWindow.postMessage({ api: 'peestream', method: 'seek', value: 120 }, '*');
-    //   iframe.contentWindow.postMessage({ api: 'peestream', method: 'mute' }, '*');
-    //   iframe.contentWindow.postMessage({ api: 'peestream', method: 'unmute' }, '*');
-    //   iframe.contentWindow.postMessage({ api: 'peestream', method: 'setVolume', value: 0.5 }, '*');
-    //   iframe.contentWindow.postMessage({ api: 'peestream', method: 'getState' }, '*');
-    // Events emitted to parent:
-    //   { api: 'peestream', event: 'ready' }
-    //   { api: 'peestream', event: 'play' }
-    //   { api: 'peestream', event: 'pause' }
-    //   { api: 'peestream', event: 'timeupdate', currentTime, duration }
-    //   { api: 'peestream', event: 'ended' }
-    //   { api: 'peestream', event: 'error', message }
-    //   { api: 'peestream', event: 'state', currentTime, duration, paused, muted, volume }
-
-    const _video = document.getElementById('main-video');
-
-    function _postToParent(payload) {
-      try { window.parent.postMessage(Object.assign({ api: 'peestream' }, payload), '*'); } catch(e) {}
-    }
-
-    // Emit ready once the embed boots
-    window.addEventListener('load', () => _postToParent({ event: 'ready' }));
-
-    // Forward video events to parent
-    _video.addEventListener('play',  () => _postToParent({ event: 'play' }));
-    _video.addEventListener('pause', () => _postToParent({ event: 'pause' }));
-    _video.addEventListener('ended', () => _postToParent({ event: 'ended' }));
-    _video.addEventListener('timeupdate', () => {
-      _postToParent({ event: 'timeupdate', currentTime: _video.currentTime, duration: _video.duration || 0 });
-    });
-    _video.addEventListener('error', () => {
-      _postToParent({ event: 'error', message: 'Media error' });
-    });
-
-    // Listen for commands from the parent
-    window.addEventListener('message', (e) => {
-      if (!e.data || e.data.api !== 'peestream') return;
-      const { method, value } = e.data;
-      switch (method) {
-        case 'play':      _video.play().catch(() => {}); break;
-        case 'pause':     _video.pause(); break;
-        case 'seek':      if (typeof value === 'number' && _video.duration) _video.currentTime = value; break;
-        case 'mute':      _video.muted = true; break;
-        case 'unmute':    _video.muted = false; break;
-        case 'setVolume': if (typeof value === 'number') _video.volume = Math.max(0, Math.min(1, value)); break;
-        case 'getState':
-          _postToParent({ event: 'state', currentTime: _video.currentTime, duration: _video.duration || 0, paused: _video.paused, muted: _video.muted, volume: _video.volume });
-          break;
-      }
-    });
-
-    // Realtime Embed Analytics Tracker
-    (function initPeeStreamAnalytics() {
-      try {
-        let sid = sessionStorage.getItem('peestream_sid');
-        if (!sid) {
-          sid = 'sid_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
-          sessionStorage.setItem('peestream_sid', sid);
-        }
-
-        let refDomain = 'Direct / Standalone';
-        try {
-          if (document.referrer) {
-            refDomain = new URL(document.referrer).hostname;
-          } else if (window.ancestorOrigins && window.ancestorOrigins.length > 0) {
-            refDomain = new URL(window.ancestorOrigins[0]).hostname;
-          }
-        } catch (e) {}
-
-        const analyticsUrl = 'https://providers.peestream.in/api/analytics/event';
-
-        function sendAnalytics(type, extra) {
-          const params = new URLSearchParams(window.location.search);
-          const currentTmdbId = params.get('tmdbId') || '';
-          const currentMediaType = params.get('type') || 'movie';
-          const titleElem = document.querySelector('.media-title');
-          const currentTitle = titleElem ? titleElem.innerText.trim() : (params.get('title') || '');
-
-          const payload = {
-            type: type,
-            sessionId: sid,
-            data: Object.assign({
-              domain: refDomain,
-              referrer: document.referrer || '',
-              currentUrl: window.location.href,
-              tmdbId: currentTmdbId,
-              mediaType: currentMediaType,
-              title: currentTitle
-            }, extra || {})
-          };
-
-          // OpenPanel Tracking
-          if (window.op) {
-            try {
-              const opEvent = type === 'pageview' ? 'embed_viewed' : type === 'play' ? 'video_started' : type;
-              window.op('track', opEvent, {
-                is_embed: true,
-                embed_source: 'iframe',
-                embedding_domain: refDomain,
-                referrer_url: document.referrer || '',
-                current_url: window.location.href,
-                tmdb_id: currentTmdbId,
-                media_type: currentMediaType,
-                title: currentTitle
-              });
-            } catch(opErr) {}
-          }
-
-          if (navigator.sendBeacon) {
-            try {
-              const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-              navigator.sendBeacon(analyticsUrl, blob);
-              return;
-            } catch (err) {}
-          }
-
-          fetch(analyticsUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            keepalive: true
-          }).catch(() => {});
-        }
-
-        // Track pageview on load
-        sendAnalytics('pageview');
-
-        // Track play and heartbeats
-        let playLogged = false;
-        let lastPing = Date.now();
-
-        if (_video) {
-          _video.addEventListener('play', () => {
-            if (!playLogged) {
-              sendAnalytics('play');
-              playLogged = true;
-            }
-          });
-
-          _video.addEventListener('timeupdate', () => {
-            const now = Date.now();
-            if (now - lastPing > 25000) {
-              sendAnalytics('heartbeat', { duration: 25000 });
-              lastPing = now;
-            }
-          });
-
-          _video.addEventListener('error', () => {
-            sendAnalytics('error', { message: 'Player playback error' });
-          });
-        }
-      } catch (e) {
-        console.warn('[PeeStream Analytics]', e);
-      }
-    })();
   </script>
 </body>
 </html>
