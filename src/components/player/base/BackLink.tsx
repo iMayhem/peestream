@@ -6,6 +6,8 @@ import { Icon, Icons } from "@/components/Icon";
 export function BackLink(props: { url: string }) {
   const { t } = useTranslation();
 
+  if (window.self !== window.top) return null;
+
   return (
     <div className="flex items-center">
       <Link
