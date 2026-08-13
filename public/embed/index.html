@@ -517,27 +517,100 @@
       cursor: pointer;
     }
 
-    /* Big play button */
+    /* Player top bar — smov: title left, badge right, black gradient scrim */
+    .player-topbar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 6;
+      padding: 1.5rem 2rem 4rem 2rem;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.75) 0%, transparent 100%);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      pointer-events: none;
+    }
+
+    .video-container.hide-controls ~ .player-topbar,
+    .video-container.hide-controls .player-topbar {
+      opacity: 0;
+      transform: translateY(-12px);
+      pointer-events: none;
+    }
+
+    .player-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .player-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 60vw;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+    }
+
+    .player-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #a359ec;
+      background: rgba(163, 89, 236, 0.14);
+      border: 1px solid rgba(163, 89, 236, 0.3);
+      padding: 3px 10px;
+      border-radius: 9999px;
+      white-space: nowrap;
+    }
+
+    .player-badge .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #a359ec;
+    }
+
+    .player-topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      pointer-events: auto;
+    }
+
+    /* Big play button (smov style: dark translucent circle, white icon) */
     .big-play-btn {
       position: absolute;
-      width: 70px;
-      height: 70px;
-      background: rgba(163, 89, 236, 0.85);
+      width: 84px;
+      height: 84px;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(6px);
       border-radius: 50%;
       display: flex;
       justify-content: center;
       align-items: center;
       color: #fff;
-      font-size: 1.8rem;
+      font-size: 2.1rem;
       cursor: pointer;
       z-index: 4;
-      box-shadow: 0 0 25px rgba(163, 89, 236, 0.4);
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       opacity: 0;
       pointer-events: none;
       transform: translate(-50%, -50%) scale(0.8);
       left: 50%;
       top: 50%;
+      padding-left: 6px;
     }
     .big-play-btn.show {
       opacity: 1;
@@ -545,30 +618,29 @@
       transform: translate(-50%, -50%) scale(1);
     }
     .big-play-btn:hover {
-      background: var(--accent-hover);
-      transform: translate(-50%, -50%) scale(1.08);
-      box-shadow: 0 0 35px rgba(163, 89, 236, 0.55);
+      background: rgba(255, 255, 255, 0.18);
+      transform: translate(-50%, -50%) scale(1.06);
     }
 
-    /* Controls overlay */
+    /* Controls overlay — smov: black gradient scrim, slide-up */
     .video-controls {
       position: absolute;
       bottom: 0;
       left: 0;
       width: 100%;
-      background: linear-gradient(to top, rgba(7, 7, 10, 0.95) 0%, rgba(7, 7, 10, 0.7) 60%, transparent 100%);
-      padding: 30px 24px 15px 24px;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.45) 55%, transparent 100%);
+      padding: 28px 2rem 16px 2rem;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 6px;
       z-index: 5;
-      transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       opacity: 1;
     }
 
     .video-container.hide-controls .video-controls {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(12px);
       pointer-events: none;
     }
 
@@ -582,10 +654,10 @@
       cursor: none;
     }
 
-    /* Progress seeker styling */
+    /* Progress seeker styling — smov: thin bar, purple fill, white dot thumb */
     .progress-area {
       width: 100%;
-      height: 12px;
+      height: 16px;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -594,10 +666,10 @@
     .progress-bar {
       width: 100%;
       height: 4px;
-      background: rgba(255, 255, 255, 0.12);
-      border-radius: 10px;
+      background: rgba(127, 141, 155, 0.25);
+      border-radius: 9999px;
       position: relative;
-      transition: height 0.15s ease;
+      transition: height 0.1s ease;
     }
 
     .progress-area:hover .progress-bar {
@@ -607,8 +679,8 @@
     .buffered-bar {
       position: absolute;
       height: 100%;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
+      background: rgba(127, 141, 155, 0.5);
+      border-radius: 9999px;
       left: 0;
       width: 0%;
     }
@@ -616,23 +688,23 @@
     .current-progress {
       position: absolute;
       height: 100%;
-      background: var(--accent-color);
-      border-radius: 10px;
+      background: #a359ec;
+      border-radius: 9999px;
       left: 0;
       width: 0%;
     }
 
     .progress-hover-dot {
       position: absolute;
-      width: 12px;
-      height: 12px;
+      width: 16px;
+      height: 16px;
       background: #fff;
       border-radius: 50%;
       top: 50%;
       left: 0%;
       transform: translate(-50%, -50%) scale(0);
-      transition: transform 0.15s ease;
-      box-shadow: 0 0 10px rgba(163, 89, 236, 0.6);
+      transition: transform 0.1s ease;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
       pointer-events: none;
     }
 
@@ -640,7 +712,7 @@
       transform: translate(-50%, -50%) scale(1);
     }
 
-    /* Controls layout */
+    /* Controls layout — smov: rounded-full icon buttons, translucent hover circle */
     .controls-row {
       display: flex;
       justify-content: space-between;
@@ -650,32 +722,34 @@
     .controls-left, .controls-right {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 2px;
     }
 
     .control-btn {
       background: none;
       border: none;
       color: #fff;
-      font-size: 1.1rem;
+      font-size: 1.25rem;
       cursor: pointer;
-      opacity: 0.8;
-      transition: all 0.2s ease;
+      transition: all 0.1s ease;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 34px;
-      height: 34px;
-      border-radius: 8px;
+      width: 40px;
+      height: 40px;
+      border-radius: 9999px;
+      padding: 8px;
     }
 
     .control-btn:hover {
-      opacity: 1;
-      color: var(--accent-color);
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(68, 84, 100, 0.5);
     }
 
-    /* Vertical Volume Controller */
+    .control-btn:active {
+      transform: scale(1.1);
+    }
+
+    /* Vertical Volume Controller — smov: dark panel, purple slider */
     .volume-container {
       position: relative;
       display: flex;
@@ -685,25 +759,24 @@
     
     .volume-popup {
       position: absolute;
-      bottom: 44px;
+      bottom: 48px;
       left: 50%;
       transform: translateX(-50%);
-      width: 38px;
+      width: 40px;
       height: 120px;
-      background: rgba(10, 10, 18, 0.96);
-      border: 1px solid var(--border-color);
+      background: #0c1216;
+      border: 1px solid #172532;
       border-radius: 12px;
       padding: 12px 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       z-index: 120;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.2s ease, transform 0.2s ease;
+      transition: opacity 0.2s ease;
     }
 
     .volume-container:hover .volume-popup,
@@ -718,157 +791,95 @@
       writing-mode: bt-lr;
       width: 6px;
       height: 90px;
-      accent-color: var(--accent-color);
+      accent-color: #a359ec;
       cursor: pointer;
       border-radius: 4px;
     }
 
-    /* Mobile Responsive Polish for Embed UI */
-    @media (max-width: 768px) {
-      .player-controls {
-        padding: 10px 12px;
-      }
-
-      .controls-row {
-        gap: 6px;
-      }
-
-      .controls-left, .controls-right {
-        gap: 4px;
-      }
-
-      .control-btn {
-        width: 34px;
-        height: 34px;
-        font-size: 0.9rem;
-      }
-
-      .time-display {
-        font-size: 0.75rem;
-        letter-spacing: 0px;
-      }
-
-      .control-menu {
-        bottom: 48px;
-        right: -5px;
-        width: 150px;
-        max-height: 190px;
-      }
-
-      .volume-popup {
-        bottom: 42px;
-        width: 36px;
-        height: 110px;
-      }
-
-      .volume-slider-vertical {
-        height: 80px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .player-controls {
-        padding: 8px 10px;
-      }
-
-      .controls-left, .controls-right {
-        gap: 2px;
-      }
-
-      .control-btn {
-        width: 32px;
-        height: 32px;
-        font-size: 0.85rem;
-      }
-
-      .time-display {
-        font-size: 0.7rem;
-      }
-
-      .header-title {
-        font-size: 0.85rem;
-      }
-
-      .header-badge {
-        display: none;
-      }
-    }
-
-    /* Time display */
+    /* Time display — smov */
     .time-display {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       font-weight: 500;
-      color: #dfdfea;
+      color: #fff;
       letter-spacing: 0.3px;
+      padding: 0 8px;
+      white-space: nowrap;
     }
 
-    /* Dropdown Menus for Subtitles / Quality */
+    /* Dropdown Menus — smov context-menu panel */
     .control-menu-container {
       position: relative;
     }
 
-      .control-menu {
-        position: absolute;
-        bottom: 45px;
-        right: -10px;
-        background: rgba(10, 10, 18, 0.96);
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        padding: 8px 0;
-        width: 160px;
-        max-height: 220px;
-        overflow-y: auto;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-        display: none;
+    .control-menu {
+      position: absolute;
+      bottom: 48px;
+      right: -10px;
+      background: #0c1216;
+      border: 1px solid #172532;
+      border-radius: 14px;
+      padding: 8px 0;
+      width: 240px;
+      max-height: 300px;
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      display: none;
       flex-direction: column;
       z-index: 100;
-      backdrop-filter: blur(16px);
     }
 
     .control-menu.show {
       display: flex;
     }
 
+    .control-menu::-webkit-scrollbar {
+      width: 4px;
+    }
+    .control-menu::-webkit-scrollbar-thumb {
+      background: rgba(127, 141, 155, 0.35);
+      border-radius: 4px;
+    }
+
     .menu-header {
-      padding: 6px 14px;
-      font-size: 0.75rem;
+      padding: 6px 16px;
+      font-size: 0.7rem;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-dim);
+      letter-spacing: 1px;
+      color: #617a8a;
       font-weight: 700;
-      border-bottom: 1px solid var(--border-color);
+      border-bottom: 1px solid #172532;
       margin-bottom: 5px;
     }
 
     .menu-option {
       background: none;
       border: none;
-      color: #fff;
+      color: #a8a8b5;
       font-family: 'DM Sans', sans-serif;
       text-align: left;
-      padding: 8px 14px;
-      font-size: 0.85rem;
+      padding: 9px 16px;
+      font-size: 0.9rem;
       cursor: pointer;
       width: 100%;
-      transition: all 0.2s ease;
+      transition: background 0.1s ease, color 0.1s ease;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
     .menu-option:hover {
-      background: rgba(163, 89, 236, 0.12);
-      color: var(--accent-color);
+      background: #172532;
+      color: #fff;
     }
 
     .menu-option.active {
-      color: var(--accent-color);
+      color: #a359ec;
       font-weight: 700;
     }
 
     /* Server menu with realtime status */
     #server-menu {
-      width: 215px;
+      width: 240px;
     }
 
     .server-option {
@@ -950,26 +961,28 @@
       opacity: 0.9;
     }
 
-    /* Subtitles rendering overlay */
+    /* Subtitles rendering overlay — smov: bare text with soft shadow */
     .subtitle-overlay {
       position: absolute;
       bottom: 95px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.75);
+      background: transparent;
       color: #fff;
-      padding: 6px 16px;
-      border-radius: 8px;
+      padding: 0 16px;
+      border-radius: 0;
       font-size: 1.25rem;
-      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 4px rgba(0, 0, 0, 0.9);
       text-align: center;
-      max-width: 80%;
+      max-width: 85%;
       pointer-events: none;
       z-index: 6;
       transition: bottom 0.25s ease;
       line-height: 1.45;
       font-weight: 500;
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      border: none;
+      white-space: pre-wrap;
+      word-wrap: break-word;
     }
 
     .hide-controls ~ .subtitle-overlay {
@@ -983,13 +996,13 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(7, 7, 10, 0.98);
+      background-color: #000000;
       z-index: 10;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      transition: opacity 0.5s ease;
+      transition: opacity 0.3s ease;
     }
     
     .overlay.hidden {
@@ -1001,11 +1014,9 @@
       width: 90%;
       max-width: 450px;
       padding: 35px 30px;
-      border-radius: 28px;
-      background: rgba(15, 15, 27, 0.7);
-      border: 1px solid rgba(163, 89, 236, 0.2);
-      backdrop-filter: blur(24px);
-      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), var(--shadow-glow);
+      border-radius: 16px;
+      background: #0f0f1b;
+      border: 1px solid #172532;
       text-align: center;
       display: flex;
       flex-direction: column;
@@ -1035,33 +1046,26 @@
     
     .spinner-box {
       position: relative;
-      width: 100px;
-      height: 100px;
-      margin-bottom: 25px;
+      width: 56px;
+      height: 56px;
+      margin-bottom: 24px;
       display: flex;
       justify-content: center;
       align-items: center;
     }
     
     .spinner-pulse {
-      position: absolute;
-      width: 80px;
-      height: 80px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(163, 89, 236, 0.15) 0%, transparent 70%);
-      border: 2.5px dashed rgba(163, 89, 236, 0.4);
-      animation: spin 8s linear infinite, pulse 2s ease-in-out infinite;
+      border: 4px solid #fff;
+      border-bottom-color: transparent;
+      background: transparent;
+      animation: spin 0.8s linear infinite;
     }
     
     .spinner-text {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-weight: 800;
-      font-size: 1.15rem;
-      color: var(--accent-hover);
-      text-shadow: 0 0 10px rgba(163, 89, 236, 0.5);
+      display: none;
     }
     
     @keyframes spin {
@@ -1069,17 +1073,13 @@
       100% { transform: rotate(360deg); }
     }
     
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); opacity: 0.6; }
-      50% { transform: scale(1.15); opacity: 1; border-color: var(--accent-hover); }
-    }
-    
     .status-text {
-      font-size: 0.9rem;
-      font-weight: 600;
+      font-size: 0.95rem;
+      font-weight: 500;
       margin-bottom: 18px;
-      color: #e5e5f5;
+      color: #fff;
       letter-spacing: 0.2px;
+      opacity: 0.9;
     }
     
     .progress-bar-container {
@@ -1376,8 +1376,8 @@
     
     .retry-btn {
       padding: 10px 24px;
-      background: var(--accent-color);
-      color: #ffffff;
+      background: #ffffff;
+      color: #000000;
       border: none;
       border-radius: 8px;
       font-weight: 700;
@@ -1387,7 +1387,7 @@
     }
     
     .retry-btn:hover {
-      background: var(--accent-hover);
+      background: #dedede;
     }
 
     #debug-console {
@@ -1569,6 +1569,8 @@
             
             <div class="controls-left">
               <button id="ctrl-play" class="control-btn" title="Play (Space)"><i class="fa-solid fa-play"></i></button>
+              <button id="ctrl-skip-back" class="control-btn" title="Back 10 seconds"><i class="fa-solid fa-backward-step"></i></button>
+              <button id="ctrl-skip-fwd" class="control-btn" title="Forward 10 seconds"><i class="fa-solid fa-forward-step"></i></button>
               <div class="volume-container">
                 <button id="ctrl-volume" class="control-btn" title="Mute"><i class="fa-solid fa-volume-high"></i></button>
                 <div id="volume-popup" class="volume-popup">
@@ -1672,6 +1674,17 @@
         
         <!-- Custom Subtitle Overlay -->
         <div id="subtitle-overlay" class="subtitle-overlay" style="display: none;"></div>
+      </div>
+
+      <!-- Player Top Bar (smov style) -->
+      <div id="player-topbar" class="player-topbar">
+        <div class="player-title-wrap">
+          <span id="player-title" class="player-title">Media Stream</span>
+        </div>
+        <div class="player-topbar-right">
+          <span id="player-badge" class="player-badge" style="display: none;"><span class="badge-dot"></span><span id="player-badge-text">Poseidon</span></span>
+          <button id="embed-trigger" class="embed-trigger-btn" title="Embed code" style="display: none;"><i class="fa-solid fa-code"></i></button>
+        </div>
       </div>
       
       <!-- Scraping Loading Overlay -->
@@ -1900,12 +1913,42 @@ const hideLoadingOverlay = () => {
     const qualityMenuContainer = document.getElementById('quality-menu-container');
     const pipBtn = document.getElementById('ctrl-pip');
     const fullscreenBtn = document.getElementById('ctrl-fullscreen');
+    const skipBackBtn = document.getElementById('ctrl-skip-back');
+    const skipFwdBtn = document.getElementById('ctrl-skip-fwd');
     
     const progressArea = document.getElementById('progress-area');
     const currentProgress = document.getElementById('current-progress');
     const bufferedBar = document.getElementById('buffered-bar');
     const progressHoverDot = document.getElementById('progress-hover-dot');
     const subtitleOverlay = document.getElementById('subtitle-overlay');
+
+    // smov-style top bar: title + active provider badge
+    const playerBadge = document.getElementById('player-badge');
+    const playerBadgeText = document.getElementById('player-badge-text');
+    const playerTitleEl = document.getElementById('player-title');
+    if (playerTitleEl && title && title !== 'Media Stream') {
+      playerTitleEl.textContent = title;
+    }
+    function setActiveProviderBadge(name) {
+      if (!playerBadge || !playerBadgeText) return;
+      if (name) {
+        playerBadgeText.textContent = name;
+        playerBadge.style.display = 'inline-flex';
+      } else {
+        playerBadge.style.display = 'none';
+      }
+    }
+
+    if (skipBackBtn) {
+      skipBackBtn.addEventListener('click', () => {
+        video.currentTime = Math.max(0, (video.currentTime || 0) - 10);
+      });
+    }
+    if (skipFwdBtn) {
+      skipFwdBtn.addEventListener('click', () => {
+        video.currentTime = Math.min((video.duration || video.currentTime || 0) + 0, (video.currentTime || 0) + 10);
+      });
+    }
     
 
     
@@ -2224,6 +2267,7 @@ const hideLoadingOverlay = () => {
 
         setServerStatus(sourceId, 'success');
         activeServerId = firstStreamId;
+        setActiveProviderBadge(primaryName);
         loaderStatus.innerText = 'Preparing video...';
         loadingOverlay.classList.remove('hidden');
         loadingOverlay.style.display = 'flex';
@@ -2320,6 +2364,7 @@ const hideLoadingOverlay = () => {
       if (!item) return;
       
       activeServerId = sourceId;
+      setActiveProviderBadge(item.name || getFriendlyServerName(sourceId));
       
       if (hlsInstance) {
         try { hlsInstance.destroy(); } catch(e) {}
