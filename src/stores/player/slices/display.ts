@@ -119,6 +119,7 @@ export const createDisplaySlice: MakeSlice<DisplaySlice> = (set, get) => ({
           set((s) => {
             s.status = playerStatus.SCRAPING;
             s.interface.error = undefined;
+            s.forcedScrapeSourceId = "vaplayer";
           });
         });
         return;
@@ -144,6 +145,7 @@ export const createDisplaySlice: MakeSlice<DisplaySlice> = (set, get) => ({
     set((s) => {
       s.status = playerStatus.IDLE;
       s.meta = null;
+      s.forcedScrapeSourceId = null;
       s.thumbnails.images = [];
       s.progress.time = 0;
       s.progress.duration = 0;

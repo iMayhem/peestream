@@ -17,6 +17,7 @@ import {
 import { getLoadbalancedProviderApiUrl } from "@/backend/providers/fetchers";
 import { getProviders } from "@/backend/providers/providers";
 import { usePreferencesStore } from "@/stores/preferences";
+import { usePlayerStore } from "@/stores/player/store";
 
 export interface ScrapingItems {
   id: string;
@@ -272,9 +273,10 @@ export function useScrape() {
 
   const preferredSourceOrder = usePreferencesStore((s) => s.sourceOrder);
   const enableSourceOrder = usePreferencesStore((s) => s.enableSourceOrder);
+  const setForcedScrapeSourceId = usePlayerStore((s) => s.setForcedScrapeSourceId);
 
   const startScraping = useCallback(
-    async (media: ScrapeMedia) => {
+    async (media: ScrapeMedia, forcedSourceId?: string | null) => {
       const providerApiUrl = getLoadbalancedProviderApiUrl();
       console.log("[useProviderScrape] Starting scraping for media:", media);
       console.log("[useProviderScrape] providerApiUrl:", providerApiUrl);
@@ -284,6 +286,7 @@ export function useScrape() {
       );
 
       startScrape();
+      setForcedScrapeSourceId(null);
       let clientProviderIds: string[] = [];
       let serverProviderIds: string[] = [];
 
@@ -359,6 +362,37 @@ export function useScrape() {
       const allSourceIds = [...clientProviderIds, ...serverProviderIds];
 
       initEvent({ sourceIds: allSourceIds });
+
+      // A cached Poseidon playback failure must retry Poseidon itself after
+      // invalidation. The normal /scrape endpoint returns the first provider
+      // that succeeds, which can otherwise be VidRock before Poseidon runs.
+      if (forcedSourceId && providerApiUrl) {
+        try {
+          const baseUrlMaker = makeProviderUrl(providerApiUrl);
+          const conn = await connectServerSideEvents<any>(
+            baseUrlMaker.scrapeSource(forcedSourceId, media),
+            ["completed", "noOutput"],
+          );
+          conn.on("start", startEvent);
+          conn.on("update", updateEvent);
+          const forcedOutput = await conn.promise();
+          if (forcedOutput?.stream?.length > 0) {
+            const forcedResult: RunOutput = {
+              sourceId: forcedSourceId,
+              stream: forcedOutput.stream[0],
+            };
+            if (isExtensionActiveCached()) {
+              await prepareStream(forcedResult.stream);
+            }
+            return getResult(forcedResult);
+          }
+        } catch (err) {
+          console.warn(
+            `[useProviderScrape] Forced ${forcedSourceId} retry failed; continuing with provider fallback`,
+            err,
+          );
+        }
+      }
 
       // Run client-side scrapers if any are enabled
       if (clientProviderIds.length > 0) {
@@ -476,6 +510,7 @@ export function useScrape() {
       startScrape,
       preferredSourceOrder,
       enableSourceOrder,
+      setForcedScrapeSourceId,
     ],
   );
 

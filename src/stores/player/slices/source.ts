@@ -78,6 +78,7 @@ export interface SourceSlice {
     asTrack: boolean;
   };
   meta: PlayerMeta | null;
+  forcedScrapeSourceId: string | null;
   languageVariants: LanguageVariant[];
   selectedLanguageVariant: LanguageVariant | null;
   setStatus(status: PlayerStatus): void;
@@ -90,6 +91,7 @@ export interface SourceSlice {
   setMeta(meta: PlayerMeta, status?: PlayerStatus): void;
   setCaption(caption: Caption | null): void;
   setSourceId(id: string | null): void;
+  setForcedScrapeSourceId(id: string | null): void;
   enableAutomaticQuality(): void;
   redisplaySource(startAt: number): void;
   setLanguageVariants(variants: LanguageVariant[]): void;
@@ -129,6 +131,7 @@ export const createSourceSlice: MakeSlice<SourceSlice> = (set, get) => ({
   currentAudioTrack: null,
   status: playerStatus.IDLE,
   meta: null,
+  forcedScrapeSourceId: null,
   languageVariants: [],
   selectedLanguageVariant: null,
   caption: {
@@ -139,6 +142,11 @@ export const createSourceSlice: MakeSlice<SourceSlice> = (set, get) => ({
     set((s) => {
       s.status = playerStatus.PLAYING;
       s.sourceId = id;
+    });
+  },
+  setForcedScrapeSourceId(id) {
+    set((s) => {
+      s.forcedScrapeSourceId = id;
     });
   },
   setStatus(status: PlayerStatus) {

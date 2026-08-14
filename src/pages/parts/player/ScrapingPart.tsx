@@ -23,6 +23,7 @@ import {
 } from "@/hooks/useProviderScrape";
 
 import { WarningPart } from "../util/WarningPart";
+import { usePlayerStore } from "@/stores/player/store";
 
 export interface ScrapingProps {
   media: ScrapeMedia;
@@ -36,6 +37,7 @@ export interface ScrapingProps {
 export function ScrapingPart(props: ScrapingProps) {
   const { report } = useReportProviders();
   const { startScraping, sourceOrder, sources, currentSource } = useScrape();
+  const forcedScrapeSourceId = usePlayerStore((s) => s.forcedScrapeSourceId);
   const isMounted = useMountedState();
   const { t } = useTranslation();
 
@@ -65,7 +67,7 @@ export function ScrapingPart(props: ScrapingProps) {
     if (started.current) return;
     started.current = true;
     (async () => {
-      const output = await startScraping(props.media);
+      const output = await startScraping(props.media, forcedScrapeSourceId);
       if (!isMounted()) return;
       props.onResult?.(
         resultRef.current.sources,
@@ -80,7 +82,7 @@ export function ScrapingPart(props: ScrapingProps) {
       );
       props.onGetStream?.(output);
     })().catch(() => setFailedStartScrape(true));
-  }, [startScraping, props, report, isMounted]);
+  }, [startScraping, props, report, isMounted, forcedScrapeSourceId]);
 
   let currentProviderIndex = sourceOrder.findIndex(
     (s) => s.id === currentSource || s.children.includes(currentSource ?? ""),
