@@ -1,7 +1,9 @@
 window.__CONFIG__ = {
   // The URL for the CORS proxy, the URL must NOT end with a slash!
   // If not specified, the onboarding will not allow a "default setup". The user will have to use the extension or set up a proxy themselves
-  VITE_CORS_PROXY_URL: "https://proxy.peestream.in,|type=api|https://providers.peestream.in",
+  // Use the existing Moovie 3003 provider API so Peestream shares its
+  // Poseidon/VaPlayer disk cache and cache invalidation endpoint.
+  VITE_CORS_PROXY_URL: "https://proxy.peestream.in,|type=api|https://providers.peestream.in/moovie-api",
 
   VITE_BACKEND_URL: "https://api.peestream.in",
 

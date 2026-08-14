@@ -1,4 +1,5 @@
 import { DisplayInterface } from "@/components/player/display/displayInterface";
+import { invalidatePoseidonCache } from "@/backend/helpers/poseidonCache";
 import { playerStatus } from "@/stores/player/slices/source";
 import { MakeSlice } from "@/stores/player/slices/types";
 
@@ -101,6 +102,28 @@ export const createDisplaySlice: MakeSlice<DisplaySlice> = (set, get) => ({
       });
     });
     newDisplay.on("error", (err) => {
+      const state = get();
+      if (state.sourceId === "vaplayer" && state.meta) {
+        const failedMeta = state.meta;
+        void invalidatePoseidonCache(failedMeta).then((invalidated) => {
+          if (!invalidated) {
+            set((s) => {
+              s.status = playerStatus.PLAYBACK_ERROR;
+              s.interface.error = err;
+            });
+            return;
+          }
+
+          // Re-enter the normal scrape flow. The shared VPS cache has just
+          // been invalidated, so this request must resolve a fresh stream.
+          set((s) => {
+            s.status = playerStatus.SCRAPING;
+            s.interface.error = undefined;
+          });
+        });
+        return;
+      }
+
       set((s) => {
         s.status = playerStatus.PLAYBACK_ERROR;
         s.interface.error = err;
