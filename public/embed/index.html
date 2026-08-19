@@ -2820,12 +2820,15 @@ body::before {
       
       activeServerId = sourceId;
       
+      // Capture position BEFORE destroying hls.js: destroy() resets the video
+      // element to 0, so reading it after would restart failover from the start.
+      const currentTime = video.currentTime;
+      
       if (hlsInstance) {
         try { hlsInstance.destroy(); } catch(e) {}
         hlsInstance = null;
       }
       
-      const currentTime = video.currentTime;
       // If forcePlay not specified, keep current play state; but on failover always pass true
       const shouldPlay = forcePlay !== null ? forcePlay : !video.paused;
       
@@ -2984,7 +2987,9 @@ body::before {
               clLog('error', `HLS error: ${data.type} ${data.details} fatal=${data.fatal}`);
             }
 
-            const isManifestError = data.details === 'manifestLoadError' || data.details === 'manifestParsingError' || data.details === 'levelLoadError' || data.details === 'fragLoadError';
+            // fragLoadError is non-fatal (hls.js retries with startLoad below); only
+            // real manifest/level failures or exhausted retries trigger failover.
+            const isManifestError = data.details === 'manifestLoadError' || data.details === 'manifestParsingError' || data.details === 'levelLoadError';
             if (data.fatal || isManifestError) {
               failThisHls(data.details);
               return;
