@@ -2703,7 +2703,9 @@ body::before {
           try { hlsInstance.destroy(); } catch(err) {}
           hlsInstance = null;
         }
-        initPlayer(firstStreamObj);
+        // Never autoplay after a search resolves — show the play button so the
+        // user's click is a real gesture (and lets the ad fire).
+        initPlayer(firstStreamObj, 0, false);
         renderOverlayServers();
         updateServerMenuUI();
       });
@@ -2885,7 +2887,10 @@ body::before {
       }
 
       // Autoplay / Mute config
-      const autoplayParam = urlParams.get('autoplay') !== 'false';
+      // Default to NO autoplay (show the play button so the user's click is a
+      // real user gesture — this is also what lets the ad fire). Only autoplay
+      // when explicitly requested via ?autoplay=true.
+      const autoplayParam = urlParams.get('autoplay') === 'true';
       const mutedParam = urlParams.get('muted') === 'true';
 
       if (mutedParam) {
