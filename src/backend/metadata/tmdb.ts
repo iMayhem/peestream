@@ -2,7 +2,7 @@ import slugify from "slugify";
 
 import { conf } from "@/setup/config";
 import { useLanguageStore } from "@/stores/language";
-import { usePreferencesStore } from "@/stores/preferences";
+
 import { SimpleCache } from "@/utils/cache";
 import { getTmdbLanguageCode } from "@/utils/language";
 import { MediaItem } from "@/utils/mediaTypes";
@@ -213,7 +213,7 @@ function getNextProxy(proxyUrls: string[]): string | undefined {
 export async function get<T>(url: string, params?: object): Promise<T> {
   const proxyUrls = getProxyUrls();
   const proxy = getNextProxy(proxyUrls);
-  const shouldProxyTmdb = true;
+  const shouldProxyTmdb = false;
   const userLanguage = useLanguageStore.getState().language;
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
 
@@ -469,24 +469,12 @@ export function getMediaBackdrop(
   backdropPath: string | null,
 ): string | undefined {
   if (!backdropPath) return undefined;
-  const proxyUrls = getProxyUrls();
-  const proxy = getNextProxy(proxyUrls);
-  const imgUrl = `https://image.tmdb.org/t/p/original${backdropPath}`;
-  if (proxy) {
-    return `${proxy}/tmdb-image/original${backdropPath}`;
-  }
-  return imgUrl;
+  return `https://image.tmdb.org/t/p/original${backdropPath}`;
 }
 
 export function getMediaPoster(posterPath: string | null): string | undefined {
   if (!posterPath) return undefined;
-  const proxyUrls = getProxyUrls();
-  const proxy = getNextProxy(proxyUrls);
-  const imgUrl = `https://image.tmdb.org/t/p/w342/${posterPath}`;
-  if (proxy) {
-    return `${proxy}/tmdb-image/w342/${posterPath}`;
-  }
-  return imgUrl;
+  return `https://image.tmdb.org/t/p/w342/${posterPath}`;
 }
 
 /**
@@ -676,16 +664,6 @@ export async function getPersonImages(id: string): Promise<TMDBPersonImages> {
 export function getPersonProfileImage(
   profilePath: string | null,
 ): string | undefined {
-  const shouldProxyTmdb = usePreferencesStore.getState().proxyTmdb;
-  const imgUrl = `https://image.tmdb.org/t/p/w185/${profilePath}`;
-
-  if (shouldProxyTmdb) {
-    const proxyUrls = getProxyUrls();
-    const proxy = getNextProxy(proxyUrls);
-    if (proxy) {
-      return `${proxy}/?destination=${imgUrl}`;
-    }
-  }
-
-  if (profilePath) return imgUrl;
+  if (!profilePath) return undefined;
+  return `https://image.tmdb.org/t/p/w185/${profilePath}`;
 }
